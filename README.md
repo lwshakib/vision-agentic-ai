@@ -7,11 +7,13 @@ Vision Agentic AI is an advanced agentic chatbot platform designed to provide a 
 ## ✨ Features
 
 - 🤖 **Agentic Chatbot**: Engage in meaningful conversations with an AI that understands context and intent.
+- 📂 **Project Management**: Organize your chats into dedicated projects for better workflow.
+- ⚡ **Optimistic UI**: Experience instant interactions with immediate feedback for actions like deletion.
 - 🔍 **Web Search Tool**: Real-time access to the web to find up-to-date information during chats.
 - 📄 **Web Extraction**: Deeply extract and analyze content from any web URL for research and insights.
 - 🎨 **Image Generation**: Generate high-quality images directly within the chat interface.
 - 🔒 **Secure Authentication**: Built-in security with BetterAuth.
-- 📂 **Image Library**: Automatically collect and manage all images generated or attached in your chats.
+- 🖼️ **Image Library**: Automatically collect and manage all images generated or attached in your chats.
 
 ## 🚀 Getting Started
 
@@ -59,7 +61,7 @@ Vision Agentic AI is an advanced agentic chatbot platform designed to provide a 
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS 4
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
 - **Backend**: Next.js Server Actions, Prisma
 - **Auth**: BetterAuth
 - **AI**: Google AI SDK, Tavily for Web Search
