@@ -10,6 +10,7 @@ import {
   ChatConversationView,
   type ChatMessage,
 } from "@/components/chat-conversation";
+import { useChatStore } from "@/lib/store";
 
 type FileInfo = {
   url: string;
@@ -40,6 +41,13 @@ export default function PromptInputWithActions() {
       toast.error("Failed to start chat");
       return;
     }
+
+    // Optimistically add chat to sidebar
+    useChatStore.getState().addChat({
+      id: data.chatId,
+      title: "New chat",
+      url: `/~/${data.chatId}`,
+    });
 
     // Build query params
     const params = new URLSearchParams();

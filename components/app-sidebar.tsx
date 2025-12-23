@@ -162,9 +162,7 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [chats, setChats] = React.useState<
-    { id: string; name: string; url: string }[]
-  >([]);
+  const { chats, setChats, addChat, chatTitles } = useChatStore();
   const [projects, setProjects] = React.useState<
     {
       id: string;
@@ -196,7 +194,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       const mapped = json.map((chat: { id: string; title?: string }) => ({
         id: chat.id,
-        name: chat.title || "Untitled chat",
+        title: chat.title || "Untitled chat",
         url: `/~/${chat.id}`,
       }));
 
@@ -206,14 +204,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     } finally {
       setIsLoadingChats(false);
     }
-  }, []);
+  }, [setChats]);
 
-  const { chatTitles } = useChatStore();
-
+  // Transform store chats to display format (handling title updates)
   const displayChats = React.useMemo(() => {
     return chats.map((chat) => ({
-      ...chat,
-      name: chatTitles[chat.id] || chat.name,
+      id: chat.id,
+      name: chatTitles[chat.id] || chat.title,
+      url: chat.url,
     }));
   }, [chats, chatTitles]);
 
@@ -303,7 +301,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         const updated = await res.json();
 
         // Remove from unassigned chats if present
-        setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+        setChats(chats.filter((chat) => chat.id !== chatId));
 
         setProjects((prev) =>
           prev.map((project) => {
@@ -342,7 +340,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setAssigningChatId(null);
       }
     },
-    []
+    [chats, setChats]
   );
 
   const handleRemoveChatFromProject = React.useCallback(
@@ -374,21 +372,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         );
 
         // Add back to unassigned chats
-        setChats((prev) => [
-          {
-            id: updated.id,
-            name: updated.title || "Untitled chat",
-            url: `/~/${updated.id}`,
-          },
-          ...prev,
-        ]);
+        addChat({
+          id: updated.id,
+          title: updated.title || "Untitled chat",
+          url: `/~/${updated.id}`,
+        });
       } catch (error) {
         console.error("Unable to remove chat from project", error);
       } finally {
         setAssigningChatId(null);
       }
     },
-    []
+    [addChat]
   );
 
   const openCreateProjectDialog = React.useCallback((chatId?: string) => {
