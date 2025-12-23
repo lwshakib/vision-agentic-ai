@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
+import { getUser } from "@/actions/user";
 import prisma from "@/lib/prisma";
 
 const MAX_RESULTS = 20;
 
 export async function GET(req: Request) {
-  const user = await currentUser();
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -25,14 +25,14 @@ export async function GET(req: Request) {
     SELECT c.id, c.title, MAX(m."createdAt") AS "lastMessageAt"
     FROM "Chat" c
     LEFT JOIN "Message" m ON m."chatId" = c.id
-    WHERE c."clerkId" = ${user.id}
+    WHERE c."userId" = ${user.id}
       AND (
         c.title ILIKE ${term}
         OR EXISTS (
           SELECT 1
           FROM "Message" m2
           WHERE m2."chatId" = c.id
-            AND m2.parts::text ILIKE ${term}
+          AND m2.parts::text ILIKE ${term}
         )
       )
     GROUP BY c.id

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
+import { getUser } from "@/actions/user";
 import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary
@@ -11,7 +11,7 @@ cloudinary.config({
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await currentUser();
+    const user = await getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

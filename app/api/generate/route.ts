@@ -1,12 +1,13 @@
 import { streamText } from "@/llm/streamText";
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
+import { getUser } from "@/actions/user";
+
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
-    const user = await currentUser();
+    const user = await getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -9,18 +9,17 @@ export const metadata: Metadata = {
     template: "%s | Vision Agentic AI",
   },
   description:
-    "Experience the future of AI with Vision Agentic AI. A powerful agentic chatbot platform, intuitive, and ready for your next project.",
+    "Vision Agentic AI is a powerful agentic chatbot platform that lets you chat, search the web, extract data, and generate images with ease.",
   keywords: [
     "AI",
     "Vision Agentic AI",
     "Agentic Chatbot",
-    "AI Platform",
-    "Computer Vision",
-    "Machine Learning",
-    "Deep Learning",
     "AI Tools",
+    "Web Search",
+    "Data Extraction",
+    "Image Generation",
     "AI Development",
-    "AI Solutions",
+    "Next.js AI",
   ],
   openGraph: {
     type: "website",
@@ -29,7 +28,7 @@ export const metadata: Metadata = {
     siteName: "Vision Agentic AI",
     title: "Vision Agentic AI",
     description:
-      "Experience the future of computer vision with Vision Agentic AI. Powerful, intuitive, and ready for your next project.",
+      "A powerful agentic chatbot platform with web search, data extraction, and image generation capabilities.",
     images: [
       {
         url: "/favicon_io/android-chrome-512x512.png",
@@ -43,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Vision Agentic AI",
     description:
-      "Experience the future of computer vision with Vision Agentic AI. Powerful, intuitive, and ready for your next project.",
+      "A powerful agentic chatbot platform with web search, data extraction, and image generation capabilities.",
     images: ["/favicon_io/android-chrome-512x512.png"],
   },
   icons: {
@@ -81,19 +80,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-
-      <html lang="en" className="scroll-smooth">
-        <body className="antialiased">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster />
-          </ThemeProvider>
-        </body>
-      </html>
+    <html lang="en" className="scroll-smooth">
+      <body className="antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

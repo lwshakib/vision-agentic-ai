@@ -64,7 +64,7 @@ Vision AI Studio is a cutting-edge platform for building and deploying AI-powere
 - **Backend**: Next.js API Routes, Prisma
 - **AI**: @ai-sdk/google, @ai-sdk/groq, @google/generative-ai
 - **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: Clerk
+- **Authentication**: BetterAuth
 - **UI Components**: Radix UI, shadcn/ui
 
 ## 🤝 Contributing
