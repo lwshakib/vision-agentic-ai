@@ -12,3 +12,113 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+
+enum MessageRole {
+  user
+  assistant
+}
+
+
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  projects      Project[]
+  chats         Chat[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+
+
+model Project {
+  id String @id @default(uuid())
+  title String
+  userId String 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chats Chat[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Chat {
+    id String @id @default(uuid())
+    title String?
+    project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId String?
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    isOnProject Boolean @default(false)
+    messages Message[]
+}
+
+
+model Message {
+  id String @id @default(uuid())
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId String
+  // Use JSON to store flexible message parts (text, file, etc.)
+  parts Json?
+  role MessageRole @default(user)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
