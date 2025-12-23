@@ -1,0 +1,1 @@
+export const MAXIMUM_OUTPUT_TOKENS = 65535;
