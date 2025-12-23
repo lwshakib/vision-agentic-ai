@@ -462,9 +462,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         toast.error("Failed to delete chat");
         // Restore chats if failed
         fetchChats();
+        fetchProjects();
       }
     },
-    [deleteChat, router, fetchChats]
+    [deleteChat, router, fetchChats, fetchProjects]
   );
 
   React.useEffect(() => {
