@@ -6,7 +6,7 @@ import {
   StreamTextOnFinishCallback,
   Tool,
 } from "ai";
-import { MAXIMUM_OUTPUT_TOKENS } from "../constants";
+import { MAXIMUM_OUTPUT_TOKENS } from "@/lib/constants";
 import { GeminiModel } from "./model";
 import { SYSTEM_PROMPT } from "./prompts";
 import { tools } from "./tools";
@@ -28,19 +28,21 @@ export type Messages = Message[];
 
 export type StreamingOptions = Omit<Parameters<typeof _streamText>[0], "model">;
 
-export function streamText(
+export async function streamText(
   messages: Messages,
   onFinish?: StreamTextOnFinishCallback<Record<string, Tool>>
 ) {
+  const modelMessages = await convertToModelMessages(messages as any);
+
   return _streamText({
     model: GeminiModel(),
     system: SYSTEM_PROMPT,
     tools: tools,
     stopWhen: stepCountIs(10), // Increased from 5 to 10 to allow for webSearch + extractWebUrl chains
     toolChoice: "auto",
-    messages: convertToModelMessages(messages as any),
+    messages: modelMessages,
     onFinish,
     temperature: 0.7,
-    maxOutputTokens: MAXIMUM_OUTPUT_TOKENS
+    maxOutputTokens: MAXIMUM_OUTPUT_TOKENS,
   });
 }

@@ -53,12 +53,12 @@ const data = {
   navMain: [
     {
       title: "New Chat",
-      url: "/~",
+      url: "/",
       icon: MessageSquarePlus,
     },
     {
       title: "Turn on Temporary Chat",
-      url: "/~?temporary-chat=true",
+      url: "/?temporary-chat=true",
       icon: Clock,
     },
     {

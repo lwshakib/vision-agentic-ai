@@ -1,7 +1,5 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createGroq } from "@ai-sdk/groq";
-import type { LanguageModel } from "ai";
-import { GOOGLE_API_KEY } from "@/env";
+import { GOOGLE_API_KEY } from "@/lib/env";
 
 export const getSingleAPIKey = () => {
   if (!GOOGLE_API_KEY) {
