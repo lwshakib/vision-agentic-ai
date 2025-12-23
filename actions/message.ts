@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
-import { MessageRole } from "../../generated/prisma/client";
-import { currentUser } from "@clerk/nextjs/server";
+import { MessageRole } from "@/generated/prisma/client";
+import { getUser } from "./user";
 
 export async function saveMessage({
   chatId,
@@ -11,7 +11,7 @@ export async function saveMessage({
   role: "user" | "assistant";
   parts: any;
 }) {
-  const user = await currentUser();
+  const user = await getUser();
   if (!user) {
     throw new Error("Unauthorized");
   }
@@ -20,7 +20,7 @@ export async function saveMessage({
   const chat = await prisma.chat.findFirst({
     where: {
       id: chatId,
-      clerkId: user.id,
+      userId: user.id,
     },
   });
 
@@ -66,4 +66,3 @@ export async function saveAssistantMessage({
     parts,
   });
 }
-
