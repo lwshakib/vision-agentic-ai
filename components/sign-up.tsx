@@ -37,7 +37,7 @@ export default function SignUp() {
       }
 
       toast.success("Account created successfully!");
-      router.push("/workspaces");
+      router.push("/");
       router.refresh();
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -51,7 +51,7 @@ export default function SignUp() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/workspaces",
+        callbackURL: "/",
       });
     } catch (error) {
       toast.error("Failed to sign up with Google");
@@ -71,7 +71,7 @@ export default function SignUp() {
               <LogoIcon />
             </Link>
             <h1 className="mb-1 mt-4 text-xl font-semibold">
-              Create a Rethink Zone Account
+              Create a Vision Agentic AI Account
             </h1>
             <p className="text-sm">Welcome! Create an account to get started</p>
           </div>

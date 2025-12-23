@@ -34,7 +34,7 @@ export default function LoginPage() {
       }
 
       toast.success("Signed in successfully!");
-      router.push("/workspaces");
+      router.push("/");
       router.refresh();
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -48,7 +48,7 @@ export default function LoginPage() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/workspaces",
+        callbackURL: "/",
       });
     } catch (error) {
       toast.error("Failed to sign in with Google");
@@ -68,7 +68,7 @@ export default function LoginPage() {
               <LogoIcon />
             </Link>
             <h1 className="mb-1 mt-4 text-xl font-semibold">
-              Sign In to Rethink Zone
+              Sign In to Vision Agentic AI
             </h1>
             <p className="text-sm">Welcome back! Sign in to continue</p>
           </div>
