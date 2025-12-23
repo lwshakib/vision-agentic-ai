@@ -1,22 +1,23 @@
-# Vision AI Studio
+# Vision Agentic AI
 
-Vision AI Studio is a cutting-edge platform for building and deploying AI-powered computer vision applications with ease. Built with Next.js and powered by state-of-the-art AI models, it provides a seamless experience for developers to create, train, and deploy computer vision models.
+Vision Agentic AI is an advanced agentic chatbot platform designed to provide a seamless and powerful user experience. Built with Next.js 15 and powered by state-of-the-art AI, it allows users to chat and utilize a suite of agentic tools, including real-time web search, detailed web content extraction, and high-quality image generation.
 
-![Vision AI Studio Demo](./public/demo.png)
+![Vision Agentic AI Demo](./public/demo.png)
 
 ## ✨ Features
 
-- 🚀 **AI-Powered Vision Models**: Leverage the latest in computer vision AI
-- 🎨 **Intuitive Interface**: User-friendly dashboard for managing your AI models
-- ⚡ **Real-time Processing**: Process images and videos in real-time
-- 🔒 **Secure & Private**: Your data remains yours, with robust security measures
-- 🌐 **API Access**: Easy integration with your existing applications
+- 🤖 **Agentic Chatbot**: Engage in meaningful conversations with an AI that understands context and intent.
+- 🔍 **Web Search Tool**: Real-time access to the web to find up-to-date information during chats.
+- 📄 **Web Extraction**: Deeply extract and analyze content from any web URL for research and insights.
+- 🎨 **Image Generation**: Generate high-quality images directly within the chat interface.
+- 🔒 **Secure Authentication**: Built-in security with BetterAuth.
+- 📂 **Image Library**: Automatically collect and manage all images generated or attached in your chats.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ and npm/yarn/pnpm
+- Node.js 18+ and Bun (recommended)
 - Git
 - A modern web browser
 
@@ -25,47 +26,45 @@ Vision AI Studio is a cutting-edge platform for building and deploying AI-powere
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/lwshakib/vision-ai-studio.git
-   cd vision-ai-studio
+   git clone https://github.com/lwshakib/vision-agentic-ai.git
+   cd vision-agentic-ai
    ```
 
 2. Install dependencies:
 
    ```bash
-   npm install
-   # or
-   yarn install
-   # or
-   pnpm install
+   bun install
    ```
 
 3. Set up environment variables:
 
    ```bash
-   cp .env.example .env.local
-   # Update the environment variables in .env.local
+   cp .env.example .env
+   # Update the environment variables in .env
    ```
 
-4. Run the development server:
+4. Initialize the database:
 
    ```bash
-   npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
+   bun run db:migrate
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. Run the development server:
+
+   ```bash
+   bun run dev
+   ```
+
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Prisma
-- **AI**: @ai-sdk/google, @ai-sdk/groq, @google/generative-ai
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: BetterAuth
-- **UI Components**: Radix UI, shadcn/ui
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS 4
+- **Backend**: Next.js Server Actions, Prisma
+- **Auth**: BetterAuth
+- **AI**: Google AI SDK, Tavily for Web Search
+- **Database**: PostgreSQL
+- **UI Components**: Radix UI, shadcn/ui, motion
 
 ## 🤝 Contributing
 

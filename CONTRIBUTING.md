@@ -1,6 +1,6 @@
-# Contributing to Vision AI Studio
+# Contributing to Vision Agentic AI
 
-First off, thank you for considering contributing to Vision AI Studio! We appreciate your time and effort to make this project better.
+First off, thank you for considering contributing to Vision Agentic AI! We appreciate your time and effort to make this project better.
 
 ## 📋 Table of Contents
 
@@ -31,8 +31,8 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 ### Reporting Bugs
 
-- **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/lwshakib/vision-ai-studio/issues)
-- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/lwshakib/vision-ai-studio/issues/new). Be sure to include:
+- **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/lwshakib/vision-agentic-ai/issues)
+- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/lwshakib/vision-agentic-ai/issues/new). Be sure to include:
   - A clear title and description
   - As much relevant information as possible
   - A code sample or an executable test case demonstrating the issue
@@ -48,9 +48,9 @@ This project and everyone participating in it is governed by our [Code of Conduc
 1. **Set up the development environment**
 
    ```bash
-   git clone https://github.com/your-username/vision-ai-studio.git
-   cd vision-ai-studio
-   npm install
+   git clone https://github.com/your-username/vision-agentic-ai.git
+   cd vision-agentic-ai
+   bun install
    ```
 
 2. **Create a new branch**
@@ -62,29 +62,22 @@ This project and everyone participating in it is governed by our [Code of Conduc
 3. **Make your changes**
 
    - Follow the project's coding standards
-   - Write tests for new features
    - Update documentation as needed
 
-4. **Run tests**
-
-   ```bash
-   npm test
-   ```
-
-5. **Commit your changes**
+4. **Commit your changes**
 
    ```bash
    git commit -m "feat: add amazing feature"
    ```
 
-6. **Push to your fork**
+5. **Push to your fork**
 
    ```bash
    git push origin feature/amazing-feature
    ```
 
-7. **Open a Pull Request**
-   - Go to [Pull Requests](https://github.com/lwshakib/vision-ai-studio/pulls)
+6. **Open a Pull Request**
+   - Go to [Pull Requests](https://github.com/lwshakib/vision-agentic-ai/pulls)
    - Click "New Pull Request"
    - Select your branch and submit the PR
 
@@ -92,29 +85,22 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 1. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
 2. Update the README.md with details of changes to the interface, including new environment variables, exposed ports, useful file locations, and container parameters.
-3. Increase the version numbers in any examples files and the README.md to the new version that this Pull Request would represent.
-4. The PR will be reviewed by the maintainers and may require changes before being merged.
+3. The PR will be reviewed by the maintainers and may require changes before being merged.
 
 ## 🛠 Development Setup
 
 ### Prerequisites
 
 - Node.js 18+
-- npm/yarn/pnpm
+- Bun
 - Git
 
 ### Installation
 
 1. Clone the repository
-2. Install dependencies: `npm install`
-3. Copy `.env.example` to `.env.local` and update the values
-4. Run the development server: `npm run dev`
-
-### Running Tests
-
-```bash
-npm test
-```
+2. Install dependencies: `bun install`
+3. Copy `.env.example` to `.env` and update the values
+4. Run the development server: `bun run dev`
 
 ## 📏 Style Guide
 
