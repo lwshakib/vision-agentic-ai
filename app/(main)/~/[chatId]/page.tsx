@@ -34,10 +34,13 @@ import ChatInput from "@/components/chat-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WebSearchLoading } from "@/components/chat-conversation";
 import { toast } from "sonner";
+import { useChatStore } from "@/lib/store";
 
 export default function ChatPage() {
   const { chatId } = useParams<{ chatId: string }>();
   if (!chatId) return null;
+
+  const { setChatTitle } = useChatStore();
 
   // Memoize transport to prevent re-creation on every render
   const chatTransport = useMemo(() => {
@@ -98,6 +101,22 @@ export default function ChatPage() {
     messagesLoaded.current = false;
     setIsLoadingHistory(true);
   }, [chatId]);
+
+  // Update chat title if found in messages
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === "assistant" && lastMessage.parts) {
+      const textPart = (lastMessage.parts as any[]).find(
+        (p) => p.type === "text"
+      );
+      if (textPart && typeof textPart.text === "string") {
+        const titleMatch = textPart.text.match(/<title>(.*?)<\/title>/);
+        if (titleMatch && chatId) {
+          setChatTitle(chatId as string, titleMatch[1].trim());
+        }
+      }
+    }
+  }, [messages, chatId, setChatTitle]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -387,13 +406,20 @@ export default function ChatPage() {
                             const key = `${message.id}-${i}`;
 
                             if (part.type === "text") {
-                              const text = part.text ?? "";
+                              let text = part.text ?? "";
                               if (!text) return null;
+
+                              // Filter out <title> tag from displayed text
+                              const displayedText = text
+                                .replace(/<title>.*?<\/title>/gs, "")
+                                .trim();
+                              if (!displayedText && text.includes("<title>"))
+                                return null;
 
                               return (
                                 <div key={key} className="flex flex-col gap-1">
                                   <MessageResponse className="[&_p]:leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-1.5 [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto">
-                                    {text}
+                                    {displayedText}
                                   </MessageResponse>
                                   {(message as any).version && (
                                     <span className="inline-flex w-fit items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">

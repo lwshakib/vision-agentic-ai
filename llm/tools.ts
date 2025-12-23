@@ -6,7 +6,7 @@ import {
   TAVILY_API_KEY,
   NEBIUS_API_KEY,
   DEEPGRAM_API_KEY,
-} from "../env";
+} from "@/lib/env";
 
 // Configure Cloudinary
 cloudinary.config({

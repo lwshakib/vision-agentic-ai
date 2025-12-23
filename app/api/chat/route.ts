@@ -30,21 +30,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
-  const message = typeof body?.message === "string" ? body.message.trim() : "";
-  const title = typeof body?.title === "string" ? body.title.trim() : undefined;
-
-  if (!message) {
-    return NextResponse.json(
-      { error: "Message text is required" },
-      { status: 400 }
-    );
-  }
 
   const chat = await prisma.chat.create({
     data: {
       userId: user.id,
-      title: title || message.slice(0, 80) || "New chat",
+      title: "New chat",
     },
     select: {
       id: true,

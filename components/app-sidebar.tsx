@@ -41,6 +41,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Logo } from "./logo";
+import { useChatStore } from "@/lib/store";
 
 // This is sample data.
 const data = {
@@ -206,6 +207,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       setIsLoadingChats(false);
     }
   }, []);
+
+  const { chatTitles } = useChatStore();
+
+  const displayChats = React.useMemo(() => {
+    return chats.map((chat) => ({
+      ...chat,
+      name: chatTitles[chat.id] || chat.name,
+    }));
+  }, [chats, chatTitles]);
 
   const fetchProjects = React.useCallback(async () => {
     setIsLoadingProjects(true);
@@ -467,7 +477,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 assigningChatId={assigningChatId}
               />
               <NavChats
-                chats={chats}
+                chats={displayChats}
                 projects={projects}
                 onMoveToProject={handleMoveChatToProject}
                 onCreateProject={openCreateProjectDialog}
