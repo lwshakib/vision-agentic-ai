@@ -5,14 +5,14 @@ import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: {
-    default: "Vision AI Studio",
-    template: "%s | Vision AI Studio",
+    default: "Vision Agentic AI",
+    template: "%s | Vision Agentic AI",
   },
   description:
-    "Experience the future of AI with Vision AI Studio. A powerful agentic chatbot platform, intuitive, and ready for your next project.",
+    "Experience the future of AI with Vision Agentic AI. A powerful agentic chatbot platform, intuitive, and ready for your next project.",
   keywords: [
     "AI",
-    "Vision AI Studio",
+    "Vision Agentic AI",
     "Agentic Chatbot",
     "AI Platform",
     "Computer Vision",
@@ -25,25 +25,25 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://vision-ai-studio.com",
-    siteName: "Vision AI Studio",
-    title: "Vision AI Studio",
+    url: "https://vision-agentic-ai.com",
+    siteName: "Vision Agentic AI",
+    title: "Vision Agentic AI",
     description:
-      "Experience the future of computer vision with Vision AI Studio. Powerful, intuitive, and ready for your next project.",
+      "Experience the future of computer vision with Vision Agentic AI. Powerful, intuitive, and ready for your next project.",
     images: [
       {
         url: "/favicon_io/android-chrome-512x512.png",
         width: 512,
         height: 512,
-        alt: "Vision AI Studio Logo",
+        alt: "Vision Agentic AI Logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vision AI Studio",
+    title: "Vision Agentic AI",
     description:
-      "Experience the future of computer vision with Vision AI Studio. Powerful, intuitive, and ready for your next project.",
+      "Experience the future of computer vision with Vision Agentic AI. Powerful, intuitive, and ready for your next project.",
     images: ["/favicon_io/android-chrome-512x512.png"],
   },
   icons: {
