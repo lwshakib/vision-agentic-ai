@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import ChatInput from "@/components/chat-input";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useChat } from "@ai-sdk/react";
@@ -19,7 +19,7 @@ type FileInfo = {
   publicId: string;
 };
 
-export default function PromptInputWithActions() {
+function PromptInputContent() {
   const userName = "Professor";
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -148,5 +148,28 @@ function TemporaryChat() {
       onSend={handleSend}
       onCopy={handleCopy}
     />
+  );
+}
+export default function PromptInputWithActions() {
+  return (
+    <Suspense fallback={
+      <div className="bg-background min-h-screen w-full flex flex-col items-center justify-center px-4 py-6 text-center">
+        <div className="w-full max-w-3xl mx-auto flex flex-col gap-4">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">
+              Good to see you, Professor.
+            </p>
+            <p className="text-lg font-medium mt-1">
+              What&apos;s the agenda today, or what are you working on?
+            </p>
+          </div>
+          <div className="w-full max-w-(--breakpoint-md) mx-auto">
+            <div className="animate-pulse bg-muted rounded-lg h-12 w-full" />
+          </div>
+        </div>
+      </div>
+    }>
+      <PromptInputContent />
+    </Suspense>
   );
 }
