@@ -37,6 +37,7 @@ export function NavChats({
   projects,
   onMoveToProject,
   onCreateProject,
+  onDeleteChat,
   assigningChatId,
 }: {
   chats: {
@@ -51,6 +52,7 @@ export function NavChats({
   }[];
   onMoveToProject?: (chatId: string, projectId: string) => void | Promise<void>;
   onCreateProject?: (chatId?: string) => void;
+  onDeleteChat?: (chatId: string) => void;
   assigningChatId?: string | null;
 }) {
   const { isMobile } = useSidebar();
@@ -96,9 +98,7 @@ export function NavChats({
                     <Forward className="text-muted-foreground" />
                     <span>Move to project</span>
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent
-                    className="w-60"
-                  >
+                  <DropdownMenuSubContent className="w-60">
                     {projects.length === 0 && (
                       <DropdownMenuItem
                         onSelect={() => onCreateProject?.(item.id)}
@@ -137,7 +137,9 @@ export function NavChats({
                   <span>Share Chat</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => item.id && onDeleteChat?.(item.id)}
+                >
                   <Trash2 className="text-muted-foreground" />
                   <span>Delete Chat</span>
                 </DropdownMenuItem>

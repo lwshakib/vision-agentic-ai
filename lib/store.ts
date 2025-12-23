@@ -12,6 +12,7 @@ interface ChatStore {
   setChatTitle: (chatId: string, title: string) => void;
   addChat: (chat: Chat) => void;
   setChats: (chats: Chat[]) => void;
+  deleteChat: (chatId: string) => void;
 }
 
 export const useChatStore = create<ChatStore>((set) => ({
@@ -28,4 +29,11 @@ export const useChatStore = create<ChatStore>((set) => ({
       return { chats: [chat, ...state.chats] };
     }),
   setChats: (chats) => set({ chats }),
+  deleteChat: (chatId) =>
+    set((state) => ({
+      chats: state.chats.filter((c) => c.id !== chatId),
+      chatTitles: Object.fromEntries(
+        Object.entries(state.chatTitles).filter(([key]) => key !== chatId)
+      ),
+    })),
 }));

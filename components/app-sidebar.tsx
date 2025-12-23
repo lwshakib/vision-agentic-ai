@@ -38,6 +38,8 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Logo } from "./logo";
@@ -162,7 +164,8 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { chats, setChats, addChat, chatTitles } = useChatStore();
+  const router = useRouter();
+  const { chats, setChats, addChat, chatTitles, deleteChat } = useChatStore();
   const [projects, setProjects] = React.useState<
     {
       id: string;
@@ -431,6 +434,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     [handleMoveChatToProject, newProjectTitle, pendingChatId]
   );
 
+  const handleDeleteChat = React.useCallback(
+    async (chatId: string) => {
+      // Optimistic delete
+      deleteChat(chatId);
+      setProjects((prev) =>
+        prev.map((p) => ({
+          ...p,
+          chats: p.chats?.filter((c) => c.id !== chatId),
+        }))
+      );
+
+      // Redirect if we are on the page of the deleted chat
+      if (window.location.pathname.includes(chatId)) {
+        router.push("/");
+      }
+
+      try {
+        const res = await fetch(`/api/chat/${chatId}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          throw new Error("Failed to delete chat");
+        }
+      } catch (error) {
+        console.error("Delete failed", error);
+        toast.error("Failed to delete chat");
+        // Restore chats if failed
+        fetchChats();
+      }
+    },
+    [deleteChat, router, fetchChats]
+  );
+
   React.useEffect(() => {
     fetchChats();
     fetchProjects();
@@ -469,6 +505,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 onCreateProject={(chatId) => openCreateProjectDialog(chatId)}
                 onMoveChat={handleMoveChatToProject}
                 onRemoveFromProject={handleRemoveChatFromProject}
+                onDeleteChat={handleDeleteChat}
                 assigningChatId={assigningChatId}
               />
               <NavChats
@@ -476,6 +513,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 projects={projects}
                 onMoveToProject={handleMoveChatToProject}
                 onCreateProject={openCreateProjectDialog}
+                onDeleteChat={handleDeleteChat}
                 assigningChatId={assigningChatId}
               />
             </ScrollArea>

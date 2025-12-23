@@ -10,6 +10,7 @@ import {
   MessageSquare,
   MoreHorizontal,
   Trash2,
+  FolderMinus,
 } from "lucide-react";
 import {
   Collapsible,
@@ -44,6 +45,7 @@ export function NavProjects({
   onCreateProject,
   onMoveChat,
   onRemoveFromProject,
+  onDeleteChat,
   assigningChatId,
 }: {
   projects: {
@@ -60,6 +62,7 @@ export function NavProjects({
     fromProjectId: string
   ) => void | Promise<void>;
   onRemoveFromProject?: (chatId: string, fromProjectId: string) => void;
+  onDeleteChat?: (chatId: string) => void;
   assigningChatId?: string | null;
 }) {
   const { isMobile } = useSidebar();
@@ -129,9 +132,7 @@ export function NavProjects({
                               <Forward className="text-muted-foreground" />
                               <span>Move to project</span>
                             </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent
-                              className="w-60"
-                            >
+                            <DropdownMenuSubContent className="w-60">
                               {projects
                                 .filter((p) => p.id !== project.id)
                                 .map((p) => (
@@ -150,7 +151,8 @@ export function NavProjects({
                                     <span>{p.title}</span>
                                   </DropdownMenuItem>
                                 ))}
-                              {projects.filter((p) => p.id !== project.id).length === 0 && (
+                              {projects.filter((p) => p.id !== project.id)
+                                .length === 0 && (
                                 <DropdownMenuItem disabled>
                                   <span className="text-muted-foreground">
                                     No other projects
@@ -173,8 +175,16 @@ export function NavProjects({
                             }
                             disabled={assigningChatId === subItem.id}
                           >
-                            <Trash2 className="text-muted-foreground" />
+                            <FolderMinus className="text-muted-foreground" />
                             <span>Remove from project</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() => onDeleteChat?.(subItem.id)}
+                            disabled={assigningChatId === subItem.id}
+                          >
+                            <Trash2 className="text-muted-foreground" />
+                            <span>Delete Chat</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -183,7 +193,9 @@ export function NavProjects({
                   {project.isLoading && (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton>
-                        <span className="text-muted-foreground">Loading...</span>
+                        <span className="text-muted-foreground">
+                          Loading...
+                        </span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   )}

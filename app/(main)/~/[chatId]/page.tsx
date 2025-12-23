@@ -102,22 +102,6 @@ export default function ChatPage() {
     setIsLoadingHistory(true);
   }, [chatId]);
 
-  // Update chat title if found in messages
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.role === "assistant" && lastMessage.parts) {
-      const textPart = (lastMessage.parts as any[]).find(
-        (p) => p.type === "text"
-      );
-      if (textPart && typeof textPart.text === "string") {
-        const titleMatch = textPart.text.match(/<title>(.*?)<\/title>/);
-        if (titleMatch && chatId) {
-          setChatTitle(chatId as string, titleMatch[1].trim());
-        }
-      }
-    }
-  }, [messages, chatId, setChatTitle]);
-
   // Scroll to bottom when messages change
   useEffect(() => {
     if (!isLoadingHistory && listEndRef.current) {

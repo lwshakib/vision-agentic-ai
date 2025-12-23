@@ -133,3 +133,30 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { chatId } = await params;
+
+  const chat = await prisma.chat.findFirst({
+    where: {
+      id: chatId,
+      userId: user.id,
+    },
+    select: { id: true },
+  });
+
+  if (!chat) {
+    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+  }
+
+  await prisma.chat.delete({
+    where: { id: chatId },
+  });
+
+  return NextResponse.json({ success: true });
+}

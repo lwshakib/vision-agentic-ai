@@ -14,12 +14,11 @@ export const getSingleAPIKey = () => {
 export const getModelName = () => {
   const availableModels = [
     // "gemini-2.5-flash",
-    "gemini-2.5-flash-lite"
+    "gemini-2.5-flash-lite",
   ];
-  
-  const randomModel = availableModels[
-    Math.floor(Math.random() * availableModels.length)
-  ];
+
+  const randomModel =
+    availableModels[Math.floor(Math.random() * availableModels.length)];
   return randomModel;
 };
 
