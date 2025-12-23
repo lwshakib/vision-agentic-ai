@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DEEPGRAM_API_KEY } from "@/env";
+import { DEEPGRAM_API_KEY } from "@/lib/env";
 
 export async function POST(req: NextRequest) {
   if (!DEEPGRAM_API_KEY) {
