@@ -1,7 +1,7 @@
-import { NextResponse, NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
-import { MessageRole } from "@/generated/prisma/client";
-import { getUser } from "@/actions/user";
+import { NextResponse, NextRequest } from 'next/server';
+import prisma from '@/lib/prisma';
+import { MessageRole } from '@/generated/prisma/client';
+import { getUser } from '@/actions/user';
 
 type Params = {
   params: Promise<{ chatId: string }>;
@@ -10,7 +10,7 @@ type Params = {
 export async function GET(_req: NextRequest, { params }: Params) {
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { chatId } = await params;
 
@@ -21,13 +21,13 @@ export async function GET(_req: NextRequest, { params }: Params) {
     },
     include: {
       messages: {
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: 'asc' },
       },
     },
   });
 
   if (!chat) {
-    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
   }
 
   return NextResponse.json(chat);
@@ -36,7 +36,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 export async function POST(req: NextRequest, { params }: Params) {
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { chatId } = await params;
   const existingChat = await prisma.chat.findFirst({
@@ -47,30 +47,30 @@ export async function POST(req: NextRequest, { params }: Params) {
   });
 
   if (!existingChat) {
-    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
   }
 
   const body = await req.json();
-  const role: "user" | "assistant" =
-    body?.role === "assistant" ? "assistant" : "user";
+  const role: 'user' | 'assistant' =
+    body?.role === 'assistant' ? 'assistant' : 'user';
   const messageText =
-    typeof body?.message === "string" ? body.message.trim() : "";
+    typeof body?.message === 'string' ? body.message.trim() : '';
   const parts = Array.isArray(body?.parts) ? body.parts : undefined;
 
   if (!parts && !messageText) {
     return NextResponse.json(
-      { error: "Message text or parts are required" },
-      { status: 400 }
+      { error: 'Message text or parts are required' },
+      { status: 400 },
     );
   }
 
   const persistedParts =
-    parts && parts.length > 0 ? parts : [{ type: "text", text: messageText }];
+    parts && parts.length > 0 ? parts : [{ type: 'text', text: messageText }];
 
   const created = await prisma.message.create({
     data: {
       chatId: existingChat.id,
-      role: role === "assistant" ? MessageRole.assistant : MessageRole.user,
+      role: role === 'assistant' ? MessageRole.assistant : MessageRole.user,
       parts: persistedParts,
     },
   });
@@ -81,13 +81,13 @@ export async function POST(req: NextRequest, { params }: Params) {
 export async function PATCH(req: NextRequest, { params }: Params) {
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { chatId } = await params;
   const body = await req.json();
   const projectId =
-    typeof body?.projectId === "string" && body.projectId.length > 0
+    typeof body?.projectId === 'string' && body.projectId.length > 0
       ? body.projectId
       : null;
 
@@ -100,7 +100,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   });
 
   if (!chat) {
-    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
   }
 
   if (projectId) {
@@ -113,7 +113,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
 
     if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
   }
 
@@ -137,7 +137,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { chatId } = await params;
@@ -151,7 +151,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   });
 
   if (!chat) {
-    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
   }
 
   await prisma.chat.delete({

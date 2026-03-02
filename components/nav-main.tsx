@@ -1,13 +1,13 @@
-import * as React from "react";
-import Link from "next/link";
-import { MessageCircle, SquarePen, type LucideIcon } from "lucide-react";
+import * as React from 'react';
+import Link from 'next/link';
+import { MessageCircle, SquarePen, type LucideIcon } from 'lucide-react';
 
 import {
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 import {
   CommandDialog,
   CommandEmpty,
@@ -16,8 +16,8 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '@/components/ui/command';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function NavMain({
   items,
@@ -29,7 +29,7 @@ export function NavMain({
   }[];
 }) {
   const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState("");
+  const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<
     { id: string; title: string; url: string }[]
   >([]);
@@ -39,13 +39,13 @@ export function NavMain({
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen((open) => !open);
       }
     };
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
   }, []);
 
   React.useEffect(() => {
@@ -70,7 +70,7 @@ export function NavMain({
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
           signal: controller.signal,
         });
-        if (!res.ok) throw new Error("Search failed");
+        if (!res.ok) throw new Error('Search failed');
         const json = await res.json();
         if (Array.isArray(json)) {
           setResults(json);
@@ -78,7 +78,7 @@ export function NavMain({
           setResults([]);
         }
       } catch (err) {
-        if ((err as any)?.name === "AbortError") return;
+        if ((err as any)?.name === 'AbortError') return;
         setResults([]);
       } finally {
         setIsLoading(false);
@@ -105,7 +105,7 @@ export function NavMain({
                 <Link
                   href={item.url}
                   onClick={(e) => {
-                    if (item.title === "Search Chats") {
+                    if (item.title === 'Search Chats') {
                       e.preventDefault();
                       setOpen(true);
                     }
@@ -130,7 +130,7 @@ export function NavMain({
         <CommandList className="overflow-y-hidden">
           <ScrollArea className="h-[300px]">
             <CommandEmpty>
-              {query ? "No results found." : "Start typing to search chats."}
+              {query ? 'No results found.' : 'Start typing to search chats.'}
             </CommandEmpty>
             <CommandGroup heading="Chats">
               {isLoading && (

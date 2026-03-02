@@ -1,6 +1,6 @@
-import prisma from "@/lib/prisma";
-import { MessageRole } from "@/generated/prisma/client";
-import { getUser } from "./user";
+import prisma from '@/lib/prisma';
+import { MessageRole } from '@/generated/prisma/client';
+import { getUser } from './user';
 
 export async function saveMessage({
   chatId,
@@ -8,12 +8,12 @@ export async function saveMessage({
   parts,
 }: {
   chatId: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   parts: any;
 }) {
   const user = await getUser();
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error('Unauthorized');
   }
 
   // Verify chat belongs to user
@@ -25,13 +25,13 @@ export async function saveMessage({
   });
 
   if (!chat) {
-    throw new Error("Chat not found");
+    throw new Error('Chat not found');
   }
 
   const message = await prisma.message.create({
     data: {
       chatId,
-      role: role === "user" ? MessageRole.user : MessageRole.assistant,
+      role: role === 'user' ? MessageRole.user : MessageRole.assistant,
       parts,
     },
   });
@@ -48,7 +48,7 @@ export async function saveUserMessage({
 }) {
   return saveMessage({
     chatId,
-    role: "user",
+    role: 'user',
     parts,
   });
 }
@@ -62,7 +62,7 @@ export async function saveAssistantMessage({
 }) {
   return saveMessage({
     chatId,
-    role: "assistant",
+    role: 'assistant',
     parts,
   });
 }

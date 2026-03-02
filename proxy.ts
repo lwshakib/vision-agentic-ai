@@ -1,34 +1,34 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 /**
  * An array of routes that are accessible to the public
  * These routes do not require authentication
  * @type {string[]}
  */
-export const publicRoutes = [""];
+export const publicRoutes = [''];
 
 /**
  * An array of routes that are used for authentication
  * These routes will redirect logged in users to /
  * @type {string[]}
  */
-export const authRoutes = ["/sign-in", "/sign-up"];
+export const authRoutes = ['/sign-in', '/sign-up'];
 
 /**
  * The prefix for API authentication routes
  * Routes that start with this prefix are used for API authentication purposes
  * @type {string}
  */
-export const apiAuthPrefix = "/api/auth";
+export const apiAuthPrefix = '/api/auth';
 
 /**
  * The default redirect path after logging in
  * @type {string}
  */
-export const DEFAULT_LOGIN_REDIRECT = "/";
+export const DEFAULT_LOGIN_REDIRECT = '/';
 
 /**
  * Proxy function that acts as middleware to handle route protection and session handling.
@@ -64,13 +64,13 @@ export default async function proxy(request: NextRequest) {
   // 3. Handle Private Routes
   if (!isLoggedIn && !isPublicRoute) {
     // Redirect unauthenticated users to sign-in
-    return NextResponse.redirect(new URL("/sign-in", nextUrl));
+    return NextResponse.redirect(new URL('/sign-in', nextUrl));
   }
 
   // 4. Pass session user info if authenticated
   if (isLoggedIn && session.user) {
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-user", JSON.stringify(session.user));
+    requestHeaders.set('x-user', JSON.stringify(session.user));
 
     return NextResponse.next({
       request: {
@@ -85,8 +85,8 @@ export default async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     // Always run for API routes
-    "/(api|trpc)(.*)",
+    '/(api|trpc)(.*)',
   ],
 };

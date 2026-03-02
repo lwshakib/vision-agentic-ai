@@ -1,5 +1,5 @@
-import type { SVGProps, ComponentProps } from "react";
-import { cn } from "@/lib/utils";
+import type { SVGProps, ComponentProps } from 'react';
+import { cn } from '@/lib/utils';
 
 export function Logo({ className, ...props }: SVGProps<SVGSVGElement>) {
   return (
@@ -10,7 +10,7 @@ export function Logo({ className, ...props }: SVGProps<SVGSVGElement>) {
       xmlnsXlink="http://www.w3.org/1999/xlink"
       viewBox="0 0 2000 2000"
       xmlSpace="preserve"
-      className={cn("size-12 text-primary", className)}
+      className={cn('size-12 text-primary', className)}
       {...props}
     >
       <g id="XMLID_233_">
@@ -28,4 +28,3 @@ export function Logo({ className, ...props }: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-

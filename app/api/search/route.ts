@@ -1,17 +1,17 @@
-import { NextResponse } from "next/server";
-import { getUser } from "@/actions/user";
-import prisma from "@/lib/prisma";
+import { NextResponse } from 'next/server';
+import { getUser } from '@/actions/user';
+import prisma from '@/lib/prisma';
 
 const MAX_RESULTS = 20;
 
 export async function GET(req: Request) {
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
-  const query = (searchParams.get("q") || "").trim();
+  const query = (searchParams.get('q') || '').trim();
 
   if (!query) {
     return NextResponse.json([]);
@@ -43,8 +43,8 @@ export async function GET(req: Request) {
   return NextResponse.json(
     results.map((r) => ({
       id: r.id,
-      title: r.title || "Untitled chat",
+      title: r.title || 'Untitled chat',
       url: `/~/${r.id}`,
-    }))
+    })),
   );
 }

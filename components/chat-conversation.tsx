@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 import {
   Conversation,
   ConversationContent,
   ConversationEmptyState,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
+} from '@/components/ai-elements/conversation';
 import {
   Message,
   MessageAttachment,
@@ -15,20 +15,20 @@ import {
   MessageResponse,
   MessageAction,
   MessageActions,
-} from "@/components/ai-elements/message";
+} from '@/components/ai-elements/message';
 import {
   Reasoning,
   ReasoningContent,
   ReasoningTrigger,
-} from "@/components/ai-elements/reasoning";
+} from '@/components/ai-elements/reasoning';
 import {
   Source,
   SourceContent,
   SourceTrigger,
-} from "@/components/prompt-kit/source";
-import { ImageIcon, LoaderIcon, MessageSquare, CopyIcon } from "lucide-react";
-import ChatInput from "@/components/chat-input";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/prompt-kit/source';
+import { ImageIcon, LoaderIcon, MessageSquare, CopyIcon } from 'lucide-react';
+import ChatInput from '@/components/chat-input';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Loose message type so this component can work with messages from `useChat`
 export type ChatMessage = any;
@@ -39,7 +39,12 @@ type ChatConversationViewProps = {
   isLoadingHistory: boolean;
   onSend: (
     text: string,
-    files?: Array<{ url: string; name: string; type: string; publicId: string }>
+    files?: Array<{
+      url: string;
+      name: string;
+      type: string;
+      publicId: string;
+    }>,
   ) => void | Promise<void>;
   onCopy: (text: string) => void | Promise<void>;
 };
@@ -86,7 +91,7 @@ export function ChatConversationView({
 
   useEffect(() => {
     if (!isLoadingHistory && listEndRef.current) {
-      listEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      listEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [isLoadingHistory, messages.length]);
 
@@ -111,7 +116,7 @@ export function ChatConversationView({
                     : [];
                   const isLastAssistant = (() => {
                     for (let i = messages.length - 1; i >= 0; i--) {
-                      if (messages[i].role === "assistant") {
+                      if (messages[i].role === 'assistant') {
                         return messageIndex === i;
                       }
                     }
@@ -121,7 +126,7 @@ export function ChatConversationView({
                   const fileParts =
                     parts.filter(
                       (part: any) =>
-                        part.type === "file" || part.type === "attachment"
+                        part.type === 'file' || part.type === 'attachment',
                     ) || [];
 
                   const allFiles = [
@@ -142,12 +147,12 @@ export function ChatConversationView({
                             <MessageAttachment
                               key={file.id || file.url}
                               data={{
-                                type: "file",
+                                type: 'file',
                                 url: file.url,
                                 mediaType:
                                   file.mediaType ||
                                   file.type ||
-                                  "application/octet-stream",
+                                  'application/octet-stream',
                                 filename: file.name || file.filename,
                               }}
                             />
@@ -158,13 +163,14 @@ export function ChatConversationView({
                         {parts
                           .filter(
                             (part: any) =>
-                              part.type !== "file" && part.type !== "attachment"
+                              part.type !== 'file' &&
+                              part.type !== 'attachment',
                           )
                           .map((part: any, i: number) => {
                             const key = `${message.id}-${i}`;
 
-                            if (part.type === "text") {
-                              const text = part.text ?? "";
+                            if (part.type === 'text') {
+                              const text = part.text ?? '';
                               if (!text) return null;
 
                               return (
@@ -181,13 +187,13 @@ export function ChatConversationView({
                               );
                             }
 
-                            if (part.type === "reasoning") {
+                            if (part.type === 'reasoning') {
                               const reasoningText =
                                 (part as any).reasoning ??
                                 (part as any).text ??
-                                "";
+                                '';
                               const isStreaming = Boolean(
-                                (part as any).isStreaming
+                                (part as any).isStreaming,
                               );
 
                               if (!reasoningText) return null;
@@ -206,7 +212,7 @@ export function ChatConversationView({
                               );
                             }
 
-                            if (part.type === "sources") {
+                            if (part.type === 'sources') {
                               const sources = (part as any).sources ?? [];
                               if (!sources.length) return null;
 
@@ -240,12 +246,12 @@ export function ChatConversationView({
                             }
 
                             if (
-                              typeof (part as any).type === "string" &&
-                              (part as any).type.startsWith("tool-")
+                              typeof (part as any).type === 'string' &&
+                              (part as any).type.startsWith('tool-')
                             ) {
                               const toolCall = part as any;
 
-                              if (toolCall.type === "tool-webSearch") {
+                              if (toolCall.type === 'tool-webSearch') {
                                 const input = toolCall.input as
                                   | { query?: string }
                                   | undefined;
@@ -262,11 +268,11 @@ export function ChatConversationView({
                                   | undefined;
 
                                 const isLoading =
-                                  toolCall.state === "input-streaming" ||
-                                  toolCall.state === "input-available";
+                                  toolCall.state === 'input-streaming' ||
+                                  toolCall.state === 'input-available';
 
                                 const hasOutput =
-                                  toolCall.state === "output-available" &&
+                                  toolCall.state === 'output-available' &&
                                   output;
                                 const results = output?.results ?? [];
 
@@ -275,7 +281,7 @@ export function ChatConversationView({
                                     input?.query &&
                                     input.query.trim().length > 0
                                       ? `Searching web for "${input.query}"..`
-                                      : "Searching web..";
+                                      : 'Searching web..';
 
                                   return (
                                     <div key={key} className="my-2">
@@ -313,7 +319,7 @@ export function ChatConversationView({
                                 return null;
                               }
 
-                              if (toolCall.type === "tool-extractWebUrl") {
+                              if (toolCall.type === 'tool-extractWebUrl') {
                                 const input = toolCall.input as
                                   | { urls?: string[] }
                                   | undefined;
@@ -333,11 +339,11 @@ export function ChatConversationView({
                                   | undefined;
 
                                 const isLoading =
-                                  toolCall.state === "input-streaming" ||
-                                  toolCall.state === "input-available";
+                                  toolCall.state === 'input-streaming' ||
+                                  toolCall.state === 'input-available';
 
                                 const hasOutput =
-                                  toolCall.state === "output-available" &&
+                                  toolCall.state === 'output-available' &&
                                   output;
                                 const results = output?.results ?? [];
                                 const urls = input?.urls ?? output?.urls ?? [];
@@ -347,8 +353,8 @@ export function ChatConversationView({
                                     urls.length > 0
                                       ? `Extracting content from ${
                                           urls.length
-                                        } URL${urls.length > 1 ? "s" : ""}..`
-                                      : "Extracting content..";
+                                        } URL${urls.length > 1 ? 's' : ''}..`
+                                      : 'Extracting content..';
 
                                   return (
                                     <div key={key} className="my-2">
@@ -386,7 +392,7 @@ export function ChatConversationView({
                                 return null;
                               }
 
-                              if (toolCall.type === "tool-imageToImage") {
+                              if (toolCall.type === 'tool-imageToImage') {
                                 const input = toolCall.input as
                                   | {
                                       imageUrl?: string;
@@ -405,11 +411,11 @@ export function ChatConversationView({
                                   | undefined;
 
                                 const isLoading =
-                                  toolCall.state === "input-streaming" ||
-                                  toolCall.state === "input-available";
+                                  toolCall.state === 'input-streaming' ||
+                                  toolCall.state === 'input-available';
 
                                 const hasOutput =
-                                  toolCall.state === "output-available" &&
+                                  toolCall.state === 'output-available' &&
                                   output;
 
                                 if (isLoading) {
@@ -449,12 +455,12 @@ export function ChatConversationView({
                                         <img
                                           src={imageSrc}
                                           alt={
-                                            input?.prompt || "Generated image"
+                                            input?.prompt || 'Generated image'
                                           }
                                           className="max-w-full h-auto rounded-md shadow-sm"
                                           style={{
-                                            maxWidth: "100%",
-                                            height: "auto",
+                                            maxWidth: '100%',
+                                            height: 'auto',
                                           }}
                                         />
                                       </div>
@@ -473,7 +479,7 @@ export function ChatConversationView({
                                       </p>
                                       <p className="text-xs mt-1">
                                         {output.error ||
-                                          "Unknown error occurred"}
+                                          'Unknown error occurred'}
                                       </p>
                                     </div>
                                   );
@@ -482,7 +488,7 @@ export function ChatConversationView({
                                 return null;
                               }
 
-                              if (toolCall.type === "tool-generateImage") {
+                              if (toolCall.type === 'tool-generateImage') {
                                 const input = toolCall.input as
                                   | {
                                       prompt?: string;
@@ -503,11 +509,11 @@ export function ChatConversationView({
                                   | undefined;
 
                                 const isLoading =
-                                  toolCall.state === "input-streaming" ||
-                                  toolCall.state === "input-available";
+                                  toolCall.state === 'input-streaming' ||
+                                  toolCall.state === 'input-available';
 
                                 const hasOutput =
-                                  toolCall.state === "output-available" &&
+                                  toolCall.state === 'output-available' &&
                                   output;
 
                                 if (isLoading) {
@@ -547,12 +553,12 @@ export function ChatConversationView({
                                         <img
                                           src={imageSrc}
                                           alt={
-                                            input?.prompt || "Generated image"
+                                            input?.prompt || 'Generated image'
                                           }
                                           className="max-w-full h-auto rounded-md shadow-sm"
                                           style={{
-                                            maxWidth: "100%",
-                                            height: "auto",
+                                            maxWidth: '100%',
+                                            height: 'auto',
                                           }}
                                         />
                                       </div>
@@ -571,7 +577,7 @@ export function ChatConversationView({
                                       </p>
                                       <p className="text-xs mt-1">
                                         {output.error ||
-                                          "Unknown error occurred"}
+                                          'Unknown error occurred'}
                                       </p>
                                     </div>
                                   );
@@ -580,7 +586,7 @@ export function ChatConversationView({
                                 return null;
                               }
 
-                              if (toolCall.type === "tool-textToSpeech") {
+                              if (toolCall.type === 'tool-textToSpeech') {
                                 const input = toolCall.input as
                                   | {
                                       text?: string;
@@ -597,11 +603,11 @@ export function ChatConversationView({
                                   | undefined;
 
                                 const isLoading =
-                                  toolCall.state === "input-streaming" ||
-                                  toolCall.state === "input-available";
+                                  toolCall.state === 'input-streaming' ||
+                                  toolCall.state === 'input-available';
 
                                 const hasOutput =
-                                  toolCall.state === "output-available" &&
+                                  toolCall.state === 'output-available' &&
                                   output;
 
                                 if (isLoading) {
@@ -656,7 +662,7 @@ export function ChatConversationView({
                                       </p>
                                       <p className="text-xs mt-1">
                                         {output.error ||
-                                          "Unknown error occurred"}
+                                          'Unknown error occurred'}
                                       </p>
                                     </div>
                                   );
@@ -671,14 +677,14 @@ export function ChatConversationView({
                             return null;
                           })}
                       </MessageContent>
-                      {message.role === "assistant" && isLastAssistant && (
+                      {message.role === 'assistant' && isLastAssistant && (
                         <>
-                          {status !== "streaming" && (
+                          {status !== 'streaming' && (
                             <MessageActions className="mt-1">
                               {(() => {
                                 const textPart = Array.isArray(message.parts)
                                   ? (message.parts as any[]).find(
-                                      (p) => p.type === "text" && p.text
+                                      (p) => p.type === 'text' && p.text,
                                     )
                                   : null;
                                 if (!textPart?.text) return null;
@@ -700,7 +706,7 @@ export function ChatConversationView({
                   );
                 })}
 
-                {status === "streaming" && null}
+                {status === 'streaming' && null}
               </>
             )}
             <div ref={listEndRef} />
@@ -730,7 +736,7 @@ export function ChatSkeleton() {
         return (
           <div
             key={index}
-            className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+            className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
           >
             <div className="flex items-start gap-3 max-w-[85%]">
               {!isUser && <Skeleton className="h-9 w-9 rounded-full" />}

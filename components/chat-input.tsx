@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   Plus,
   Mic,
@@ -11,11 +11,11 @@ import {
   ImageIcon,
   VideoIcon,
   FileIcon,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   uploadToCloudinary,
   type UploadProgress,
-} from "@/lib/cloudinary-upload";
+} from '@/lib/cloudinary-upload';
 
 /* ------------------ LIVE RAIL WAVEFORM ------------------ */
 
@@ -69,7 +69,7 @@ function LiveWaveform({
     const analyser = analyserRef.current;
     if (!canvas || !analyser) return;
 
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext('2d')!;
     const buffer = new Uint8Array(analyser.fftSize);
 
     const barWidth = 3;
@@ -112,7 +112,7 @@ function LiveWaveform({
         const h = v * canvas.height;
 
         ctx.globalAlpha = 0.35 + v * 0.65;
-        ctx.fillStyle = "#e5e7eb";
+        ctx.fillStyle = '#e5e7eb';
 
         ctx.fillRect(i * step, centerY - h / 2, barWidth, h);
       }
@@ -144,12 +144,12 @@ function LiveWaveform({
       canvas.width = canvas.offsetWidth * dpr;
       canvas.height = height * dpr;
       canvas.style.height = `${height}px`;
-      canvas.getContext("2d")?.scale(dpr, dpr);
+      canvas.getContext('2d')?.scale(dpr, dpr);
     };
 
     resize();
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
   }, [height]);
 
   return (
@@ -224,8 +224,8 @@ function FilePreviewItem({
   preview: FilePreview;
   onRemove: () => void;
 }) {
-  const isImage = preview.file.type.startsWith("image/");
-  const isVideo = preview.file.type.startsWith("video/");
+  const isImage = preview.file.type.startsWith('image/');
+  const isVideo = preview.file.type.startsWith('video/');
 
   return (
     <div className="relative group">
@@ -293,7 +293,7 @@ type ChatInputProps = {
 
 export default function ChatInput({
   onSend,
-  placeholder = "Ask anything",
+  placeholder = 'Ask anything',
   className,
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -301,7 +301,7 @@ export default function ChatInput({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
   const [isMultiline, setIsMultiline] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -330,7 +330,7 @@ export default function ChatInput({
     setIsSubmitting(true);
     try {
       await onSend?.(text, fileInfos.length > 0 ? fileInfos : undefined);
-      setValue("");
+      setValue('');
       // Clean up file previews
       filePreviews.forEach((preview) => {
         URL.revokeObjectURL(preview.previewUrl);
@@ -368,10 +368,10 @@ export default function ChatInput({
               prev.map((p) =>
                 p.id === preview.id
                   ? { ...p, uploadProgress: progress.percentage }
-                  : p
-              )
+                  : p,
+              ),
             );
-          }
+          },
         );
 
         setFilePreviews((prev) =>
@@ -384,8 +384,8 @@ export default function ChatInput({
                   isUploading: false,
                   uploadProgress: 100,
                 }
-              : p
-          )
+              : p,
+          ),
         );
       } catch (error) {
         setFilePreviews((prev) =>
@@ -395,17 +395,17 @@ export default function ChatInput({
                   ...p,
                   isUploading: false,
                   error:
-                    error instanceof Error ? error.message : "Upload failed",
+                    error instanceof Error ? error.message : 'Upload failed',
                 }
-              : p
-          )
+              : p,
+          ),
         );
       }
     }
 
     // Reset file input
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
@@ -425,11 +425,11 @@ export default function ChatInput({
     const el = textareaRef.current;
     if (!el) return;
 
-    el.style.height = "auto";
+    el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
 
     const computed = window.getComputedStyle(el);
-    const lineHeight = parseFloat(computed.lineHeight || "0");
+    const lineHeight = parseFloat(computed.lineHeight || '0');
     if (lineHeight > 0) {
       const lines = el.scrollHeight / lineHeight;
       setIsMultiline(lines > 1.2);
@@ -457,15 +457,15 @@ export default function ChatInput({
         // Do not clear audioChunksRef here; stopRecording() / sendForTranscription()
         // will decide whether to keep or discard the chunks.
         console.log(
-          "MediaRecorder stopped, chunks length:",
-          audioChunksRef.current.length
+          'MediaRecorder stopped, chunks length:',
+          audioChunksRef.current.length,
         );
       };
 
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error("Error starting recording:", error);
+      console.error('Error starting recording:', error);
       setIsRecording(false);
     }
   };
@@ -473,53 +473,53 @@ export default function ChatInput({
   const sendForTranscription = async () => {
     const chunks = audioChunksRef.current;
     audioChunksRef.current = [];
-    console.log("Sending chunks for transcription, count:", chunks.length);
+    console.log('Sending chunks for transcription, count:', chunks.length);
     if (!chunks.length) {
-      console.warn("No audio chunks to transcribe");
+      console.warn('No audio chunks to transcribe');
       return;
     }
 
     try {
       setIsTranscribing(true);
-      const audioBlob = new Blob(chunks, { type: "audio/webm" });
+      const audioBlob = new Blob(chunks, { type: 'audio/webm' });
       const reader = new FileReader();
 
       const base64Audio: string = await new Promise((resolve, reject) => {
         reader.onerror = () => reject(reader.error);
         reader.onloadend = () => {
           const result = reader.result;
-          if (typeof result === "string") {
-            const base64 = result.split(",")[1];
+          if (typeof result === 'string') {
+            const base64 = result.split(',')[1];
             resolve(base64);
           } else {
-            reject(new Error("Failed to read audio blob"));
+            reject(new Error('Failed to read audio blob'));
           }
         };
         reader.readAsDataURL(audioBlob);
       });
 
-      const res = await fetch("/api/transcribe", {
-        method: "POST",
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ audioData: base64Audio }),
       });
 
       if (!res.ok) {
-        console.error("Transcription request failed");
+        console.error('Transcription request failed');
         return;
       }
 
       const data: { transcript?: string } = await res.json();
       const transcript = data.transcript?.trim();
-      console.log("Transcribed text from Deepgram:", transcript);
+      console.log('Transcribed text from Deepgram:', transcript);
       if (transcript) {
         // Place the transcript into the input; let the user send manually
         setValue((v) => (v ? `${v} ${transcript}` : transcript));
       }
     } catch (err) {
-      console.error("Error sending audio for transcription:", err);
+      console.error('Error sending audio for transcription:', err);
     } finally {
       setIsTranscribing(false);
     }
@@ -529,13 +529,13 @@ export default function ChatInput({
     try {
       if (
         mediaRecorderRef.current &&
-        mediaRecorderRef.current.state !== "inactive"
+        mediaRecorderRef.current.state !== 'inactive'
       ) {
         const recorder = mediaRecorderRef.current;
         mediaRecorderRef.current = null;
 
         const handleStop = () => {
-          recorder.removeEventListener("stop", handleStop);
+          recorder.removeEventListener('stop', handleStop);
           setIsRecording(false);
           if (commit) {
             void sendForTranscription();
@@ -545,13 +545,13 @@ export default function ChatInput({
           }
         };
 
-        recorder.addEventListener("stop", handleStop);
+        recorder.addEventListener('stop', handleStop);
         recorder.stop();
       } else {
         setIsRecording(false);
       }
     } catch (error) {
-      console.error("Error stopping recording:", error);
+      console.error('Error stopping recording:', error);
       setIsRecording(false);
     }
   };
@@ -593,7 +593,7 @@ export default function ChatInput({
 
       <div
         className={`w-full rounded-2xl bg-neutral-800 text-white px-4 py-3 transition-all duration-200 ease-out ${
-          className ?? ""
+          className ?? ''
         }`}
       >
         {isRecording ? (
@@ -634,7 +634,7 @@ export default function ChatInput({
           // Normal state: show input UI
           <div
             className={
-              isMultiline ? "flex flex-col gap-3" : "flex items-center gap-3"
+              isMultiline ? 'flex flex-col gap-3' : 'flex items-center gap-3'
             }
           >
             {isMultiline ? (
@@ -644,7 +644,7 @@ export default function ChatInput({
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       handleSend();
                     }
@@ -700,7 +700,7 @@ export default function ChatInput({
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       handleSend();
                     }

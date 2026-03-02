@@ -1,6 +1,6 @@
-import { NextResponse, NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
-import { getUser } from "@/actions/user";
+import { NextResponse, NextRequest } from 'next/server';
+import prisma from '@/lib/prisma';
+import { getUser } from '@/actions/user';
 
 type Params = {
   params: Promise<{ projectId: string }>;
@@ -9,7 +9,7 @@ type Params = {
 export async function GET(_req: NextRequest, { params }: Params) {
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { projectId } = await params;
@@ -23,7 +23,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   });
 
   if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
 
   const chats = await prisma.chat.findMany({
@@ -31,7 +31,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       projectId,
       userId: user.id,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
     select: {
       id: true,
       title: true,

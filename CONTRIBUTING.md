@@ -60,7 +60,6 @@ This project and everyone participating in it is governed by our [Code of Conduc
    ```
 
 3. **Make your changes**
-
    - Follow the project's coding standards
    - Update documentation as needed
 

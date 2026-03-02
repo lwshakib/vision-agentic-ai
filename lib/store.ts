@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface Chat {
   id: string;
@@ -33,7 +33,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     set((state) => ({
       chats: state.chats.filter((c) => c.id !== chatId),
       chatTitles: Object.fromEntries(
-        Object.entries(state.chatTitles).filter(([key]) => key !== chatId)
+        Object.entries(state.chatTitles).filter(([key]) => key !== chatId),
       ),
     })),
 }));

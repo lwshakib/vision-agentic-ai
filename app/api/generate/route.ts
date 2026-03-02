@@ -1,6 +1,6 @@
-import { streamText } from "@/llm/streamText";
-import { NextResponse } from "next/server";
-import { getUser } from "@/actions/user";
+import { streamText } from '@/llm/streamText';
+import { NextResponse } from 'next/server';
+import { getUser } from '@/actions/user';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     const user = await getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();
@@ -25,11 +25,11 @@ export async function POST(req: Request) {
 
     return response;
   } catch (error: any) {
-    console.error("Error in chat API:", error);
+    console.error('Error in chat API:', error);
 
     return NextResponse.json(
-      { error: "Failed to process chat request" },
-      { status: 500 }
+      { error: 'Failed to process chat request' },
+      { status: 500 },
     );
   }
 }

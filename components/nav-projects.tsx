@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 import {
   ChevronRight,
   FolderKanban,
@@ -11,12 +11,12 @@ import {
   MoreHorizontal,
   Trash2,
   FolderMinus,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from '@/components/ui/collapsible';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +26,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -37,7 +37,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 
 export function NavProjects({
   projects,
@@ -59,7 +59,7 @@ export function NavProjects({
   onMoveChat?: (
     chatId: string,
     targetProjectId: string,
-    fromProjectId: string
+    fromProjectId: string,
   ) => void | Promise<void>;
   onRemoveFromProject?: (chatId: string, fromProjectId: string) => void;
   onDeleteChat?: (chatId: string) => void;
@@ -120,8 +120,8 @@ export function NavProjects({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                           className="w-48 rounded-lg"
-                          side={isMobile ? "bottom" : "right"}
-                          align={isMobile ? "end" : "start"}
+                          side={isMobile ? 'bottom' : 'right'}
+                          align={isMobile ? 'end' : 'start'}
                         >
                           <DropdownMenuItem>
                             <MessageSquare className="text-muted-foreground" />

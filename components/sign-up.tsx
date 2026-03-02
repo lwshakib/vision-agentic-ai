@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import { Logo as LogoIcon } from "@/components/logo";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
-import { Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Logo as LogoIcon } from '@/components/logo';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/auth-client';
+import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function SignUp() {
   const router = useRouter();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -32,15 +32,15 @@ export default function SignUp() {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to create account");
+        toast.error(error.message || 'Failed to create account');
         return;
       }
 
-      toast.success("Account created successfully!");
-      router.push("/");
+      toast.success('Account created successfully!');
+      router.push('/');
       router.refresh();
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -50,11 +50,11 @@ export default function SignUp() {
     setIsGoogleLoading(true);
     try {
       await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/",
+        provider: 'google',
+        callbackURL: '/',
       });
     } catch (error) {
-      toast.error("Failed to sign up with Google");
+      toast.error('Failed to sign up with Google');
       setIsGoogleLoading(false);
     }
   };
@@ -209,7 +209,7 @@ export default function SignUp() {
                   Creating account...
                 </>
               ) : (
-                "Continue"
+                'Continue'
               )}
             </Button>
           </div>

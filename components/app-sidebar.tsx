@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 import {
   BookOpen,
   Bot,
@@ -9,15 +9,15 @@ import {
   Search,
   Settings2,
   SquareTerminal,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
-import { NavChats } from "@/components/nav-chats";
-import { NavUser } from "@/components/nav-user";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { NavMain } from '@/components/nav-main';
+import { NavProjects } from '@/components/nav-projects';
+import { NavChats } from '@/components/nav-chats';
+import { NavUser } from '@/components/nav-user';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 import {
   Sidebar,
@@ -37,126 +37,126 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Logo } from "./logo";
-import { useChatStore } from "@/lib/store";
+} from '@/components/ui/sidebar';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Logo } from './logo';
+import { useChatStore } from '@/lib/store';
 
 // This is sample data.
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: 'shadcn',
+    email: 'm@example.com',
+    avatar: '/avatars/shadcn.jpg',
   },
   navMain: [
     {
-      title: "New Chat",
-      url: "/",
+      title: 'New Chat',
+      url: '/',
       icon: MessageSquarePlus,
     },
     {
-      title: "Turn on Temporary Chat",
-      url: "/?temporary-chat=true",
+      title: 'Turn on Temporary Chat',
+      url: '/?temporary-chat=true',
       icon: Clock,
     },
     {
-      title: "Search Chats",
-      url: "#",
+      title: 'Search Chats',
+      url: '#',
       icon: Search,
     },
     {
-      title: "Library",
-      url: "/library",
+      title: 'Library',
+      url: '/library',
       icon: BookOpen,
     },
   ],
   projects: [
     {
-      title: "Playground",
-      url: "#",
+      title: 'Playground',
+      url: '#',
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: 'History',
+          url: '#',
         },
         {
-          title: "Starred",
-          url: "#",
+          title: 'Starred',
+          url: '#',
         },
         {
-          title: "Settings",
-          url: "#",
+          title: 'Settings',
+          url: '#',
         },
       ],
     },
     {
-      title: "Models",
-      url: "#",
+      title: 'Models',
+      url: '#',
       icon: Bot,
       items: [
         {
-          title: "Genesis",
-          url: "#",
+          title: 'Genesis',
+          url: '#',
         },
         {
-          title: "Explorer",
-          url: "#",
+          title: 'Explorer',
+          url: '#',
         },
         {
-          title: "Quantum",
-          url: "#",
+          title: 'Quantum',
+          url: '#',
         },
       ],
     },
     {
-      title: "Documentation",
-      url: "#",
+      title: 'Documentation',
+      url: '#',
       icon: BookOpen,
       items: [
         {
-          title: "Introduction",
-          url: "#",
+          title: 'Introduction',
+          url: '#',
         },
         {
-          title: "Get Started",
-          url: "#",
+          title: 'Get Started',
+          url: '#',
         },
         {
-          title: "Tutorials",
-          url: "#",
+          title: 'Tutorials',
+          url: '#',
         },
         {
-          title: "Changelog",
-          url: "#",
+          title: 'Changelog',
+          url: '#',
         },
       ],
     },
     {
-      title: "Settings",
-      url: "#",
+      title: 'Settings',
+      url: '#',
       icon: Settings2,
       items: [
         {
-          title: "General",
-          url: "#",
+          title: 'General',
+          url: '#',
         },
         {
-          title: "Team",
-          url: "#",
+          title: 'Team',
+          url: '#',
         },
         {
-          title: "Billing",
-          url: "#",
+          title: 'Billing',
+          url: '#',
         },
         {
-          title: "Limits",
-          url: "#",
+          title: 'Limits',
+          url: '#',
         },
       ],
     },
@@ -175,10 +175,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }[]
   >([]);
   const [assigningChatId, setAssigningChatId] = React.useState<string | null>(
-    null
+    null,
   );
   const [createProjectOpen, setCreateProjectOpen] = React.useState(false);
-  const [newProjectTitle, setNewProjectTitle] = React.useState("");
+  const [newProjectTitle, setNewProjectTitle] = React.useState('');
   const [isCreatingProject, setIsCreatingProject] = React.useState(false);
   const [pendingChatId, setPendingChatId] = React.useState<string | null>(null);
   const [isLoadingChats, setIsLoadingChats] = React.useState(true);
@@ -187,9 +187,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const fetchChats = React.useCallback(async () => {
     setIsLoadingChats(true);
     try {
-      const res = await fetch("/api/chat");
+      const res = await fetch('/api/chat');
       if (!res.ok) {
-        throw new Error("Failed to fetch chats");
+        throw new Error('Failed to fetch chats');
       }
 
       const json = await res.json();
@@ -197,13 +197,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       const mapped = json.map((chat: { id: string; title?: string }) => ({
         id: chat.id,
-        title: chat.title || "Untitled chat",
+        title: chat.title || 'Untitled chat',
         url: `/~/${chat.id}`,
       }));
 
       setChats(mapped);
     } catch (error) {
-      console.error("Unable to load chats", error);
+      console.error('Unable to load chats', error);
     } finally {
       setIsLoadingChats(false);
     }
@@ -221,9 +221,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const fetchProjects = React.useCallback(async () => {
     setIsLoadingProjects(true);
     try {
-      const res = await fetch("/api/projects");
+      const res = await fetch('/api/projects');
       if (!res.ok) {
-        throw new Error("Failed to fetch projects");
+        throw new Error('Failed to fetch projects');
       }
 
       const json = await res.json();
@@ -237,7 +237,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       setProjects(mapped);
     } catch (error) {
-      console.error("Unable to load projects", error);
+      console.error('Unable to load projects', error);
     } finally {
       setIsLoadingProjects(false);
     }
@@ -253,7 +253,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
 
       return prev.map((p) =>
-        p.id === projectId ? { ...p, isLoading: true } : p
+        p.id === projectId ? { ...p, isLoading: true } : p,
       );
     });
 
@@ -262,7 +262,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     try {
       const res = await fetch(`/api/projects/${projectId}/chats`);
       if (!res.ok) {
-        throw new Error("Failed to fetch project chats");
+        throw new Error('Failed to fetch project chats');
       }
 
       const json = await res.json();
@@ -270,19 +270,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       const mapped = json.map((chat: { id: string; title?: string }) => ({
         id: chat.id,
-        title: chat.title || "Untitled chat",
+        title: chat.title || 'Untitled chat',
         url: `/~/${chat.id}`,
       }));
 
       setProjects((prev) =>
         prev.map((p) =>
-          p.id === projectId ? { ...p, chats: mapped, isLoading: false } : p
-        )
+          p.id === projectId ? { ...p, chats: mapped, isLoading: false } : p,
+        ),
       );
     } catch (error) {
-      console.error("Unable to load project chats", error);
+      console.error('Unable to load project chats', error);
       setProjects((prev) =>
-        prev.map((p) => (p.id === projectId ? { ...p, isLoading: false } : p))
+        prev.map((p) => (p.id === projectId ? { ...p, isLoading: false } : p)),
       );
     }
   }, []);
@@ -292,13 +292,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       setAssigningChatId(chatId);
       try {
         const res = await fetch(`/api/chat/${chatId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ projectId }),
         });
 
         if (!res.ok) {
-          throw new Error("Failed to move chat to project");
+          throw new Error('Failed to move chat to project');
         }
 
         const updated = await res.json();
@@ -320,13 +320,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
             const chatEntry = {
               id: updated.id,
-              title: updated.title || "Untitled chat",
+              title: updated.title || 'Untitled chat',
               url: `/~/${updated.id}`,
             };
 
             const existingChats = project.chats ?? [];
             const alreadyPresent = existingChats.some(
-              (c) => c.id === chatEntry.id
+              (c) => c.id === chatEntry.id,
             );
 
             return {
@@ -335,15 +335,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 ? existingChats
                 : [...existingChats, chatEntry],
             };
-          })
+          }),
         );
       } catch (error) {
-        console.error("Unable to move chat to project", error);
+        console.error('Unable to move chat to project', error);
       } finally {
         setAssigningChatId(null);
       }
     },
-    [chats, setChats]
+    [chats, setChats],
   );
 
   const handleRemoveChatFromProject = React.useCallback(
@@ -351,13 +351,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       setAssigningChatId(chatId);
       try {
         const res = await fetch(`/api/chat/${chatId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ projectId: null }),
         });
 
         if (!res.ok) {
-          throw new Error("Failed to remove chat from project");
+          throw new Error('Failed to remove chat from project');
         }
 
         const updated = await res.json();
@@ -370,23 +370,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   ...project,
                   chats: (project.chats ?? []).filter((c) => c.id !== chatId),
                 }
-              : project
-          )
+              : project,
+          ),
         );
 
         // Add back to unassigned chats
         addChat({
           id: updated.id,
-          title: updated.title || "Untitled chat",
+          title: updated.title || 'Untitled chat',
           url: `/~/${updated.id}`,
         });
       } catch (error) {
-        console.error("Unable to remove chat from project", error);
+        console.error('Unable to remove chat from project', error);
       } finally {
         setAssigningChatId(null);
       }
     },
-    [addChat]
+    [addChat],
   );
 
   const openCreateProjectDialog = React.useCallback((chatId?: string) => {
@@ -400,14 +400,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       if (!newProjectTitle.trim()) return;
       setIsCreatingProject(true);
       try {
-        const res = await fetch("/api/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: newProjectTitle }),
         });
 
         if (!res.ok) {
-          throw new Error("Failed to create project");
+          throw new Error('Failed to create project');
         }
 
         const project = await res.json();
@@ -419,19 +419,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         setProjects((prev) => [projectEntry, ...prev]);
         setCreateProjectOpen(false);
-        setNewProjectTitle("");
+        setNewProjectTitle('');
 
         if (pendingChatId) {
           await handleMoveChatToProject(pendingChatId, project.id);
           setPendingChatId(null);
         }
       } catch (error) {
-        console.error("Unable to create project", error);
+        console.error('Unable to create project', error);
       } finally {
         setIsCreatingProject(false);
       }
     },
-    [handleMoveChatToProject, newProjectTitle, pendingChatId]
+    [handleMoveChatToProject, newProjectTitle, pendingChatId],
   );
 
   const handleDeleteChat = React.useCallback(
@@ -442,30 +442,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         prev.map((p) => ({
           ...p,
           chats: p.chats?.filter((c) => c.id !== chatId),
-        }))
+        })),
       );
 
       // Redirect if we are on the page of the deleted chat
       if (window.location.pathname.includes(chatId)) {
-        router.push("/");
+        router.push('/');
       }
 
       try {
         const res = await fetch(`/api/chat/${chatId}`, {
-          method: "DELETE",
+          method: 'DELETE',
         });
         if (!res.ok) {
-          throw new Error("Failed to delete chat");
+          throw new Error('Failed to delete chat');
         }
       } catch (error) {
-        console.error("Delete failed", error);
-        toast.error("Failed to delete chat");
+        console.error('Delete failed', error);
+        toast.error('Failed to delete chat');
         // Restore chats if failed
         fetchChats();
         fetchProjects();
       }
     },
-    [deleteChat, router, fetchChats, fetchProjects]
+    [deleteChat, router, fetchChats, fetchProjects],
   );
 
   React.useEffect(() => {
@@ -553,7 +553,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 Cancel
               </Button>
               <Button type="submit" disabled={isCreatingProject}>
-                {isCreatingProject ? "Creating..." : "Create project"}
+                {isCreatingProject ? 'Creating...' : 'Create project'}
               </Button>
             </DialogFooter>
           </form>

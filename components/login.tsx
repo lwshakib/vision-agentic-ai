@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { Logo as LogoIcon } from "@/components/logo";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
-import { Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Logo as LogoIcon } from '@/components/logo';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/auth-client';
+import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -29,15 +29,15 @@ export default function LoginPage() {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to sign in");
+        toast.error(error.message || 'Failed to sign in');
         return;
       }
 
-      toast.success("Signed in successfully!");
-      router.push("/");
+      toast.success('Signed in successfully!');
+      router.push('/');
       router.refresh();
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -47,11 +47,11 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/",
+        provider: 'google',
+        callbackURL: '/',
       });
     } catch (error) {
-      toast.error("Failed to sign in with Google");
+      toast.error('Failed to sign in with Google');
       setIsGoogleLoading(false);
     }
   };
@@ -185,7 +185,7 @@ export default function LoginPage() {
                   Signing in...
                 </>
               ) : (
-                "Sign In"
+                'Sign In'
               )}
             </Button>
           </div>

@@ -1,6 +1,6 @@
-import prisma from "@/lib/prisma";
-import { getUser } from "@/actions/user";
-import { redirect } from "next/navigation";
+import prisma from '@/lib/prisma';
+import { getUser } from '@/actions/user';
+import { redirect } from 'next/navigation';
 
 type ImageItem = {
   id: string;
@@ -11,24 +11,24 @@ type ImageItem = {
 
 function extractImagesFromParts(
   parts: any[] | null | undefined,
-  createdAt: Date
+  createdAt: Date,
 ): ImageItem[] {
   if (!Array.isArray(parts)) return [];
 
   const images: ImageItem[] = [];
 
   for (const part of parts) {
-    if (!part || typeof part !== "object") continue;
+    if (!part || typeof part !== 'object') continue;
 
     const type = (part as any).type;
-    const mediaType = (part as any).mediaType || "";
+    const mediaType = (part as any).mediaType || '';
     const url = (part as any).url as string | undefined;
     const name =
-      (part as any).name || (part as any).filename || "Image attachment";
+      (part as any).name || (part as any).filename || 'Image attachment';
 
-    const isFileLike = type === "file" || type === "attachment";
+    const isFileLike = type === 'file' || type === 'attachment';
     const isImage =
-      typeof mediaType === "string" && mediaType.startsWith("image/");
+      typeof mediaType === 'string' && mediaType.startsWith('image/');
 
     if (isFileLike && isImage && url) {
       images.push({
@@ -47,7 +47,7 @@ export default async function LibraryPage() {
   const user = await getUser();
 
   if (!user) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
 
   const messages = await prisma.message.findMany({
@@ -62,7 +62,7 @@ export default async function LibraryPage() {
       createdAt: true,
     },
     orderBy: {
-      createdAt: "desc",
+      createdAt: 'desc',
     },
   });
 
