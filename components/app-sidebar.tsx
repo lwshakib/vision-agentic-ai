@@ -306,9 +306,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         if (fromProjectId) {
           setProjectChats(
             fromProjectId,
-            (
-              projects.find((p) => p.id === fromProjectId)?.chats ?? []
-            ).filter((c) => c.id !== chatId),
+            (projects.find((p) => p.id === fromProjectId)?.chats ?? []).filter(
+              (c) => c.id !== chatId,
+            ),
           );
         }
 
@@ -415,7 +415,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setIsCreatingProject(false);
       }
     },
-    [handleMoveChatToProject, newProjectTitle, pendingChatId, projects, setProjects],
+    [
+      handleMoveChatToProject,
+      newProjectTitle,
+      pendingChatId,
+      projects,
+      setProjects,
+    ],
   );
 
   /**
@@ -591,7 +597,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   );
 }
-
 
 /**
  * Skeleton UI displayed during the initial loading phase.

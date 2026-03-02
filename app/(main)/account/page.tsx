@@ -21,7 +21,6 @@ import {
   Loader2,
   Mail,
   User as UserIcon,
-  Shield,
   Smartphone,
   Laptop,
   Globe,
@@ -31,20 +30,37 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /**
+ * Type definitions for session and account data.
+ */
+interface SessionData {
+  id: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
+interface AccountData {
+  id: string;
+  providerId: string;
+  accountId: string;
+}
+
+/**
  * AccountPage Component
  * Provides a comprehensive interface for users to manage their profile,
  * including updating their avatar, name, email, and viewing active sessions.
  */
 export default function AccountPage() {
-  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  
+
   // Local state for profile fields.
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<SessionData[]>([]);
+  const [accounts, setAccounts] = useState<AccountData[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
 
@@ -64,8 +80,8 @@ export default function AccountPage() {
   const fetchSessions = async () => {
     setIsLoadingSessions(true);
     try {
-      // @ts-ignore - better-auth types can be tricky
-      const { data, error } = await authClient.listSessions();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (authClient as any).listSessions();
       if (error) throw error;
       setSessions(data || []);
     } catch (error) {
@@ -81,8 +97,8 @@ export default function AccountPage() {
   const fetchAccounts = async () => {
     setIsLoadingAccounts(true);
     try {
-      // @ts-ignore
-      const { data, error } = await authClient.listAccounts();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (authClient as any).listAccounts();
       if (error) throw error;
       setAccounts(data || []);
     } catch (error) {
@@ -112,9 +128,9 @@ export default function AccountPage() {
 
       toast.success('Profile updated successfully');
       // Refresh the session to show updated data across the app.
-      window.location.reload(); 
-    } catch (error: any) {
-      toast.error(error.message);
+      window.location.reload();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Update failed');
     } finally {
       setIsUpdating(false);
     }
@@ -131,7 +147,7 @@ export default function AccountPage() {
     try {
       // 1. Upload to Cloudinary.
       const uploadResult = await uploadToCloudinary(file);
-      
+
       // 2. Update the user record with the new URL.
       const res = await fetch('/api/user/update', {
         method: 'PATCH',
@@ -143,9 +159,11 @@ export default function AccountPage() {
 
       toast.success('Profile picture updated');
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error);
-      toast.error(error.message || 'Failed to upload image');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to upload image',
+      );
     } finally {
       setIsUploading(false);
     }
@@ -158,7 +176,9 @@ export default function AccountPage() {
   if (!session?.user) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-muted-foreground">Please sign in to view your account.</p>
+        <p className="text-muted-foreground">
+          Please sign in to view your account.
+        </p>
       </div>
     );
   }
@@ -185,13 +205,13 @@ export default function AccountPage() {
                     {session.user.name?.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 {/* Hover/Upload Overlay */}
-                <label 
-                  htmlFor="avatar-upload" 
+                <label
+                  htmlFor="avatar-upload"
                   className={cn(
-                    "absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity cursor-pointer",
-                    isUploading ? "opacity-100" : "group-hover:opacity-100"
+                    'absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity cursor-pointer',
+                    isUploading ? 'opacity-100' : 'group-hover:opacity-100',
                   )}
                 >
                   {isUploading ? (
@@ -199,19 +219,21 @@ export default function AccountPage() {
                   ) : (
                     <Camera className="h-8 w-8" />
                   )}
-                  <input 
-                    id="avatar-upload" 
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={handleImageUpload} 
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageUpload}
                     disabled={isUploading}
                   />
                 </label>
               </div>
               <div className="mt-4 space-y-1">
                 <CardTitle className="text-xl">{session.user.name}</CardTitle>
-                <CardDescription className="font-medium">{session.user.email}</CardDescription>
+                <CardDescription className="font-medium">
+                  {session.user.email}
+                </CardDescription>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -242,10 +264,10 @@ export default function AccountPage() {
                   <Label htmlFor="name">Display Name</Label>
                   <div className="relative">
                     <UserIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="name" 
-                      value={name} 
-                      onChange={(e) => setName(e.target.value)} 
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       className="pl-10"
                       placeholder="Your name"
                     />
@@ -255,10 +277,10 @@ export default function AccountPage() {
                   <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      value={email} 
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
                       readOnly
                       className="pl-10 bg-muted/50 cursor-not-allowed"
                       placeholder="your.email@example.com"
@@ -266,7 +288,11 @@ export default function AccountPage() {
                   </div>
                 </div>
                 <div className="pt-2">
-                  <Button type="submit" disabled={isUpdating} className="w-full sm:w-auto">
+                  <Button
+                    type="submit"
+                    disabled={isUpdating}
+                    className="w-full sm:w-auto"
+                  >
                     {isUpdating ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -295,9 +321,9 @@ export default function AccountPage() {
             <CardContent className="p-0">
               <div className="divide-y divide-border">
                 {isLoadingAccounts ? (
-                   <div className="p-4 space-y-4">
-                     <Skeleton className="h-10 w-full" />
-                   </div>
+                  <div className="p-4 space-y-4">
+                    <Skeleton className="h-10 w-full" />
+                  </div>
                 ) : accounts.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground italic">
                     No connected accounts.
@@ -305,37 +331,47 @@ export default function AccountPage() {
                 ) : (
                   <>
                     {accounts.map((acc) => (
-                      <div key={acc.id} className="p-4 flex items-center justify-between">
+                      <div
+                        key={acc.id}
+                        className="p-4 flex items-center justify-between"
+                      >
                         <div className="flex items-center gap-4">
                           <div className="p-2 rounded-lg bg-accent">
                             {acc.providerId === 'google' ? (
-                               <svg className="size-5" viewBox="0 0 24 24">
-                                 <path
-                                   fill="currentColor"
-                                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                 />
-                                 <path
-                                   fill="currentColor"
-                                   d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                 />
-                                 <path
-                                   fill="currentColor"
-                                   d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                                 />
-                                 <path
-                                   fill="currentColor"
-                                   d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z"
-                                  />
-                               </svg>
+                              <svg className="size-5" viewBox="0 0 24 24">
+                                <path
+                                  fill="currentColor"
+                                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                />
+                                <path
+                                  fill="currentColor"
+                                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                />
+                                <path
+                                  fill="currentColor"
+                                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                                />
+                                <path
+                                  fill="currentColor"
+                                  d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z"
+                                />
+                              </svg>
                             ) : (
                               <Globe className="size-5" />
                             )}
                           </div>
                           <div>
-                            <div className="font-medium capitalize">{acc.providerId}</div>
+                            <div className="font-medium capitalize">
+                              {acc.providerId}
+                            </div>
                           </div>
                         </div>
-                        <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 border-none">Linked</Badge>
+                        <Badge
+                          variant="secondary"
+                          className="bg-blue-500/10 text-blue-600 border-none"
+                        >
+                          Linked
+                        </Badge>
                       </div>
                     ))}
                     {/* Placeholder for Microsoft */}
@@ -353,7 +389,12 @@ export default function AccountPage() {
                           <div className="font-medium">Microsoft</div>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-muted-foreground border-dashed">Available soon</Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-muted-foreground border-dashed"
+                      >
+                        Available soon
+                      </Badge>
                     </div>
                   </>
                 )}
@@ -375,17 +416,20 @@ export default function AccountPage() {
             <CardContent className="p-0">
               <div className="divide-y divide-border">
                 {isLoadingSessions ? (
-                   <div className="p-4 space-y-4">
-                     <Skeleton className="h-12 w-full" />
-                     <Skeleton className="h-12 w-full" />
-                   </div>
+                  <div className="p-4 space-y-4">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
                 ) : sessions.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground">
                     No active sessions found.
                   </div>
                 ) : (
                   sessions.map((sess) => (
-                    <div key={sess.id} className="p-4 flex items-center justify-between hover:bg-accent/5 transition-colors">
+                    <div
+                      key={sess.id}
+                      className="p-4 flex items-center justify-between hover:bg-accent/5 transition-colors"
+                    >
                       <div className="flex items-center gap-4">
                         <div className="p-2 rounded-lg bg-primary/10">
                           {sess.userAgent?.toLowerCase().includes('mobile') ? (
@@ -398,7 +442,12 @@ export default function AccountPage() {
                           <div className="font-medium flex items-center gap-2">
                             {sess.ipAddress || 'Unknown IP'}
                             {sess.id === session.session.id && (
-                              <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-none text-[10px] py-0">Current</Badge>
+                              <Badge
+                                variant="secondary"
+                                className="bg-green-500/10 text-green-600 border-none text-[10px] py-0"
+                              >
+                                Current
+                              </Badge>
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground flex items-center gap-2">

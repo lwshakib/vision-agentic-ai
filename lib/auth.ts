@@ -103,4 +103,20 @@ export const auth = betterAuth({
       enabled: true, // Allow linking multiple providers (e.g., Google and Email) to one user.
     },
   },
+
+  /**
+   * Additional user fields for the session.
+   */
+  user: {
+    additionalFields: {
+      messageCredits: {
+        type: 'number',
+        defaultValue: 10,
+      },
+      lastCreditReset: {
+        type: 'date',
+        defaultValue: new Date(),
+      },
+    },
+  },
 });

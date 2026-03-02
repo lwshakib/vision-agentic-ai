@@ -9,6 +9,7 @@ import { streamText } from '@/llm/streamText';
 import { NextResponse } from 'next/server';
 // Import utility for retrieving the current user's session.
 import { getUser } from '@/actions/user';
+import { checkAndManageCredits, consumeCredit } from '@/lib/credits';
 
 /**
  * Configure the route's maximum execution duration.
@@ -31,8 +32,25 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { messages } = body;
 
+    // Credit Management
+    const { canProceed } = await checkAndManageCredits(user.id);
+
+    if (!canProceed) {
+      return NextResponse.json(
+        {
+          error: 'Credit exhausted',
+          message:
+            'You have reached your daily limit of 10 messages. Please upgrade to Pro or wait until tomorrow.',
+        },
+        { status: 403 },
+      );
+    }
+
     // Trigger the core LLM streaming process.
     const result = await streamText(messages);
+
+    // If generation starts successfully, consume one credit.
+    await consumeCredit(user.id);
 
     /**
      * Convert the raw stream result into a format optimized for the frontend UI.

@@ -120,6 +120,7 @@ function PromptInputContent() {
 function TemporaryChat() {
   // Loading state for history (not used here but maintained for component consistency).
   const [isLoadingHistory] = useState(false);
+  const router = useRouter();
 
   // Memoize the chat transport to prevent unnecessary re-creations.
   const chatTransport = useMemo(
@@ -135,6 +136,23 @@ function TemporaryChat() {
     transport: chatTransport,
     onError: (err) => {
       console.error('Temporary chat error:', err);
+      try {
+        const errorData = JSON.parse(err.message);
+        if (errorData.error === 'Credit exhausted') {
+          toast.error('Limit Reached', {
+            description:
+              errorData.message ||
+              'You have reached your daily limit of 10 messages.',
+            action: {
+              label: 'Upgrade',
+              onClick: () => router.push('/pro'),
+            },
+          });
+          return;
+        }
+      } catch {
+        // Fallback for non-JSON errors
+      }
       toast.error('Internal server error');
     },
   });

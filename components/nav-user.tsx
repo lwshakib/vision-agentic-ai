@@ -19,6 +19,7 @@ import {
 
 // Import Avatar and Dropdown UI primitives.
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,7 +131,16 @@ export function NavUser({
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <div className="flex flex-col items-end gap-1 px-1">
+                <Badge
+                  variant="outline"
+                  className="h-4 px-1 text-[9px] font-bold border-primary/20 bg-primary/5 text-primary"
+                >
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(session?.user as any)?.messageCredits ?? 0}/10
+                </Badge>
+                <ChevronsUpDown className="size-3 text-muted-foreground" />
+              </div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 

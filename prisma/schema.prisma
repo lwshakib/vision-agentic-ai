@@ -34,6 +34,10 @@ model User {
   projects      Project[]
   chats         Chat[]
 
+  // Credit system fields
+  messageCredits Int      @default(10)
+  lastCreditReset DateTime @default(now())
+
   @@unique([email])
   @@map("user")
 }

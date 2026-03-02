@@ -32,18 +32,22 @@ export async function PATCH(req: Request) {
     });
 
     return NextResponse.json(updatedUser);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update user error:', error);
     // Handle unique constraint violations (e.g., email already in use).
-    if (error.code === 'P2002') {
+    if (
+      error instanceof Error &&
+      'code' in error &&
+      (error as { code: string }).code === 'P2002'
+    ) {
       return NextResponse.json(
         { error: 'Email already in use' },
-        { status: 400 }
+        { status: 400 },
       );
     }
     return NextResponse.json(
       { error: 'Failed to update user' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

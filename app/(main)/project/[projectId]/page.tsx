@@ -8,7 +8,7 @@
 
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { FolderKanban, MessageSquare, Loader2, Plus } from 'lucide-react';
+import { FolderKanban, MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import ChatInput from '@/components/chat-input';
@@ -30,9 +30,10 @@ export default function ProjectPage() {
   const { projectId } = useParams() as { projectId: string };
 
   const [project, setProject] = React.useState<{ title: string } | null>(null);
-  const [chats, setChats] = React.useState<{ id: string; title: string; url: string }[]>([]);
+  const [chats, setChats] = React.useState<
+    { id: string; title: string; url: string }[]
+  >([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isCreatingChat, setIsCreatingChat] = React.useState(false);
 
   /**
    * Fetch project details and its chats.
@@ -58,12 +59,14 @@ export default function ProjectPage() {
       const projectData = await projectRes.json();
       const chatsData = await chatsRes.json();
 
-      const mappedChats = chatsData.map((c: any) => ({
-        id: c.id,
-        title: c.title || 'Untitled chat',
-        url: `/~/${c.id}`,
-      }));
-      
+      const mappedChats = chatsData.map(
+        (c: { id: string; title?: string }) => ({
+          id: c.id,
+          title: c.title || 'Untitled chat',
+          url: `/~/${c.id}`,
+        }),
+      );
+
       setProject({ title: projectData.title });
       setChats(mappedChats);
 
@@ -87,7 +90,6 @@ export default function ProjectPage() {
    * Handle starting a new chat within this project.
    */
   const handleSend = async (message: string, files?: FileInfo[]) => {
-    setIsCreatingChat(true);
     try {
       // Create a new chat session assigned to this project.
       const res = await fetch('/api/chat', {
@@ -101,7 +103,7 @@ export default function ProjectPage() {
       }
 
       const data = await res.json();
-      
+
       const chatEntry = {
         id: data.chatId,
         title: 'New chat',
@@ -126,7 +128,6 @@ export default function ProjectPage() {
       console.error('Error starting chat:', error);
       toast.error('Failed to start new chat');
     } finally {
-      setIsCreatingChat(false);
     }
   };
 
@@ -147,7 +148,9 @@ export default function ProjectPage() {
           <div className="p-3 rounded-xl bg-primary/10 text-primary">
             <FolderKanban className="size-8" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">{project?.title}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {project?.title}
+          </h1>
         </div>
         <p className="text-muted-foreground max-w-md mx-auto">
           Start a new conversation or view recent chats in this project.
@@ -157,9 +160,9 @@ export default function ProjectPage() {
       <main className="flex-1 flex flex-col max-w-3xl w-full mx-auto px-4 pb-8 overflow-hidden">
         {/* Chat Input Area */}
         <div className="mb-12">
-          <ChatInput 
-            onSend={handleSend} 
-            placeholder="Type a message to start a new chat in this project..." 
+          <ChatInput
+            onSend={handleSend}
+            placeholder="Type a message to start a new chat in this project..."
           />
         </div>
 
@@ -178,7 +181,9 @@ export default function ProjectPage() {
             {chats.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-2xl bg-muted/30">
                 <MessageSquare className="size-10 text-muted-foreground/30 mb-3" />
-                <p className="text-muted-foreground text-sm">No chats in this project yet.</p>
+                <p className="text-muted-foreground text-sm">
+                  No chats in this project yet.
+                </p>
                 <p className="text-xs text-muted-foreground/60 mt-1">
                   Start one above to keep your research organized.
                 </p>

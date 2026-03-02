@@ -162,7 +162,6 @@ export function NavChats({
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
 
-
                 <DropdownMenuSeparator />
 
                 {/* Destructive chat deletion. */}

@@ -9,7 +9,7 @@
 // Import React hooks for lifecycle management and optimization.
 import { useEffect, useMemo, useRef, useState } from 'react';
 // Import Next.js hooks for accessing URL parameters and search queries.
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 // Import AI SDK for AI-driven chat capabilities.
 import { useChat } from '@ai-sdk/react';
 // Import AI SDK transport for communication with the API.
@@ -44,6 +44,7 @@ export default function ChatPage() {
   const { chatId } = useParams<{ chatId: string }>();
   // Access state action to set the current chat title in the UI.
   const { setChatTitle } = useChatStore();
+  const router = useRouter();
 
   /**
    * Memoize the chat transport to ensure we don't reconnect on every render,
@@ -72,6 +73,23 @@ export default function ChatPage() {
     // Global error handler for chat operations.
     onError: (err) => {
       console.error('Chat error:', err);
+      try {
+        const errorData = JSON.parse(err.message);
+        if (errorData.error === 'Credit exhausted') {
+          toast.error('Limit Reached', {
+            description:
+              errorData.message ||
+              'You have reached your daily limit of 10 messages.',
+            action: {
+              label: 'Upgrade',
+              onClick: () => router.push('/pro'),
+            },
+          });
+          return;
+        }
+      } catch {
+        // Fallback
+      }
       toast.error('Internal server error');
     },
     // Callback triggered when the AI finishes generating a response.

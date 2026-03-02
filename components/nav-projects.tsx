@@ -11,7 +11,6 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 // Import a set of polished icons for project and chat management.
 import {
-  ChevronRight,
   FolderKanban,
   FolderPlus,
   Forward,
@@ -134,9 +133,7 @@ export function NavProjects({
               {/* Action: Three-dot icon replaces the chevron. Provide project actions. */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <SidebarMenuAction
-                    className="group-data-[state=open]/collapsible:rotate-0"
-                  >
+                  <SidebarMenuAction className="group-data-[state=open]/collapsible:rotate-0">
                     <MoreHorizontal />
                     <span className="sr-only">Project Actions</span>
                   </SidebarMenuAction>
@@ -146,9 +143,7 @@ export function NavProjects({
                   side={isMobile ? 'bottom' : 'right'}
                   align={isMobile ? 'end' : 'start'}
                 >
-                  <DropdownMenuItem
-                    onSelect={() => onCreateProject?.()}
-                  >
+                  <DropdownMenuItem onSelect={() => onCreateProject?.()}>
                     <FolderPlus className="mr-2 size-4 text-muted-foreground" />
                     <span>New Project</span>
                   </DropdownMenuItem>
