@@ -46,7 +46,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const json: any = await dgRes.json();
+    const json = await dgRes.json() as {
+      results?: {
+        channels?: Array<{
+          alternatives?: Array<{
+            transcript?: string;
+          }>;
+        }>;
+      };
+    };
     const transcript =
       json.results?.channels?.[0]?.alternatives?.[0]?.transcript?.trim() ?? '';
 

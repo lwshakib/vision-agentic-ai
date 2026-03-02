@@ -36,7 +36,7 @@ export default function LoginPage() {
       toast.success('Signed in successfully!');
       router.push('/');
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -50,7 +50,7 @@ export default function LoginPage() {
         provider: 'google',
         callbackURL: '/',
       });
-    } catch (error) {
+    } catch {
       toast.error('Failed to sign in with Google');
       setIsGoogleLoading(false);
     }
@@ -193,7 +193,7 @@ export default function LoginPage() {
 
         <div className="bg-muted rounded-(--radius) border p-3">
           <p className="text-accent-foreground text-center text-sm">
-            Don't have an account ?
+            Don&apos;t have an account ?
             <Button asChild variant="link" className="px-2">
               <Link href="/sign-up">Create account</Link>
             </Button>

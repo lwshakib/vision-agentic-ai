@@ -2,9 +2,15 @@
 
 import { CopyIcon, RotateCcw } from 'lucide-react';
 import { MessageAction, MessageActions } from '@/components/ai-elements/message';
+import type { UIMessage } from 'ai';
+
+interface TextPart {
+  type: string;
+  text?: string;
+}
 
 interface MessageActionsListProps {
-  message: any;
+  message: UIMessage;
   onCopy: (text: string) => void;
   onRetry?: () => void;
 }
@@ -13,10 +19,10 @@ export function MessageActionsList({ message, onCopy, onRetry }: MessageActionsL
   if (message.role !== 'assistant') return null;
 
   const fullText = Array.isArray(message.parts)
-    ? (message.parts as any[])
+    ? (message.parts as TextPart[])
         .filter((p) => p.type === 'text' && p.text)
         .map((p) =>
-          p.text
+          (p.text ?? '')
             .replace(/<title>.*?<\/title>/gs, '')
             .trim(),
         )

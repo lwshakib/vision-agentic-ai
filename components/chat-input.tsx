@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   Plus,
   Mic,
@@ -8,7 +8,6 @@ import {
   AudioLines,
   Check,
   ArrowUp,
-  ImageIcon,
   VideoIcon,
   FileIcon,
 } from 'lucide-react';
@@ -16,6 +15,7 @@ import {
   uploadToCloudinary,
   type UploadProgress,
 } from '@/lib/cloudinary-upload';
+import NextImage from 'next/image';
 
 /* ------------------ LIVE RAIL WAVEFORM ------------------ */
 
@@ -34,37 +34,18 @@ function LiveWaveform({
 
   const railRef = useRef<number[]>([]);
 
-  useEffect(() => {
-    if (!active) {
-      cleanup();
-      return;
-    }
+  const cleanup = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    audioCtxRef.current?.close();
 
-    const start = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+    railRef.current = [];
+    analyserRef.current = null;
+    audioCtxRef.current = null;
+    streamRef.current = null;
+  }, []);
 
-      const AudioCtx =
-        window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioCtx();
-      audioCtxRef.current = ctx;
-
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 1024;
-      analyser.smoothingTimeConstant = 0.85;
-
-      const source = ctx.createMediaStreamSource(stream);
-      source.connect(analyser);
-
-      analyserRef.current = analyser;
-      draw();
-    };
-
-    start();
-    return cleanup;
-  }, [active]);
-
-  const draw = () => {
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
     if (!canvas || !analyser) return;
@@ -122,18 +103,40 @@ function LiveWaveform({
     };
 
     rafRef.current = requestAnimationFrame(render);
-  };
+  }, []);
 
-  const cleanup = () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    audioCtxRef.current?.close();
+  useEffect(() => {
+    if (!active) {
+      cleanup();
+      return;
+    }
 
-    railRef.current = [];
-    analyserRef.current = null;
-    audioCtxRef.current = null;
-    streamRef.current = null;
-  };
+    const start = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AudioCtx();
+      audioCtxRef.current = ctx;
+
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.85;
+
+      const source = ctx.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      analyserRef.current = analyser;
+      draw();
+    };
+
+    start();
+    return cleanup;
+  }, [active, cleanup, draw]);
+
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -231,10 +234,13 @@ function FilePreviewItem({
     <div className="relative group">
       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-neutral-700">
         {isImage && (
-          <img
+          <NextImage
             src={preview.previewUrl}
             alt={preview.file.name}
             className="w-full h-full object-cover"
+            width={64}
+            height={64}
+            unoptimized
           />
         )}
         {isVideo && (

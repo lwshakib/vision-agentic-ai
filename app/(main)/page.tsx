@@ -82,7 +82,7 @@ function PromptInputContent() {
 }
 
 function TemporaryChat() {
-  const [error, setError] = useState<string | null>(null);
+
   const [isLoadingHistory] = useState(false);
 
   const chatTransport = useMemo(

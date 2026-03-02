@@ -19,15 +19,17 @@ function VerifyEmailContent() {
   useEffect(() => {
     const success = searchParams.get('success');
     if (success === 'true') {
-      setStatus('success');
+      queueMicrotask(() => setStatus('success'));
       toast.success('Email verified successfully!');
       return;
     }
 
     const token = searchParams.get('token');
     if (!token) {
-      setStatus('error');
-      setErrorMessage('Verification token is missing.');
+      queueMicrotask(() => {
+        setStatus('error');
+        setErrorMessage('Verification token is missing.');
+      });
       return;
     }
 
@@ -47,7 +49,7 @@ function VerifyEmailContent() {
           toast.success('Email verified successfully!');
         }
       })
-      .catch((err) => {
+      .catch(() => {
         setStatus('error');
         setErrorMessage('An unexpected error occurred.');
       });

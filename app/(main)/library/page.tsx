@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { getUser } from '@/actions/user';
 import { redirect } from 'next/navigation';
+import Image from 'next/image';
 
 type ImageItem = {
   id: string;
@@ -9,8 +10,17 @@ type ImageItem = {
   createdAt: Date;
 };
 
+type MessagePart = {
+  type?: string;
+  mediaType?: string;
+  url?: string;
+  name?: string;
+  filename?: string;
+  id?: string;
+};
+
 function extractImagesFromParts(
-  parts: any[] | null | undefined,
+  parts: MessagePart[] | null | undefined,
   createdAt: Date,
 ): ImageItem[] {
   if (!Array.isArray(parts)) return [];
@@ -20,11 +30,10 @@ function extractImagesFromParts(
   for (const part of parts) {
     if (!part || typeof part !== 'object') continue;
 
-    const type = (part as any).type;
-    const mediaType = (part as any).mediaType || '';
-    const url = (part as any).url as string | undefined;
-    const name =
-      (part as any).name || (part as any).filename || 'Image attachment';
+    const type = part.type;
+    const mediaType = part.mediaType || '';
+    const url = part.url;
+    const name = part.name || part.filename || 'Image attachment';
 
     const isFileLike = type === 'file' || type === 'attachment';
     const isImage =
@@ -32,7 +41,7 @@ function extractImagesFromParts(
 
     if (isFileLike && isImage && url) {
       images.push({
-        id: (part as any).id || `${url}-${createdAt.toISOString()}`,
+        id: part.id || `${url}-${createdAt.toISOString()}`,
         url,
         alt: name,
         createdAt,
@@ -69,7 +78,7 @@ export default async function LibraryPage() {
   const allImages: ImageItem[] = [];
 
   for (const message of messages) {
-    const parts = message.parts as any[] | null | undefined;
+    const parts = message.parts as MessagePart[] | null | undefined;
     const images = extractImagesFromParts(parts, message.createdAt);
     allImages.push(...images);
   }
@@ -114,11 +123,13 @@ export default async function LibraryPage() {
                   key={image.id}
                   className="mb-4 break-inside-avoid overflow-hidden rounded-xl border bg-background shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                 >
-                  <img
+                  <Image
                     src={image.url}
                     alt={image.alt}
                     className="h-auto w-full object-cover"
                     loading="lazy"
+                    width={400}
+                    height={300}
                   />
                   <figcaption className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground">
                     <span className="line-clamp-1">{image.alt}</span>

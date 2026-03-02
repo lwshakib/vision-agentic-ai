@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { MessageRole } from '@/generated/prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 import { getUser } from './user';
 
 export async function saveMessage({
@@ -9,7 +10,7 @@ export async function saveMessage({
 }: {
   chatId: string;
   role: 'user' | 'assistant';
-  parts: any;
+  parts: Prisma.InputJsonValue;
 }) {
   const user = await getUser();
   if (!user) {
@@ -44,7 +45,7 @@ export async function saveUserMessage({
   parts,
 }: {
   chatId: string;
-  parts: any;
+  parts: Prisma.InputJsonValue;
 }) {
   return saveMessage({
     chatId,
@@ -58,7 +59,7 @@ export async function saveAssistantMessage({
   parts,
 }: {
   chatId: string;
-  parts: any;
+  parts: Prisma.InputJsonValue;
 }) {
   return saveMessage({
     chatId,

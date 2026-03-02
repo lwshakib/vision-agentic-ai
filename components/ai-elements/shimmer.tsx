@@ -18,24 +18,21 @@ export type TextShimmerProps = {
   spread?: number;
 };
 
+const MotionP = motion.create('p' as keyof JSX.IntrinsicElements);
+
 const ShimmerComponent = ({
   children,
-  as: Component = 'p',
   className,
   duration = 2,
   spread = 2,
 }: TextShimmerProps) => {
-  const MotionComponent = motion.create(
-    Component as keyof JSX.IntrinsicElements,
-  );
-
   const dynamicSpread = useMemo(
     () => (children?.length ?? 0) * spread,
     [children, spread],
   );
 
   return (
-    <MotionComponent
+    <MotionP
       animate={{ backgroundPosition: '0% center' }}
       className={cn(
         'relative inline-block bg-[length:250%_100%,auto] bg-clip-text text-transparent',
@@ -57,7 +54,7 @@ const ShimmerComponent = ({
       }}
     >
       {children}
-    </MotionComponent>
+    </MotionP>
   );
 };
 

@@ -78,7 +78,7 @@ export function NavMain({
           setResults([]);
         }
       } catch (err) {
-        if ((err as any)?.name === 'AbortError') return;
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         setResults([]);
       } finally {
         setIsLoading(false);

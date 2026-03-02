@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
 
       setIsEmailSent(true);
       toast.success('Reset link sent to your email');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
           </Link>
           <h1 className="mb-1 mt-4 text-xl font-semibold">Check your email</h1>
           <p className="text-sm text-balance">
-            We've sent a password reset link to <strong>{email}</strong>.
+            We&apos;ve sent a password reset link to <strong>{email}</strong>.
           </p>
 
           <div className="mt-6 flex flex-col gap-3">

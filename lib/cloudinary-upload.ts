@@ -61,7 +61,7 @@ export async function uploadToCloudinary(
             publicId: response.public_id,
             secureUrl: response.secure_url || response.url,
           });
-        } catch (error) {
+        } catch {
           reject(new Error('Failed to parse upload response'));
         }
       } else {

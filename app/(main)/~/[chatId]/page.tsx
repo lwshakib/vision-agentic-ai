@@ -4,21 +4,29 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { ImageIcon, MessageSquare } from 'lucide-react';
 import ChatInput from '@/components/chat-input';
 import { ChatConversationList } from '@/components/chats/conversation-list';
 import { toast } from 'sonner';
 import { useChatStore } from '@/lib/store';
-import { cn } from '@/lib/utils';
+
+interface MessagePart {
+  type: string;
+  text?: string;
+  id?: string;
+  publicId?: string;
+  name?: string;
+  filename?: string;
+  url?: string;
+  mediaType?: string;
+}
 
 export default function ChatPage() {
   const { chatId } = useParams<{ chatId: string }>();
-  if (!chatId) return null;
-
   const { setChatTitle } = useChatStore();
 
   // Memoize transport to prevent re-creation on every render
   const chatTransport = useMemo(() => {
+    if (!chatId) return null;
     return new DefaultChatTransport({
       api: '/api/generate',
       headers: {
@@ -33,14 +41,14 @@ export default function ChatPage() {
     setMessages,
     status,
   } = useChat({
-    transport: chatTransport,
+    transport: chatTransport ?? undefined,
     onError: (err) => {
       console.error('Chat error:', err);
       toast.error('Internal server error');
     },
     onFinish: (message) => {
       // Persist assistant message with parts (including tool outputs)
-      const parts = (message as any)?.message?.parts ?? [];
+      const parts = (message as unknown as { message?: { parts?: unknown[] } })?.message?.parts ?? [];
       if (!chatId || !parts || parts.length === 0) return;
       void fetch(`/api/chat/${chatId}`, {
         method: 'POST',
@@ -85,10 +93,10 @@ export default function ChatPage() {
     const prevParts = Array.isArray(previousUserMessage.parts)
       ? previousUserMessage.parts
       : [];
-    const textPart = prevParts.find((p: any) => p.type === 'text');
+    const textPart = prevParts.find((p: MessagePart) => p.type === 'text') as MessagePart | undefined;
     const filesParts = prevParts.filter(
-      (p: any) => p.type === 'file' || p.type === 'attachment',
-    );
+      (p: MessagePart) => p.type === 'file' || p.type === 'attachment',
+    ) as MessagePart[];
 
     // Remove this assistant message and any subsequent messages
     const newMessages = messages.slice(0, messageIndex);
@@ -97,18 +105,18 @@ export default function ChatPage() {
     // Re-send the user message
     if (filesParts.length > 0) {
       sendMessage({
-        text: (textPart as any)?.text || 'See attached files',
-        files: filesParts.map((file: any) => ({
-          id: file.id || file.publicId,
-          name: file.name || file.filename,
-          url: file.url,
+        text: textPart?.text || 'See attached files',
+        files: filesParts.map((file: MessagePart) => ({
+          id: file.id || file.publicId || '',
+          name: file.name || file.filename || '',
+          url: file.url || '',
           type: 'file',
           mediaType: file.mediaType || file.type || 'application/octet-stream',
         })),
       });
     } else {
       sendMessage({
-        text: (textPart as any)?.text || '',
+        text: textPart?.text || '',
       });
     }
   };
@@ -222,6 +230,8 @@ export default function ChatPage() {
       });
     }
   };
+
+  if (!chatId) return null;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

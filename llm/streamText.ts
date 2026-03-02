@@ -1,10 +1,9 @@
 import {
   streamText as _streamText,
   convertToModelMessages,
-  experimental_generateImage,
   stepCountIs,
-  StreamTextOnFinishCallback,
-  Tool,
+  type StreamTextOnFinishCallback,
+  type Tool,
 } from 'ai';
 import { MAXIMUM_OUTPUT_TOKENS } from '@/lib/constants';
 import { GeminiModel } from './model';
@@ -32,6 +31,7 @@ export async function streamText(
   messages: Messages,
   onFinish?: StreamTextOnFinishCallback<Record<string, Tool>>,
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const modelMessages = await convertToModelMessages(messages as any);
 
   return _streamText({

@@ -1,10 +1,16 @@
 import { create } from 'zustand';
 
+interface Chat {
+  id: string;
+  title: string;
+  [key: string]: unknown;
+}
+
 interface ChatStore {
-  chats: Array<any>;
-  setChats: (chats: Array<any>) => void;
-  currentChat: any;
-  setCurrentChat: (chat: any) => void;
+  chats: Chat[];
+  setChats: (chats: Chat[]) => void;
+  currentChat: Chat | null;
+  setCurrentChat: (chat: Chat | null) => void;
 }
 
 export const useChatStore = create<ChatStore>((set) => ({

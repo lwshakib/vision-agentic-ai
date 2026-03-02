@@ -7,12 +7,10 @@ import { Label } from '@/components/ui/label';
 import { authClient } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function SignUp() {
-  const router = useRouter();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -39,7 +37,7 @@ export default function SignUp() {
       }
 
       setIsEmailSent(true);
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -53,7 +51,7 @@ export default function SignUp() {
         provider: 'google',
         callbackURL: '/',
       });
-    } catch (error) {
+    } catch {
       toast.error('Failed to sign up with Google');
       setIsGoogleLoading(false);
     }
@@ -68,8 +66,8 @@ export default function SignUp() {
           </Link>
           <h1 className="mb-1 mt-4 text-xl font-semibold">Check your email</h1>
           <p className="text-sm text-balance">
-            We've sent a verification link to <strong>{email}</strong>. Please
-            verify your email to continue.
+            We&apos;ve sent a verification link to <strong>{email}</strong>.
+            Please verify your email to continue.
           </p>
 
           <div className="mt-6 flex flex-col gap-3">

@@ -4,12 +4,6 @@ import { LoaderIcon } from 'lucide-react';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import React, { useState, useEffect } from 'react';
 
-interface ToolActionStatusProps {
-  loadingText?: string;
-  error?: string;
-  success?: boolean;
-  failedTitle?: string;
-}
 
 export function ToolLoading({ loadingText }: { loadingText: string }) {
   return (

@@ -5,18 +5,25 @@ const tvlyClient = tavily({ apiKey: TAVILY_API_KEY || '' });
 
 export async function extractWebUrl({ urls }: { urls: string[] }) {
   try {
-    // Use advanced extraction depth for comprehensive content
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response: any = await tvlyClient.extract(urls, {
+    const response = await (tvlyClient as unknown as { 
+      extract: (urls: string[], options: Record<string, unknown>) => Promise<Record<string, unknown>> 
+    }).extract(urls, {
       includeFavicon: true,
       includeImages: false,
       topic: 'general',
       format: 'markdown',
-      extractDepth: 'advanced', // Changed from "basic" to "advanced" for deeper extraction
+      extractDepth: 'advanced',
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const results = (response?.results || [])?.map((r: any) => ({
+    interface ExtractionResult {
+      url: string;
+      title?: string;
+      rawContent?: string;
+      content?: string;
+      favicon?: string;
+    }
+
+    const results = ((response?.results as ExtractionResult[]) || []).map((r) => ({
       url: r.url,
       title: r.title || r.url,
       content: r.rawContent || r.content || 'No content extracted',
@@ -29,8 +36,8 @@ export async function extractWebUrl({ urls }: { urls: string[] }) {
       urls: urls,
       results: results,
       totalSources: results.length,
-      totalContentLength: results.reduce(
-        (sum: number, r: any) => sum + (r.extractedLength || 0),
+      totalContentLength: (results as { extractedLength: number }[]).reduce(
+        (sum, r) => sum + (r.extractedLength || 0),
         0,
       ),
       response_time: response.responseTime,

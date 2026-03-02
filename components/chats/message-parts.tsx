@@ -9,9 +9,29 @@ import { ToolSearchResults } from './tool-search';
 import { ToolAudioPlayer } from './tool-audio';
 import { ToolLoading, SearchLoading, ToolError } from './tool-status';
 
+interface MessagePart {
+  type: string;
+  text?: string;
+  reasoning?: string;
+  isStreaming?: boolean;
+  sources?: SourceItem[];
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  state?: string;
+  [key: string]: unknown;
+}
+
+interface SourceItem {
+  url?: string;
+  href?: string;
+  title?: string;
+  name?: string;
+  description?: string;
+}
+
 interface MessagePartsProps {
   messageId: string;
-  parts: any[];
+  parts: MessagePart[];
   isVersioned?: boolean;
   version?: number | string;
 }
@@ -21,11 +41,11 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
     <MessageContent>
       {parts
         .filter(
-          (part: any) =>
+          (part: MessagePart) =>
             part.type !== 'file' &&
             part.type !== 'attachment',
         )
-        .map((part: any, i: number) => {
+        .map((part: MessagePart, i: number) => {
           const key = `${messageId}-${i}`;
 
           if (part.type === 'text') {
@@ -47,8 +67,8 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
           }
 
           if (part.type === 'reasoning') {
-            const reasoningText = (part as any).reasoning ?? (part as any).text ?? '';
-            const isStreaming = Boolean((part as any).isStreaming);
+            const reasoningText = part.reasoning ?? part.text ?? '';
+            const isStreaming = Boolean(part.isStreaming);
             if (!reasoningText) return null;
 
             return (
@@ -60,12 +80,12 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
           }
 
           if (part.type === 'sources') {
-            const sources = (part as any).sources ?? [];
+            const sources = part.sources ?? [];
             if (!sources.length) return null;
 
             return (
               <div key={key} className="mb-3 flex flex-wrap justify-start gap-2">
-                {sources.map((source: any) => {
+                {sources.map((source: SourceItem) => {
                   const href = source.url ?? source.href;
                   if (!href) return null;
                   const title = source.title ?? source.name ?? source.url ?? href;
@@ -80,8 +100,8 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
             );
           }
 
-          if (typeof (part as any).type === 'string' && (part as any).type.startsWith('tool-')) {
-            const toolCall = part as any;
+          if (typeof part.type === 'string' && part.type.startsWith('tool-')) {
+            const toolCall = part;
 
             // Web Search
             if (toolCall.type === 'tool-webSearch') {

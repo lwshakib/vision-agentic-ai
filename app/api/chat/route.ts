@@ -24,7 +24,7 @@ export async function GET() {
   return NextResponse.json(chats);
 }
 
-export async function POST(req: Request) {
+export async function POST() {
   const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

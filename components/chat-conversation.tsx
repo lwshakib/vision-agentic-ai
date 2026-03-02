@@ -4,8 +4,9 @@ import ChatInput from '@/components/chat-input';
 import { ChatConversationList as ConversationList } from './chats/conversation-list';
 import { ConversationSkeleton, ChatInputSkeleton } from './chats/chat-skeleton';
 import { SearchLoading as SearchLoadingUI, ToolLoading as ToolLoadingUI } from './chats/tool-status';
+import type { UIMessage } from 'ai';
 
-export type ChatMessage = any;
+export type ChatMessage = UIMessage;
 
 type ChatConversationViewProps = {
   messages: ChatMessage[];

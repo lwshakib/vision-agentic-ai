@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Logo Component matches snapshot 1`] = `
+<DocumentFragment>
+  <svg
+    class="size-12 text-primary"
+    id="Layer_1"
+    version="1.1"
+    viewBox="0 0 2000 2000"
+    xml:space="preserve"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+  >
+    <g
+      id="XMLID_233_"
+    >
+      <polygon
+        class="fill-current"
+        id="XMLID_274_"
+        points="1334.96,763.09 1168.79,763.09 1028.18,1006.63 1123.13,1129.98 1228.25,947.92 1292.5,836.63 1510.27,763.09"
+      />
+      <polygon
+        class="fill-current"
+        id="XMLID_279_"
+        points="1007.37,1042.67 1007.08,1043.18 859.33,787.27 1047.51,881.44 730.9,564.83 564.73,564.83 785.9,947.92 1007.08,1331 1090.62,1186.3"
+      />
+    </g>
+  </svg>
+</DocumentFragment>
+`;

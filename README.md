@@ -59,6 +59,21 @@ Vision Agentic AI is an advanced agentic chatbot platform designed to provide a 
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Testing
+
+Run unit and snapshot tests with Jest:
+
+```bash
+bun run test
+```
+
+Run E2E tests with Playwright:
+
+```bash
+# Ensure your dev server is running or use the built-in webServer config
+bun run test:e2e
+```
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS

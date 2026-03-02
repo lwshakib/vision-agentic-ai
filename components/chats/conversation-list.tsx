@@ -7,9 +7,10 @@ import { ChatMessageItem } from './message-item';
 import { ConversationSkeleton } from './chat-skeleton';
 import { Message, MessageContent } from '@/components/ai-elements/message';
 import { ThinkingDots } from '@/components/thinking-dots';
+import type { UIMessage } from 'ai';
 
 interface ChatConversationListProps {
-  messages: any[];
+  messages: UIMessage[];
   status: string;
   isLoadingHistory: boolean;
   onCopy: (text: string) => void;

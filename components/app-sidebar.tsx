@@ -43,7 +43,7 @@ import {
 } from '@/components/ui/sidebar';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Logo } from './logo';
 import { useChatStore } from '@/lib/store';

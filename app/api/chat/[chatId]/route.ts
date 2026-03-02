@@ -88,7 +88,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     existingChat._count.messages === 0 &&
     (existingChat.title === 'New chat' || !existingChat.title)
   ) {
-    const firstTextPart = persistedParts.find((p: any) => p.type === 'text');
+    const firstTextPart = persistedParts.find((p: Record<string, unknown>) => p.type === 'text');
     if (firstTextPart?.text) {
       generatedTitle = await generateChatTitle(firstTextPart.text);
       await prisma.chat.update({
