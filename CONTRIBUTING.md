@@ -94,12 +94,35 @@ This project and everyone participating in it is governed by our [Code of Conduc
 - Bun
 - Git
 
-### Installation
+### Installation & Local Development
 
-1. Clone the repository
-2. Install dependencies: `bun install`
-3. Copy `.env.example` to `.env` and update the values
-4. Run the development server: `bun run dev`
+1. **Fork & Clone**: Fork the repository and clone it to your local machine.
+2. **Dependencies**: Install required packages using Bun:
+   ```bash
+   bun install
+   ```
+3. **Environment**: Copy `.env.example` to `.env` and configure your API keys (Google AI, Tavily, Cloudinary, etc.).
+4. **Database**: Initialize and migrate your local PostgreSQL database:
+   ```bash
+   bun run db:migrate
+   ```
+5. **Start Dev Server**: Launch the application:
+   ```bash
+   bun run dev
+   ```
+6. **Database Management**: You can visualize and edit your database records using Prisma Studio:
+   ```bash
+   bun run db:studio
+   ```
+
+### Quality Assurance
+
+Before submitting a PR, please ensure your changes pass the following checks:
+
+- **Linting**: `bun run lint`
+- **Formatting**: `bun run format:check`
+- **Unit Tests**: `bun run test`
+- **E2E Tests**: `bun run test:e2e` (requires local dev server running)
 
 ## 📏 Style Guide
 

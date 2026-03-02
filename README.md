@@ -1,19 +1,21 @@
-# Vision Agentic AI
+# <img src="./public/logo.svg" width="40" alt="Vision Agentic AI Logo" style="vertical-align: middle;"> Vision Agentic AI
 
-Vision Agentic AI is an advanced agentic chatbot platform designed to provide a seamless and powerful user experience. Built with Next.js 15 and powered by state-of-the-art AI, it allows users to chat and utilize a suite of agentic tools, including real-time web search, detailed web content extraction, and high-quality image generation.
+Vision Agentic AI is a state-of-the-art agentic AI platform built with **Next.js 15+** and **React 19**. It empowers users with a sophisticated suite of AI tools, including real-time web exploration, automated content extraction, high-quality image generation, and natural voice synthesis.
 
 ![Vision Agentic AI Demo](./public/demo.png)
 
-## ✨ Features
+## ✨ Key Features
 
-- 🤖 **Agentic Chatbot**: Engage in meaningful conversations with an AI that understands context and intent.
-- 📂 **Project Management**: Organize your chats into dedicated projects for better workflow.
-- ⚡ **Optimistic UI**: Experience instant interactions with immediate feedback for actions like deletion.
-- 🔍 **Web Search Tool**: Real-time access to the web to find up-to-date information during chats.
-- 📄 **Web Extraction**: Deeply extract and analyze content from any web URL for research and insights.
-- 🎨 **Image Generation**: Generate high-quality images directly within the chat interface.
-- 🔒 **Secure Authentication**: Built-in security with BetterAuth.
-- 🖼️ **Image Library**: Automatically collect and manage all images generated or attached in your chats.
+- 🤖 **Agentic Chat System**: Context-aware AI interactions powered by Google's Gemini models.
+- 📂 **Workspace & Project Management**: Organize specialized chats into dedicated projects for streamlined workflows.
+- 🔍 **Real-time Web Search**: Integrated Tavily search for up-to-the-minute information retrieval.
+- 📄 **Deep Web Extraction**: Automated tools to scrape and analyze content from any URL.
+- 🎨 **Creative Image Generation**: Generate stunning visuals directly within your conversation flow.
+- 🎙️ **Text-to-Speech (TTS)**: Convert AI responses into natural-sounding speech.
+- 🔒 **Enterprise-Grade Auth**: Secure user accounts and session management via BetterAuth.
+- 🖼️ **Media Asset Library**: Centralized management for all generated and uploaded images.
+- ⚡ **Optimistic UI Engine**: High-performance interface with immediate feedback using Framer Motion.
+- 🌗 **Adaptive Theming**: Fully responsive design with support for System, Light, and Dark modes.
 
 ## 🚀 Getting Started
 
@@ -76,12 +78,33 @@ bun run test:e2e
 
 ## 🛠️ Tech Stack
 
+- **Runtime & Package Manager**: [Bun](https://bun.sh/)
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
-- **Backend**: Next.js Server Actions, Prisma
-- **Auth**: BetterAuth
-- **AI**: Google AI SDK, Tavily for Web Search
-- **Database**: PostgreSQL
-- **UI Components**: Radix UI, shadcn/ui, motion
+- **Backend**: Next.js Server Actions, Prisma ORM
+- **Authentication**: [Better-Auth](https://better-auth.com/)
+- **AI Integration**: [Google Gemini Pro Vision](https://ai.google.dev/), [Vercel AI SDK](https://sdk.vercel.ai/)
+- **Web Intelligence**: [Tavily AI Search](https://tavily.com/)
+- **Database**: PostgreSQL (via Prisma)
+- **Image Hosting**: [Cloudinary](https://cloudinary.com/)
+- **UI & Motion**: Radix UI, shadcn/ui, Framer Motion
+- **Testing**: Jest, Playwright
+
+## 📂 Project Architecture
+
+The codebase follows a modern Next.js 15 App Router architecture with a strong emphasis on modularity and type safety:
+
+- **`actions/`**: Server-side logic for data mutations and external integrations.
+- **`app/`**: Route definitions and layout configurations.
+  - `(auth)`: Encapsulated authentication flows.
+  - `(main)`: Core application views and user workspace.
+  - `api/`: REST endpoints for authentication and tool execution triggers.
+- **`components/`**: React components hierarchy.
+  - `ai-elements/`: Interactive components for rendering AI-generated content (e.g., search cards, image galleries).
+  - `chats/`: Core chat interface and conversation state management.
+  - `ui/`: Design system primitives built with Tailwind and Radix UI.
+- **`llm/`**: The brain of the application. Contains tool definitions, specialized prompts, and streaming logic.
+- **`lib/`**: Centralized utilities, database clients (Prisma), and shared constants.
+- **`prisma/`**: Data modeling and migration history for PostgreSQL.
 
 ## 🤝 Contributing
 
