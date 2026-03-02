@@ -1,41 +1,65 @@
+/**
+ * LoginPage Component (Reusable Unit)
+ * This component provides a full-featured login interface including
+ * traditional email/password auth and social provider integrations.
+ * It uses 'better-auth' client for session management.
+ */
+
 'use client';
 
+// Import Branding.
 import { Logo as LogoIcon } from '@/components/logo';
+// Import UI primitives.
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+// Import the client-side authentication library.
 import { authClient } from '@/lib/auth-client';
+// Import icons.
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+// Import routing hooks.
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+// Import flash message utility.
 import { toast } from 'sonner';
 
+/**
+ * Main application login page component.
+ */
 export default function LoginPage() {
   const router = useRouter();
+
+  // State for user credentials and loading indicators.
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+  /**
+   * Logic for authenticating via email and password string.
+   */
   const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent page reload.
     setIsLoading(true);
 
     try {
+      // Invoke the 'better-auth' email sign-in method.
       const { error } = await authClient.signIn.email({
         email,
         password,
       });
 
+      // Handle server-side authentication errors.
       if (error) {
         toast.error(error.message || 'Failed to sign in');
         return;
       }
 
+      // Success: notify the user and redirect to the application root.
       toast.success('Signed in successfully!');
       router.push('/');
-      router.refresh();
+      router.refresh(); // Ensure server session state is synchronized.
     } catch {
       toast.error('An unexpected error occurred');
     } finally {
@@ -43,12 +67,16 @@ export default function LoginPage() {
     }
   };
 
+  /**
+   * Logic for initiating the Google OAuth2 flow.
+   */
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
+      // Direct the user to the Google sign-in provider.
       await authClient.signIn.social({
         provider: 'google',
-        callbackURL: '/',
+        callbackURL: '/', // Route to return to after successful OAuth.
       });
     } catch {
       toast.error('Failed to sign in with Google');
@@ -57,12 +85,15 @@ export default function LoginPage() {
   };
 
   return (
+    // Outer section container: full height, centered content.
     <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
+      {/* Login Card Form Structure. */}
       <form
         onSubmit={handleEmailSignIn}
         className="bg-card m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
       >
         <div className="p-8 pb-6">
+          {/* Header Section: Logo and Titles. */}
           <div>
             <Link href="/" aria-label="go home">
               <LogoIcon />
@@ -70,10 +101,14 @@ export default function LoginPage() {
             <h1 className="mb-1 mt-4 text-xl font-semibold">
               Sign In to Vision Agentic AI
             </h1>
-            <p className="text-sm">Welcome back! Sign in to continue</p>
+            <p className="text-sm text-muted-foreground">
+              Welcome back! Sign in to continue
+            </p>
           </div>
 
+          {/* Social Provider Grid. */}
           <div className="mt-6 grid grid-cols-2 gap-3">
+            {/* Google Authentication Button. */}
             <Button
               type="button"
               variant="outline"
@@ -109,6 +144,7 @@ export default function LoginPage() {
               )}
               <span>Google</span>
             </Button>
+            {/* Placeholder for future Microsoft Auth. */}
             <Button type="button" variant="outline" disabled>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -131,8 +167,10 @@ export default function LoginPage() {
             </Button>
           </div>
 
+          {/* Visual Separator. */}
           <hr className="my-4 border-dashed" />
 
+          {/* Manual Email Input Section. */}
           <div className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email" className="block text-sm">
@@ -146,6 +184,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading || isGoogleLoading}
+                placeholder="name@example.com"
               />
             </div>
 
@@ -154,12 +193,13 @@ export default function LoginPage() {
                 <Label htmlFor="pwd" className="text-sm">
                   Password
                 </Label>
+                {/* Secondary navigation to password recovery tools. */}
                 <Button asChild variant="link" size="sm">
                   <Link
                     href="/forgot-password"
                     className="link intent-info variant-ghost text-sm"
                   >
-                    Forgot your Password ?
+                    Forgot your Password?
                   </Link>
                 </Button>
               </div>
@@ -174,6 +214,7 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Primary Submit Button. */}
             <Button
               type="submit"
               className="w-full"
@@ -191,9 +232,10 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* Footer: Redirection to Account Creation. */}
         <div className="bg-muted rounded-(--radius) border p-3">
           <p className="text-accent-foreground text-center text-sm">
-            Don&apos;t have an account ?
+            Don&apos;t have an account?
             <Button asChild variant="link" className="px-2">
               <Link href="/sign-up">Create account</Link>
             </Button>

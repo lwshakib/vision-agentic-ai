@@ -1,8 +1,8 @@
 ---
 name: 📚 Documentation
 about: Improvements or additions to the Vision Agentic AI documentation
-title: "[DOCS] "
-labels: ["documentation"]
+title: '[DOCS] '
+labels: ['documentation']
 assignees: []
 ---
 

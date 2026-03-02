@@ -1,7 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Message, MessageAttachment, MessageAttachments } from '@/components/ai-elements/message';
+import {
+  Message,
+  MessageAttachment,
+  MessageAttachments,
+} from '@/components/ai-elements/message';
 import { ChatMessageParts } from './message-parts';
 import { MessageActionsList } from './message-actions';
 import type { UIMessage } from 'ai';
@@ -26,11 +30,19 @@ interface MessageItemProps {
   onRetry?: () => void;
 }
 
-export function ChatMessageItem({ message, onCopy, onRetry }: MessageItemProps) {
+export function ChatMessageItem({
+  message,
+  onCopy,
+  onRetry,
+}: MessageItemProps) {
   const parts = Array.isArray(message.parts) ? message.parts : [];
   const msgWithFiles = message as MessageWithFiles;
   const messageFiles = msgWithFiles.files || [];
-  const fileParts = parts.filter((part: MessagePartItem) => part.type === 'file' || part.type === 'attachment') || [];
+  const fileParts =
+    parts.filter(
+      (part: MessagePartItem) =>
+        part.type === 'file' || part.type === 'attachment',
+    ) || [];
 
   const allFiles = [
     ...messageFiles,
@@ -54,19 +66,20 @@ export function ChatMessageItem({ message, onCopy, onRetry }: MessageItemProps) 
               data={{
                 type: 'file',
                 url: file.url || '',
-                mediaType: file.mediaType || file.type || 'application/octet-stream',
+                mediaType:
+                  file.mediaType || file.type || 'application/octet-stream',
                 filename: file.name || file.filename || '',
               }}
             />
           ))}
         </MessageAttachments>
       )}
-      
-      <ChatMessageParts 
-        messageId={message.id} 
-        parts={parts} 
-        isVersioned={!!msgWithFiles.version} 
-        version={msgWithFiles.version} 
+
+      <ChatMessageParts
+        messageId={message.id}
+        parts={parts}
+        isVersioned={!!msgWithFiles.version}
+        version={msgWithFiles.version}
       />
 
       <MessageActionsList message={message} onCopy={onCopy} onRetry={onRetry} />

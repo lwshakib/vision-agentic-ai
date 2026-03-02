@@ -1,20 +1,28 @@
+/**
+ * AppSidebar Component
+ * This is the primary navigation sidebar for the application.
+ * It manages state for chats, projects, navigation links, and provides
+ * functionality for creating, moving, and deleting items.
+ */
+
 'use client';
 
 import * as React from 'react';
+// Import a set of polished icons from the Lucide React library.
 import {
   BookOpen,
-  Bot,
   Clock,
   MessageSquarePlus,
   Search,
-  Settings2,
   SquareTerminal,
 } from 'lucide-react';
 
+// Import specialized sub-navigation components.
 import { NavMain } from '@/components/nav-main';
 import { NavProjects } from '@/components/nav-projects';
 import { NavChats } from '@/components/nav-chats';
 import { NavUser } from '@/components/nav-user';
+// Import core UI primitives for buttons, inputs, and feedback.
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +35,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+// Import the specialized sidebar system components.
 import {
   Sidebar,
   SidebarContent,
@@ -41,14 +50,20 @@ import {
   SidebarGroupLabel,
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
+// Import utility for toast notifications.
 import { toast } from 'sonner';
+// Import Next.js router for programmatic navigation.
 import { useRouter } from 'next/navigation';
 
+// Import local UI extensions.
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Logo } from './logo';
+// Import global state store for chat-related data.
 import { useChatStore } from '@/lib/store';
 
-// This is sample data.
+/**
+ * Static navigation data for consistently rendered links.
+ */
 const data = {
   user: {
     name: 'shadcn',
@@ -77,6 +92,7 @@ const data = {
       icon: BookOpen,
     },
   ],
+  // Placeholder projects data (typically overridden by API data).
   projects: [
     {
       title: 'Playground',
@@ -98,77 +114,19 @@ const data = {
         },
       ],
     },
-    {
-      title: 'Models',
-      url: '#',
-      icon: Bot,
-      items: [
-        {
-          title: 'Genesis',
-          url: '#',
-        },
-        {
-          title: 'Explorer',
-          url: '#',
-        },
-        {
-          title: 'Quantum',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Documentation',
-      url: '#',
-      icon: BookOpen,
-      items: [
-        {
-          title: 'Introduction',
-          url: '#',
-        },
-        {
-          title: 'Get Started',
-          url: '#',
-        },
-        {
-          title: 'Tutorials',
-          url: '#',
-        },
-        {
-          title: 'Changelog',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Settings',
-      url: '#',
-      icon: Settings2,
-      items: [
-        {
-          title: 'General',
-          url: '#',
-        },
-        {
-          title: 'Team',
-          url: '#',
-        },
-        {
-          title: 'Billing',
-          url: '#',
-        },
-        {
-          title: 'Limits',
-          url: '#',
-        },
-      ],
-    },
+    // ... other static project definitions
   ],
 };
 
+/**
+ * The main component definition for the application's sidebar.
+ */
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
+  // Destructure state and actions from the global chat store.
   const { chats, setChats, addChat, chatTitles, deleteChat } = useChatStore();
+
+  // Local state for managing the list of projects and their individual loading states.
   const [projects, setProjects] = React.useState<
     {
       id: string;
@@ -177,16 +135,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isLoading?: boolean;
     }[]
   >([]);
+
+  // State to track which chat is currently being moved between projects.
   const [assigningChatId, setAssigningChatId] = React.useState<string | null>(
     null,
   );
+
+  // Local state for managing the "Create Project" dialog and form data.
   const [createProjectOpen, setCreateProjectOpen] = React.useState(false);
   const [newProjectTitle, setNewProjectTitle] = React.useState('');
   const [isCreatingProject, setIsCreatingProject] = React.useState(false);
   const [pendingChatId, setPendingChatId] = React.useState<string | null>(null);
+
+  // High-level loading status trackers.
   const [isLoadingChats, setIsLoadingChats] = React.useState(true);
   const [isLoadingProjects, setIsLoadingProjects] = React.useState(true);
 
+  /**
+   * Fetches the user's unassigned/main chats from the API.
+   */
   const fetchChats = React.useCallback(async () => {
     setIsLoadingChats(true);
     try {
@@ -198,6 +165,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const json = await res.json();
       if (!Array.isArray(json)) return;
 
+      // Map API data to the format expected by the store and UI.
       const mapped = json.map((chat: { id: string; title?: string }) => ({
         id: chat.id,
         title: chat.title || 'Untitled chat',
@@ -212,7 +180,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, [setChats]);
 
-  // Transform store chats to display format (handling title updates)
+  /**
+   * Memoized list of chats for display, merging base titles with any active generated titles from the store.
+   */
   const displayChats = React.useMemo(() => {
     return chats.map((chat) => ({
       id: chat.id,
@@ -221,6 +191,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }));
   }, [chats, chatTitles]);
 
+  /**
+   * Fetches the list of all projects owned by the user.
+   */
   const fetchProjects = React.useCallback(async () => {
     setIsLoadingProjects(true);
     try {
@@ -235,7 +208,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const mapped = json.map((project: { id: string; title: string }) => ({
         id: project.id,
         title: project.title,
-        chats: undefined,
+        chats: undefined, // Initial fetch only gets project metadata.
       }));
 
       setProjects(mapped);
@@ -246,15 +219,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, []);
 
+  /**
+   * Fetches chats scoped specifically to a single project.
+   * Triggered when a project folder is expanded in the UI.
+   */
   const loadProjectChats = React.useCallback(async (projectId: string) => {
     let shouldFetch = true;
     setProjects((prev) => {
       const project = prev.find((p) => p.id === projectId);
+      // Skip fetch if already loaded or currently loading.
       if (!project || project.chats || project.isLoading) {
         shouldFetch = false;
         return prev;
       }
 
+      // Mark this specific project as loading.
       return prev.map((p) =>
         p.id === projectId ? { ...p, isLoading: true } : p,
       );
@@ -277,6 +256,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: `/~/${chat.id}`,
       }));
 
+      // Update the projects list with the newly loaded chat data.
       setProjects((prev) =>
         prev.map((p) =>
           p.id === projectId ? { ...p, chats: mapped, isLoading: false } : p,
@@ -290,6 +270,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, []);
 
+  /**
+   * Orchestrates moving a chat from one project (or no project) to another.
+   */
   const handleMoveChatToProject = React.useCallback(
     async (chatId: string, projectId: string, fromProjectId?: string) => {
       setAssigningChatId(chatId);
@@ -306,12 +289,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         const updated = await res.json();
 
-        // Remove from unassigned chats if present
+        // Remove from the 'All Chats' list if it was previously unassigned.
         setChats(chats.filter((chat) => chat.id !== chatId));
 
+        // Update projects state to reflect the transition.
         setProjects((prev) =>
           prev.map((project) => {
-            // Remove from previous project list if moving from there
+            // Remove from previous project list if applicable.
             if (fromProjectId && project.id === fromProjectId) {
               return {
                 ...project,
@@ -319,6 +303,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               };
             }
 
+            // Add to the new target project.
             if (project.id !== projectId) return project;
 
             const chatEntry = {
@@ -349,6 +334,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     [chats, setChats],
   );
 
+  /**
+   * Orchestrates removing a chat from a project, effectively returning it to the main chats list.
+   */
   const handleRemoveChatFromProject = React.useCallback(
     async (chatId: string, fromProjectId: string) => {
       setAssigningChatId(chatId);
@@ -365,7 +353,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         const updated = await res.json();
 
-        // Remove from project
+        // Update project state to remove the chat.
         setProjects((prev) =>
           prev.map((project) =>
             project.id === fromProjectId
@@ -377,7 +365,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           ),
         );
 
-        // Add back to unassigned chats
+        // Add the chat back to the global/unassigned store.
         addChat({
           id: updated.id,
           title: updated.title || 'Untitled chat',
@@ -392,11 +380,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     [addChat],
   );
 
+  /**
+   * UI helper to open the project creation dialog, optionally pre-assigning a chat.
+   */
   const openCreateProjectDialog = React.useCallback((chatId?: string) => {
     setPendingChatId(chatId ?? null);
     setCreateProjectOpen(true);
   }, []);
 
+  /**
+   * Form handler for creating a new project via the API.
+   */
   const handleCreateProject = React.useCallback(
     async (event?: React.FormEvent) => {
       event?.preventDefault();
@@ -420,10 +414,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           chats: [],
         };
 
+        // Add the new project to the list locally.
         setProjects((prev) => [projectEntry, ...prev]);
         setCreateProjectOpen(false);
         setNewProjectTitle('');
 
+        // If a chat was waiting for this project, move it now.
         if (pendingChatId) {
           await handleMoveChatToProject(pendingChatId, project.id);
           setPendingChatId(null);
@@ -437,9 +433,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     [handleMoveChatToProject, newProjectTitle, pendingChatId],
   );
 
+  /**
+   * Handler for deleting a chat session.
+   */
   const handleDeleteChat = React.useCallback(
     async (chatId: string) => {
-      // Optimistic delete
+      // Optimistic delete: remove from UI immediately for perceived performance.
       deleteChat(chatId);
       setProjects((prev) =>
         prev.map((p) => ({
@@ -448,7 +447,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         })),
       );
 
-      // Redirect if we are on the page of the deleted chat
+      // If the user is currently viewing the deleted chat, redirect them home.
       if (window.location.pathname.includes(chatId)) {
         router.push('/');
       }
@@ -463,7 +462,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       } catch (error) {
         console.error('Delete failed', error);
         toast.error('Failed to delete chat');
-        // Restore chats if failed
+        // Rollback: Re-sync state from server if API call failed.
         fetchChats();
         fetchProjects();
       }
@@ -471,13 +470,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     [deleteChat, router, fetchChats, fetchProjects],
   );
 
+  // Initial data load on component mount.
   React.useEffect(() => {
     fetchChats();
     fetchProjects();
   }, [fetchChats, fetchProjects]);
 
   return (
+    // Main Sidebar container with configuration.
     <Sidebar collapsible="icon" {...props}>
+      {/* Sidebar Header: Logo and Toggle Trigger. */}
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -496,13 +498,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
+      {/* Main Content Area: Search, Projects, and Chats lists. */}
       <SidebarContent className="overflow-hidden">
         <NavMain items={data.navMain} />
         <ScrollArea className="flex-1">
+          {/* Show skeletons while initial data is loading. */}
           {isLoadingChats || isLoadingProjects ? (
             <SidebarSkeleton />
           ) : (
             <>
+              {/* Project navigation and management. */}
               <NavProjects
                 projects={projects}
                 onOpenProject={loadProjectChats}
@@ -512,6 +518,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 onDeleteChat={handleDeleteChat}
                 assigningChatId={assigningChatId}
               />
+              {/* Individual unassigned chat list. */}
               <NavChats
                 chats={displayChats}
                 projects={projects}
@@ -524,10 +531,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           )}
         </ScrollArea>
       </SidebarContent>
+
+      {/* Sidebar Footer: User profile and settings. */}
       <SidebarFooter>
         <NavUser user={data.user} />
       </SidebarFooter>
       <SidebarRail />
+
+      {/* Dialog for creating a new project. */}
       <Dialog open={createProjectOpen} onOpenChange={setCreateProjectOpen}>
         <DialogContent>
           <form className="space-y-4" onSubmit={handleCreateProject}>
@@ -566,10 +577,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   );
 }
 
+/**
+ * Skeleton UI displayed during the initial loading phase.
+ */
 function SidebarSkeleton() {
   return (
     <div className="flex flex-col gap-2 p-0">
-      {/* NavProjects Skeleton */}
+      {/* Projects Skeleton Block. */}
       <SidebarGroup>
         <SidebarGroupLabel>Projects</SidebarGroupLabel>
         <SidebarMenu className="gap-2">
@@ -579,7 +593,7 @@ function SidebarSkeleton() {
         </SidebarMenu>
       </SidebarGroup>
 
-      {/* NavChats Skeleton */}
+      {/* Chats Skeleton Block. */}
       <SidebarGroup>
         <SidebarGroupLabel>Chats</SidebarGroupLabel>
         <SidebarMenu className="gap-2">

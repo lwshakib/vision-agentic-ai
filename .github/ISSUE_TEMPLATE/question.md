@@ -1,8 +1,8 @@
 ---
 name: ❓ Question
 about: Ask a question about the Vision Agentic AI platform
-title: "[Q] "
-labels: ["question"]
+title: '[Q] '
+labels: ['question']
 assignees: []
 ---
 

@@ -1,6 +1,23 @@
+/**
+ * ChatInput Component
+ * This is a highly complex, multi-feature input system.
+ * It supports:
+ * 1. Auto-resizing multi-line text input.
+ * 2. Voice recording with real-time waveform visualization.
+ * 3. Automatic audio transcription via Deepgram.
+ * 4. Multi-file uploads (images/videos) to Cloudinary with progress tracking.
+ */
+
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+// Import a diverse set of icons for various UI states.
 import {
   Plus,
   Mic,
@@ -11,6 +28,7 @@ import {
   VideoIcon,
   FileIcon,
 } from 'lucide-react';
+// Import Cloudinary upload utilities and progress types.
 import {
   uploadToCloudinary,
   type UploadProgress,
@@ -19,6 +37,10 @@ import NextImage from 'next/image';
 
 /* ------------------ LIVE RAIL WAVEFORM ------------------ */
 
+/**
+ * LiveWaveform Component
+ * Renders a dynamic bar-style visualization of live audio input from the microphone.
+ */
 function LiveWaveform({
   active,
   height = 36,
@@ -26,14 +48,19 @@ function LiveWaveform({
   active: boolean;
   height?: number;
 }) {
+  // Refs for managing Canvas Web API and Web Audio API objects.
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const rafRef = useRef<number>(0);
+  const rafRef = useRef<number>(0); // Request Animation Frame ID.
 
+  // Persistence for the bar heights to create a sliding transition effect.
   const railRef = useRef<number[]>([]);
 
+  /**
+   * Cleanup routine to stop all media tracks and close the audio context.
+   */
   const cleanup = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -45,6 +72,9 @@ function LiveWaveform({
     streamRef.current = null;
   }, []);
 
+  /**
+   * Drawing loop that converts frequency-domain audio data into visual bars.
+   */
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
@@ -53,22 +83,27 @@ function LiveWaveform({
     const ctx = canvas.getContext('2d')!;
     const buffer = new Uint8Array(analyser.fftSize);
 
+    // Configuration for the bar grid.
     const barWidth = 3;
     const gap = 2;
     const step = barWidth + gap;
     const maxBars = Math.floor(canvas.width / step);
 
+    // Initialize the bar height history if empty or resized.
     if (railRef.current.length !== maxBars) {
       railRef.current = Array(maxBars).fill(0.12);
     }
 
+    // Constants for signal processing.
     const GAIN = 5;
-    const CURVE = 0.65;
+    const CURVE = 0.65; // Non-linear amplification for better visibility of quiet sounds.
     const FLOOR = 0.12;
 
     const render = () => {
+      // Get the current raw time-domain audio signal.
       analyser.getByteTimeDomainData(buffer);
 
+      // Calculate Root Mean Square (RMS) energy to measure volume.
       let sum = 0;
       for (let i = 0; i < buffer.length; i++) {
         const v = (buffer[i] - 128) / 128;
@@ -76,25 +111,32 @@ function LiveWaveform({
       }
       const rms = Math.sqrt(sum / buffer.length);
 
+      // Apply non-linear scaling to the energy level for a "punchy" visual.
       let energy = Math.pow(rms * GAIN, CURVE);
       energy = Math.min(1, energy);
 
+      // Apply a simple smoothing filter to the transition.
       const last = railRef.current[railRef.current.length - 1] ?? FLOOR;
       const next = last + (energy - last) * 0.35;
 
+      // Shift the array to create the sliding "rail" effect.
       railRef.current.shift();
       railRef.current.push(Math.max(FLOOR, next));
 
+      // Clear the canvas for the next frame.
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const centerY = canvas.height / 2;
 
+      // Render each bar in the rail.
       for (let i = 0; i < railRef.current.length; i++) {
         const v = railRef.current[i];
         const h = v * canvas.height;
 
+        // Visual styling: Dynamic alpha based on loudness.
         ctx.globalAlpha = 0.35 + v * 0.65;
         ctx.fillStyle = '#e5e7eb';
 
+        // Draw the bar centered vertically.
         ctx.fillRect(i * step, centerY - h / 2, barWidth, h);
       }
 
@@ -105,6 +147,9 @@ function LiveWaveform({
     rafRef.current = requestAnimationFrame(render);
   }, []);
 
+  /**
+   * Effect to start or stop the audio stream and visualization loop.
+   */
   useEffect(() => {
     if (!active) {
       cleanup();
@@ -112,32 +157,38 @@ function LiveWaveform({
     }
 
     const start = async () => {
+      // Request microphone access.
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
+      // Initialize the Web Audio Context.
       const AudioCtx =
         window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
       const ctx = new AudioCtx();
       audioCtxRef.current = ctx;
 
+      // Set up the analyser node for extracting signal data.
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
       analyser.smoothingTimeConstant = 0.85;
 
+      // Connect the mic stream to the analyser.
       const source = ctx.createMediaStreamSource(stream);
       source.connect(analyser);
 
       analyserRef.current = analyser;
-      draw();
+      draw(); // Start the drawing loop.
     };
 
     start();
     return cleanup;
   }, [active, cleanup, draw]);
 
-
-
+  /**
+   * Handle canvas resizing and DPI scaling for crisp visuals.
+   */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -164,11 +215,16 @@ function LiveWaveform({
 
 /* ------------------ CIRCULAR PROGRESS ------------------ */
 
+/**
+ * CircularProgress Component
+ * Shows a tiny circular loader for individual file uploads.
+ */
 function CircularProgress({ percentage }: { percentage: number }) {
   const size = 24;
   const strokeWidth = 2;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
+  // Calculate dash offset based on completion percentage.
   const offset = circumference - (percentage / 100) * circumference;
 
   return (
@@ -179,6 +235,7 @@ function CircularProgress({ percentage }: { percentage: number }) {
         height={size}
         style={{ width: size, height: size }}
       >
+        {/* Background track circle. */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -187,6 +244,7 @@ function CircularProgress({ percentage }: { percentage: number }) {
           strokeWidth={strokeWidth}
           fill="none"
         />
+        {/* Foreground progress circle. */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -200,6 +258,7 @@ function CircularProgress({ percentage }: { percentage: number }) {
           className="transition-all duration-300"
         />
       </svg>
+      {/* Percentage text in the center. */}
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="text-[8px] font-medium text-white">{percentage}%</span>
       </div>
@@ -209,17 +268,22 @@ function CircularProgress({ percentage }: { percentage: number }) {
 
 /* ------------------ FILE PREVIEW ------------------ */
 
+// Type definition for a file in the upload pipeline.
 type FilePreview = {
   id: string;
   file: File;
-  previewUrl: string;
-  cloudUrl: string | null;
+  previewUrl: string; // Blob URL for instant local display.
+  cloudUrl: string | null; // Final URL after Cloudinary upload.
   publicId: string | null;
   uploadProgress: number;
   isUploading: boolean;
   error: string | null;
 };
 
+/**
+ * FilePreviewItem Component
+ * Renders an individual thumbnail with upload status and removal functionality.
+ */
 function FilePreviewItem({
   preview,
   onRemove,
@@ -233,6 +297,7 @@ function FilePreviewItem({
   return (
     <div className="relative group">
       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-neutral-700">
+        {/* Render local thumbnail if it's an image. */}
         {isImage && (
           <NextImage
             src={preview.previewUrl}
@@ -243,32 +308,34 @@ function FilePreviewItem({
             unoptimized
           />
         )}
+        {/* Generic video icon placeholder for video files. */}
         {isVideo && (
           <div className="w-full h-full flex items-center justify-center bg-neutral-800">
             <VideoIcon className="w-6 h-6 text-neutral-400" />
           </div>
         )}
+        {/* Generic file icon for other types. */}
         {!isImage && !isVideo && (
           <div className="w-full h-full flex items-center justify-center">
             <FileIcon className="w-6 h-6 text-neutral-400" />
           </div>
         )}
 
-        {/* Upload progress overlay */}
+        {/* Show progress overlay when uploading. */}
         {preview.isUploading && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <CircularProgress percentage={preview.uploadProgress} />
           </div>
         )}
 
-        {/* Error overlay */}
+        {/* Error state overlay. */}
         {preview.error && (
           <div className="absolute inset-0 bg-red-500/80 flex items-center justify-center">
             <X className="w-4 h-4 text-white" />
           </div>
         )}
 
-        {/* Remove button */}
+        {/* Remove button displayed on hover. */}
         {!preview.isUploading && (
           <button
             onClick={onRemove}
@@ -284,6 +351,7 @@ function FilePreviewItem({
 
 /* ------------------ CHAT INPUT ------------------ */
 
+// Data structure passed to the parent after successful message submission.
 type FileInfo = {
   url: string;
   name: string;
@@ -297,16 +365,21 @@ type ChatInputProps = {
   className?: string;
 };
 
+/**
+ * Main ChatInput component.
+ */
 export default function ChatInput({
   onSend,
   placeholder = 'Ask anything',
   className,
 }: ChatInputProps) {
+  // DOM references for elements and recording states.
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  // Local component states.
   const [value, setValue] = useState('');
   const [isMultiline, setIsMultiline] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -314,16 +387,20 @@ export default function ChatInput({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filePreviews, setFilePreviews] = useState<FilePreview[]>([]);
 
+  // UI derive logic: Can the user send the current input?
   const hasText = value.trim().length > 0;
   const hasFiles =
     filePreviews.length > 0 &&
     filePreviews.every((f) => f.cloudUrl && !f.isUploading);
 
+  /**
+   * Orchestrates the primary sending logic, combining text and uploaded files.
+   */
   const handleSend = async () => {
     if ((!hasText && !hasFiles) || isSubmitting) return;
     const text = value.trim();
 
-    // Get all uploaded file info (URL, name, type, publicId)
+    // Collect all successfully uploaded file metadata.
     const fileInfos: FileInfo[] = filePreviews
       .filter((f) => f.cloudUrl && !f.isUploading && f.publicId)
       .map((f) => ({
@@ -335,26 +412,32 @@ export default function ChatInput({
 
     setIsSubmitting(true);
     try {
+      // Trigger the parent's send callback.
       await onSend?.(text, fileInfos.length > 0 ? fileInfos : undefined);
-      setValue('');
-      // Clean up file previews
+      setValue(''); // Reset text box.
+
+      // Cleanup local blob URLs to prevent memory leaks.
       filePreviews.forEach((preview) => {
         URL.revokeObjectURL(preview.previewUrl);
       });
-      setFilePreviews([]);
+      setFilePreviews([]); // Clear attachment list.
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  /**
+   * Logic for when the user selects files from their device.
+   */
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    // Create a preview object for each newly selected file.
     const newPreviews: FilePreview[] = Array.from(files).map((file) => ({
       id: Math.random().toString(36).substring(7),
       file,
-      previewUrl: URL.createObjectURL(file),
+      previewUrl: URL.createObjectURL(file), // Local URL for immediate UI feedback.
       cloudUrl: null,
       publicId: null,
       uploadProgress: 0,
@@ -364,12 +447,13 @@ export default function ChatInput({
 
     setFilePreviews((prev) => [...prev, ...newPreviews]);
 
-    // Upload each file
+    // Sequential upload processing for each file.
     for (const preview of newPreviews) {
       try {
         const result = await uploadToCloudinary(
           preview.file,
           (progress: UploadProgress) => {
+            // Update UI with real-time percentage.
             setFilePreviews((prev) =>
               prev.map((p) =>
                 p.id === preview.id
@@ -380,6 +464,7 @@ export default function ChatInput({
           },
         );
 
+        // Upload complete: store Cloudinary response data.
         setFilePreviews((prev) =>
           prev.map((p) =>
             p.id === preview.id
@@ -394,6 +479,7 @@ export default function ChatInput({
           ),
         );
       } catch (error) {
+        // Record upload failure.
         setFilePreviews((prev) =>
           prev.map((p) =>
             p.id === preview.id
@@ -409,12 +495,15 @@ export default function ChatInput({
       }
     }
 
-    // Reset file input
+    // Reset the input so the user can pick the same file again if desired.
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
+  /**
+   * UI action to remove an attached file.
+   */
   const removeFile = (id: string) => {
     setFilePreviews((prev) => {
       const preview = prev.find((p) => p.id === id);
@@ -427,13 +516,17 @@ export default function ChatInput({
 
   /* -------- AUTO RESIZE TEXTAREA (PASTE + TYPE) -------- */
 
+  /**
+   * Layout effect to perfectly resize the input area based on its current content height.
+   */
   useLayoutEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
 
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
+    el.style.height = 'auto'; // Reset to calculate true scrollHeight.
+    el.style.height = `${el.scrollHeight}px`; // Set to scrollHeight.
 
+    // Determine if the input has expanded into multiple lines.
     const computed = window.getComputedStyle(el);
     const lineHeight = parseFloat(computed.lineHeight || '0');
     if (lineHeight > 0) {
@@ -444,6 +537,9 @@ export default function ChatInput({
     }
   }, [value]);
 
+  /**
+   * Voice Input: Starts microphone capture and raw data gathering.
+   */
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -451,17 +547,16 @@ export default function ChatInput({
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
+      // Handle raw audio data availability.
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
+      // Handle stream termination events.
       mediaRecorder.onstop = async () => {
-        // Stop all tracks on stream to release the microphone
-        stream.getTracks().forEach((track) => track.stop());
-        // Do not clear audioChunksRef here; stopRecording() / sendForTranscription()
-        // will decide whether to keep or discard the chunks.
+        stream.getTracks().forEach((track) => track.stop()); // Stop mic completely.
         console.log(
           'MediaRecorder stopped, chunks length:',
           audioChunksRef.current.length,
@@ -476,9 +571,12 @@ export default function ChatInput({
     }
   };
 
+  /**
+   * Sends the collected audio buffer to the backend for speech-to-text conversion.
+   */
   const sendForTranscription = async () => {
     const chunks = audioChunksRef.current;
-    audioChunksRef.current = [];
+    audioChunksRef.current = []; // Reset locally.
     console.log('Sending chunks for transcription, count:', chunks.length);
     if (!chunks.length) {
       console.warn('No audio chunks to transcribe');
@@ -490,6 +588,7 @@ export default function ChatInput({
       const audioBlob = new Blob(chunks, { type: 'audio/webm' });
       const reader = new FileReader();
 
+      // Convert audio blob to base64 string for API transmission.
       const base64Audio: string = await new Promise((resolve, reject) => {
         reader.onerror = () => reject(reader.error);
         reader.onloadend = () => {
@@ -504,6 +603,7 @@ export default function ChatInput({
         reader.readAsDataURL(audioBlob);
       });
 
+      // Invoke the transcription API route.
       const res = await fetch('/api/transcribe', {
         method: 'POST',
         headers: {
@@ -520,8 +620,9 @@ export default function ChatInput({
       const data: { transcript?: string } = await res.json();
       const transcript = data.transcript?.trim();
       console.log('Transcribed text from Deepgram:', transcript);
+
+      // If a transcript was returned, append it to the current input text.
       if (transcript) {
-        // Place the transcript into the input; let the user send manually
         setValue((v) => (v ? `${v} ${transcript}` : transcript));
       }
     } catch (err) {
@@ -531,6 +632,9 @@ export default function ChatInput({
     }
   };
 
+  /**
+   * Voice Input: Stops capture and decides whether to transcribe or discard.
+   */
   const stopRecording = async (commit: boolean) => {
     try {
       if (
@@ -540,14 +644,16 @@ export default function ChatInput({
         const recorder = mediaRecorderRef.current;
         mediaRecorderRef.current = null;
 
+        /**
+         * Wait for the recorder to fully finish emitting its final chunks.
+         */
         const handleStop = () => {
           recorder.removeEventListener('stop', handleStop);
           setIsRecording(false);
           if (commit) {
             void sendForTranscription();
           } else {
-            // Discard recorded chunks
-            audioChunksRef.current = [];
+            audioChunksRef.current = []; // Explicitly discard if canceled.
           }
         };
 
@@ -562,6 +668,9 @@ export default function ChatInput({
     }
   };
 
+  /**
+   * UI focus correction when switching modes.
+   */
   useEffect(() => {
     if (isMultiline) {
       const el = textareaRef.current;
@@ -574,7 +683,7 @@ export default function ChatInput({
 
   return (
     <div className="w-full">
-      {/* File previews */}
+      {/* File Upload List: Displayed above the input box. */}
       {filePreviews.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-2">
           {filePreviews.map((preview) => (
@@ -587,7 +696,7 @@ export default function ChatInput({
         </div>
       )}
 
-      {/* Hidden file input */}
+      {/* Hidden file selector system hook. */}
       <input
         ref={fileInputRef}
         type="file"
@@ -597,13 +706,14 @@ export default function ChatInput({
         className="hidden"
       />
 
+      {/* Main interactive input chassis. */}
       <div
         className={`w-full rounded-2xl bg-neutral-800 text-white px-4 py-3 transition-all duration-200 ease-out ${
           className ?? ''
         }`}
       >
         {isRecording ? (
-          // Recording state: show waveform UI
+          /* -------- ACTIVE RECORDING UI -------- */
           <div className="flex items-center gap-3">
             <button
               disabled
@@ -612,8 +722,10 @@ export default function ChatInput({
               <Plus size={18} />
             </button>
 
+            {/* Live audio stream visualization. */}
             <LiveWaveform active={isRecording} />
 
+            {/* Cancel recording. */}
             <button
               onClick={() => stopRecording(false)}
               className="h-9 w-9 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center"
@@ -621,6 +733,7 @@ export default function ChatInput({
               <X size={18} />
             </button>
 
+            {/* Confirm and Transcribe. */}
             <button
               onClick={() => stopRecording(true)}
               className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center"
@@ -629,7 +742,7 @@ export default function ChatInput({
             </button>
           </div>
         ) : isTranscribing ? (
-          // Transcribing state: hide waveform and input, show loading in same area
+          /* -------- TRANSCRIBING STATE UI -------- */
           <div className="flex items-center justify-center gap-3 py-1">
             <div className="h-6 w-6 rounded-full border-2 border-neutral-400 border-t-transparent animate-spin" />
             <span className="text-xs text-neutral-300">
@@ -637,19 +750,21 @@ export default function ChatInput({
             </span>
           </div>
         ) : (
-          // Normal state: show input UI
+          /* -------- NORMAL INPUT UI -------- */
           <div
             className={
               isMultiline ? 'flex flex-col gap-3' : 'flex items-center gap-3'
             }
           >
             {isMultiline ? (
+              /* Expanded View: Toolbar below text area. */
               <>
                 <textarea
                   ref={textareaRef}
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   onKeyDown={(e) => {
+                    // Send on Enter (if no Shift key).
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       handleSend();
@@ -662,6 +777,7 @@ export default function ChatInput({
                 />
 
                 <div className="flex items-center justify-between gap-3">
+                  {/* Bottom-left: Attach button. */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="h-9 w-9 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center"
@@ -670,6 +786,7 @@ export default function ChatInput({
                   </button>
 
                   <div className="flex items-center gap-3">
+                    {/* Voice input trigger. */}
                     <button
                       onClick={startRecording}
                       disabled={isTranscribing}
@@ -678,6 +795,7 @@ export default function ChatInput({
                       <Mic size={18} />
                     </button>
 
+                    {/* Send button with context-aware icon. */}
                     <button
                       onClick={handleSend}
                       disabled={(!hasText && !hasFiles) || isSubmitting}
@@ -693,6 +811,7 @@ export default function ChatInput({
                 </div>
               </>
             ) : (
+              /* Inline View: Toolbar on same line as text input. */
               <>
                 <button
                   onClick={() => fileInputRef.current?.click()}

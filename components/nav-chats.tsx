@@ -1,6 +1,13 @@
+/**
+ * NavChats Component
+ * Renders the list of unassigned (standalone) chats in the sidebar.
+ * Includes functionality to move these chats into projects or delete them.
+ */
+
 'use client';
 
 import Link from 'next/link';
+// Import utility and functional icons.
 import {
   FolderKanban,
   FolderPlus,
@@ -12,6 +19,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+// Import Dropdown UI components for the chat context menu.
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +30,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+// Import Sidebar layout primitives.
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -32,13 +41,16 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
+/**
+ * Component to display a flat list of chats with individual action menus.
+ */
 export function NavChats({
-  chats,
-  projects,
-  onMoveToProject,
-  onCreateProject,
-  onDeleteChat,
-  assigningChatId,
+  chats, // Array of chat objects to display.
+  projects, // Global list of projects for the "Move to project" feature.
+  onMoveToProject, // Callback for project reassignment.
+  onCreateProject, // Callback to initiate new project creation.
+  onDeleteChat, // Callback for chat removal.
+  assigningChatId, // Tracker for showing loading state on a specific chat.
 }: {
   chats: {
     id?: string;
@@ -58,27 +70,36 @@ export function NavChats({
   const { isMobile } = useSidebar();
 
   return (
+    // Wrap the chats list in a SidebarGroup, hidden when the sidebar is collapsed to icon-only mode.
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Chats</SidebarGroupLabel>
       <SidebarMenu>
+        {/* Empty state messaging if no unassigned chats exist. */}
         {chats.length === 0 && (
           <SidebarMenuItem>
             <SidebarMenuButton disabled>
-              <MessageSquare className="text-muted-foreground" />
+              <MessageSquare className="text-muted-foreground mr-2 size-4" />
               <span className="text-muted-foreground">No chats yet</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         )}
+
+        {/* Map through each individual chat. */}
         {chats.map((item) => (
           <SidebarMenuItem key={item.id || item.name}>
+            {/* Primary link to the chat session. */}
             <SidebarMenuButton asChild>
               <Link href={item.url}>
+                {/* Dynamically render icon or fallback to default MessageSquare. */}
                 {item.icon ? <item.icon /> : <MessageSquare />}
                 <span>{item.name}</span>
               </Link>
             </SidebarMenuButton>
+
+            {/* Context menu for chat-specific actions. */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
+                {/* The '...' button visible on hover. */}
                 <SidebarMenuAction showOnHover>
                   <MoreHorizontal />
                   <span className="sr-only">More</span>
@@ -89,24 +110,30 @@ export function NavChats({
                 side={isMobile ? 'bottom' : 'right'}
                 align={isMobile ? 'end' : 'start'}
               >
-                <DropdownMenuItem>
-                  <MessageSquare className="text-muted-foreground" />
-                  <span>View Chat</span>
+                <DropdownMenuItem asChild>
+                  <Link href={item.url}>
+                    <MessageSquare className="text-muted-foreground mr-2 size-4" />
+                    <span>View Chat</span>
+                  </Link>
                 </DropdownMenuItem>
+
+                {/* Hierarchical "Move to project" menu. */}
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <Forward className="text-muted-foreground" />
+                    <Forward className="text-muted-foreground mr-2 size-4" />
                     <span>Move to project</span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-60">
+                    {/* Secondary option if no projects exist yet. */}
                     {projects.length === 0 && (
                       <DropdownMenuItem
                         onSelect={() => onCreateProject?.(item.id)}
                       >
-                        <FolderPlus className="text-muted-foreground" />
+                        <FolderPlus className="text-muted-foreground mr-2 size-4" />
                         <span>Create project</span>
                       </DropdownMenuItem>
                     )}
+                    {/* List existing projects as valid drop targets. */}
                     {projects.map((project) => (
                       <DropdownMenuItem
                         key={project.id}
@@ -115,32 +142,39 @@ export function NavChats({
                         }
                         disabled={assigningChatId === item.id}
                       >
+                        {/* Show specific loading spinner if this chat is being processed. */}
                         {assigningChatId === item.id ? (
-                          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                          <Loader2 className="mr-2 size-4 animate-spin text-muted-foreground" />
                         ) : (
-                          <FolderKanban className="text-muted-foreground" />
+                          <FolderKanban className="mr-2 size-4 text-muted-foreground" />
                         )}
                         <span>{project.title}</span>
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
+                    {/* Immediate trigger to create a NEW project for this chat. */}
                     <DropdownMenuItem
                       onSelect={() => onCreateProject?.(item.id)}
                     >
-                      <FolderPlus className="text-muted-foreground" />
+                      <FolderPlus className="text-muted-foreground mr-2 size-4" />
                       <span>Create new project</span>
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
-                <DropdownMenuItem>
-                  <Forward className="text-muted-foreground" />
-                  <span>Share Chat</span>
+
+                <DropdownMenuItem disabled>
+                  <Forward className="text-muted-foreground mr-2 size-4" />
+                  <span>Share Chat (N/A)</span>
                 </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
+
+                {/* Destructive chat deletion. */}
                 <DropdownMenuItem
                   onSelect={() => item.id && onDeleteChat?.(item.id)}
+                  className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
                 >
-                  <Trash2 className="text-muted-foreground" />
+                  <Trash2 className="mr-2 size-4" />
                   <span>Delete Chat</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

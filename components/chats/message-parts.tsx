@@ -1,8 +1,15 @@
 'use client';
 
 import React from 'react';
-import { MessageContent, MessageResponse } from '@/components/ai-elements/message';
-import { Reasoning, ReasoningContent, ReasoningTrigger } from '@/components/ai-elements/reasoning';
+import {
+  MessageContent,
+  MessageResponse,
+} from '@/components/ai-elements/message';
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from '@/components/ai-elements/reasoning';
 import { Source, SourceTrigger, SourceContent } from './source';
 import { ToolImage } from './tool-image';
 import { ToolSearchResults } from './tool-search';
@@ -15,8 +22,8 @@ interface MessagePart {
   reasoning?: string;
   isStreaming?: boolean;
   sources?: SourceItem[];
-  input?: Record<string, unknown>;
-  output?: Record<string, unknown>;
+  input?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  output?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   state?: string;
   [key: string]: unknown;
 }
@@ -36,14 +43,18 @@ interface MessagePartsProps {
   version?: number | string;
 }
 
-export function ChatMessageParts({ messageId, parts, isVersioned, version }: MessagePartsProps) {
+export function ChatMessageParts({
+  messageId,
+  parts,
+  isVersioned,
+  version,
+}: MessagePartsProps) {
   return (
     <MessageContent>
       {parts
         .filter(
           (part: MessagePart) =>
-            part.type !== 'file' &&
-            part.type !== 'attachment',
+            part.type !== 'file' && part.type !== 'attachment',
         )
         .map((part: MessagePart, i: number) => {
           const key = `${messageId}-${i}`;
@@ -84,15 +95,22 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
             if (!sources.length) return null;
 
             return (
-              <div key={key} className="mb-3 flex flex-wrap justify-start gap-2">
+              <div
+                key={key}
+                className="mb-3 flex flex-wrap justify-start gap-2"
+              >
                 {sources.map((source: SourceItem) => {
                   const href = source.url ?? source.href;
                   if (!href) return null;
-                  const title = source.title ?? source.name ?? source.url ?? href;
+                  const title =
+                    source.title ?? source.name ?? source.url ?? href;
                   return (
                     <Source href={href} key={href}>
                       <SourceTrigger showFavicon />
-                      <SourceContent title={title} description={source.description} />
+                      <SourceContent
+                        title={title}
+                        description={source.description}
+                      />
                     </Source>
                   );
                 })}
@@ -107,12 +125,20 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
             if (toolCall.type === 'tool-webSearch') {
               const input = toolCall.input;
               const output = toolCall.output;
-              const isLoading = toolCall.state === 'input-streaming' || toolCall.state === 'input-available';
+              const isLoading =
+                toolCall.state === 'input-streaming' ||
+                toolCall.state === 'input-available';
               const hasOutput = toolCall.state === 'output-available' && output;
 
               if (isLoading) {
-                const text = input?.query?.trim() ? `Searching web for "${input.query}"..` : 'Searching web..';
-                return <div key={key} className="my-2"><ToolLoading loadingText={text} /></div>;
+                const text = input?.query?.trim()
+                  ? `Searching web for "${input.query}"..`
+                  : 'Searching web..';
+                return (
+                  <div key={key} className="my-2">
+                    <ToolLoading loadingText={text} />
+                  </div>
+                );
               }
 
               if (hasOutput && output?.results?.length > 0) {
@@ -125,13 +151,22 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
             if (toolCall.type === 'tool-extractWebUrl') {
               const input = toolCall.input;
               const output = toolCall.output;
-              const isLoading = toolCall.state === 'input-streaming' || toolCall.state === 'input-available';
+              const isLoading =
+                toolCall.state === 'input-streaming' ||
+                toolCall.state === 'input-available';
               const hasOutput = toolCall.state === 'output-available' && output;
               const urls = input?.urls ?? output?.urls ?? [];
 
               if (isLoading) {
-                const text = urls.length > 0 ? `Extracting content from ${urls.length} URL${urls.length > 1 ? 's' : ''}..` : 'Extracting content..';
-                return <div key={key} className="my-2"><ToolLoading loadingText={text} /></div>;
+                const text =
+                  urls.length > 0
+                    ? `Extracting content from ${urls.length} URL${urls.length > 1 ? 's' : ''}..`
+                    : 'Extracting content..';
+                return (
+                  <div key={key} className="my-2">
+                    <ToolLoading loadingText={text} />
+                  </div>
+                );
               }
 
               if (hasOutput && output?.results?.length > 0) {
@@ -144,19 +179,37 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
             if (toolCall.type === 'tool-imageToImage') {
               const input = toolCall.input;
               const output = toolCall.output;
-              const isLoading = toolCall.state === 'input-streaming' || toolCall.state === 'input-available';
+              const isLoading =
+                toolCall.state === 'input-streaming' ||
+                toolCall.state === 'input-available';
               const hasOutput = toolCall.state === 'output-available' && output;
 
               if (isLoading) {
-                return <div key={key} className="my-2"><ToolLoading loadingText="Generating image from your image.." /></div>;
+                return (
+                  <div key={key} className="my-2">
+                    <ToolLoading loadingText="Generating image from your image.." />
+                  </div>
+                );
               }
 
               if (hasOutput && output.success && output.image) {
-                return <ToolImage key={key} imageSrc={output.image} prompt={input?.prompt} />;
+                return (
+                  <ToolImage
+                    key={key}
+                    imageSrc={output.image}
+                    prompt={input?.prompt}
+                  />
+                );
               }
 
               if (hasOutput && !output.success) {
-                return <ToolError key={key} title="Image generation failed" error={output.error} />;
+                return (
+                  <ToolError
+                    key={key}
+                    title="Image generation failed"
+                    error={output.error}
+                  />
+                );
               }
             }
 
@@ -164,19 +217,37 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
             if (toolCall.type === 'tool-generateImage') {
               const input = toolCall.input;
               const output = toolCall.output;
-              const isLoading = toolCall.state === 'input-streaming' || toolCall.state === 'input-available';
+              const isLoading =
+                toolCall.state === 'input-streaming' ||
+                toolCall.state === 'input-available';
               const hasOutput = toolCall.state === 'output-available' && output;
 
               if (isLoading) {
-                return <div key={key} className="my-2"><ToolLoading loadingText="Generating image.." /></div>;
+                return (
+                  <div key={key} className="my-2">
+                    <ToolLoading loadingText="Generating image.." />
+                  </div>
+                );
               }
 
               if (hasOutput && output.success && output.image) {
-                return <ToolImage key={key} imageSrc={output.image} prompt={input?.prompt} />;
+                return (
+                  <ToolImage
+                    key={key}
+                    imageSrc={output.image}
+                    prompt={input?.prompt}
+                  />
+                );
               }
 
               if (hasOutput && !output.success) {
-                return <ToolError key={key} title="Image generation failed" error={output.error} />;
+                return (
+                  <ToolError
+                    key={key}
+                    title="Image generation failed"
+                    error={output.error}
+                  />
+                );
               }
             }
 
@@ -184,19 +255,37 @@ export function ChatMessageParts({ messageId, parts, isVersioned, version }: Mes
             if (toolCall.type === 'tool-textToSpeech') {
               const input = toolCall.input;
               const output = toolCall.output;
-              const isLoading = toolCall.state === 'input-streaming' || toolCall.state === 'input-available';
+              const isLoading =
+                toolCall.state === 'input-streaming' ||
+                toolCall.state === 'input-available';
               const hasOutput = toolCall.state === 'output-available' && output;
 
               if (isLoading) {
-                return <div key={key} className="my-2"><SearchLoading loadingText="Generating speech..." /></div>;
+                return (
+                  <div key={key} className="my-2">
+                    <SearchLoading loadingText="Generating speech..." />
+                  </div>
+                );
               }
 
               if (hasOutput && output.success && output.audioUrl) {
-                return <ToolAudioPlayer key={key} audioUrl={output.audioUrl} text={input?.text} />;
+                return (
+                  <ToolAudioPlayer
+                    key={key}
+                    audioUrl={output.audioUrl}
+                    text={input?.text}
+                  />
+                );
               }
 
               if (hasOutput && !output.success) {
-                return <ToolError key={key} title="Speech generation failed" error={output.error} />;
+                return (
+                  <ToolError
+                    key={key}
+                    title="Speech generation failed"
+                    error={output.error}
+                  />
+                );
               }
             }
           }

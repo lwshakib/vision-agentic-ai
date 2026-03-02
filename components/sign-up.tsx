@@ -1,41 +1,65 @@
+/**
+ * SignUp Component
+ * This component provides the interface for new user registration.
+ * It supports both traditional email-based sign-up and Google OAuth2.
+ * Includes a multi-step UI that transitions to a verification notice after successful submission.
+ */
+
 'use client';
 
+// Import Branding element.
 import { Logo as LogoIcon } from '@/components/logo';
+// Import UI design system components.
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+// Import the 'better-auth' client library.
 import { authClient } from '@/lib/auth-client';
+// Import icons for loading states.
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+// Import notification utility.
 import { toast } from 'sonner';
 
+/**
+ * Main SignUp Component.
+ */
 export default function SignUp() {
+  // Component state for individual form fields.
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // Loading and flow-control states.
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
 
+  /**
+   * Primary form handler for creating a new user account via email.
+   */
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      // Invoke the email sign-up process.
       const { error } = await authClient.signUp.email({
         email,
         password,
-        name: `${firstName} ${lastName}`.trim(),
-        callbackURL: '/verify-email?success=true',
+        name: `${firstName} ${lastName}`.trim(), // Combine names for the global Name field.
+        callbackURL: '/verify-email?success=true', // Path to redirect after verification.
       });
 
+      // Handle server-side registration errors (e.g., account already exists).
       if (error) {
         toast.error(error.message || 'Failed to create account');
         return;
       }
 
+      // Transition to the "Check Your Email" UI state.
       setIsEmailSent(true);
     } catch {
       toast.error('An unexpected error occurred');
@@ -44,12 +68,15 @@ export default function SignUp() {
     }
   };
 
+  /**
+   * Logic for social sign-up/sign-in via Google.
+   */
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
     try {
       await authClient.signIn.social({
         provider: 'google',
-        callbackURL: '/',
+        callbackURL: '/', // Redirect home after successful registration.
       });
     } catch {
       toast.error('Failed to sign up with Google');
@@ -57,6 +84,10 @@ export default function SignUp() {
     }
   };
 
+  /**
+   * Render Mode: Verification Pending.
+   * Displayed after the user submits the sign-up form.
+   */
   if (isEmailSent) {
     return (
       <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
@@ -65,12 +96,13 @@ export default function SignUp() {
             <LogoIcon />
           </Link>
           <h1 className="mb-1 mt-4 text-xl font-semibold">Check your email</h1>
-          <p className="text-sm text-balance">
+          <p className="text-sm text-balance text-muted-foreground">
             We&apos;ve sent a verification link to <strong>{email}</strong>.
             Please verify your email to continue.
           </p>
 
           <div className="mt-6 flex flex-col gap-3">
+            {/* Direct convenience link for Gmail users. */}
             <Button asChild className="w-full">
               <a
                 href="https://mail.google.com"
@@ -89,13 +121,19 @@ export default function SignUp() {
     );
   }
 
+  /**
+   * Render Mode: Registration Form.
+   * The default state of the component.
+   */
   return (
     <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
+      {/* Sign-up form chassis. */}
       <form
         onSubmit={handleEmailSignUp}
         className="bg-card m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
       >
         <div className="p-8 pb-6">
+          {/* Header context. */}
           <div>
             <Link href="/" aria-label="go home">
               <LogoIcon />
@@ -103,10 +141,14 @@ export default function SignUp() {
             <h1 className="mb-1 mt-4 text-xl font-semibold">
               Create a Vision Agentic AI Account
             </h1>
-            <p className="text-sm">Welcome! Create an account to get started</p>
+            <p className="text-sm text-muted-foreground">
+              Welcome! Create an account to get started
+            </p>
           </div>
 
+          {/* Social connection options. */}
           <div className="mt-6 grid grid-cols-2 gap-3">
+            {/* Google provider button. */}
             <Button
               type="button"
               variant="outline"
@@ -142,6 +184,7 @@ export default function SignUp() {
               )}
               <span>Google</span>
             </Button>
+            {/* Future placeholder provider. */}
             <Button type="button" variant="outline" disabled>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -166,6 +209,7 @@ export default function SignUp() {
 
           <hr className="my-4 border-dashed" />
 
+          {/* Core registration fields. */}
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -180,6 +224,7 @@ export default function SignUp() {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   disabled={isLoading || isGoogleLoading}
+                  placeholder="Jane"
                 />
               </div>
               <div className="space-y-2">
@@ -194,6 +239,7 @@ export default function SignUp() {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   disabled={isLoading || isGoogleLoading}
+                  placeholder="Doe"
                 />
               </div>
             </div>
@@ -210,6 +256,7 @@ export default function SignUp() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading || isGoogleLoading}
+                placeholder="jane@example.com"
               />
             </div>
 
@@ -228,6 +275,7 @@ export default function SignUp() {
               />
             </div>
 
+            {/* Form submission trigger. */}
             <Button
               type="submit"
               className="w-full"
@@ -245,9 +293,10 @@ export default function SignUp() {
           </div>
         </div>
 
+        {/* Option to pivot to Sign-In. */}
         <div className="bg-muted rounded-(--radius) border p-3">
           <p className="text-accent-foreground text-center text-sm">
-            Have an account ?
+            Have an account?
             <Button asChild variant="link" className="px-2">
               <Link href="/sign-in">Sign In</Link>
             </Button>

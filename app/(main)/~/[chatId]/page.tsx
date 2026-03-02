@@ -1,55 +1,88 @@
+/**
+ * Chat Details Page
+ * This client-side component handles the rendering and logic for a specific chat session.
+ * It manages message history loading, real-time messaging, and persistence.
+ */
+
 'use client';
 
+// Import React hooks for lifecycle management and optimization.
 import { useEffect, useMemo, useRef, useState } from 'react';
+// Import Next.js hooks for accessing URL parameters and search queries.
 import { useParams, useSearchParams } from 'next/navigation';
+// Import AI SDK for AI-driven chat capabilities.
 import { useChat } from '@ai-sdk/react';
+// Import AI SDK transport for communication with the API.
 import { DefaultChatTransport } from 'ai';
+// Import custom components.
 import ChatInput from '@/components/chat-input';
 import { ChatConversationList } from '@/components/chats/conversation-list';
+// Import utility for notifications.
 import { toast } from 'sonner';
+// Import global state for chat management.
 import { useChatStore } from '@/lib/store';
 
+/**
+ * Interface representing a component part of a chat message (text, file, etc.).
+ */
 interface MessagePart {
-  type: string;
-  text?: string;
-  id?: string;
-  publicId?: string;
-  name?: string;
-  filename?: string;
-  url?: string;
-  mediaType?: string;
+  type: string; // The category of the part.
+  text?: string; // Content if it's text.
+  id?: string; // Unique part ID.
+  publicId?: string; // External storage ID.
+  name?: string; // Display name.
+  filename?: string; // Alternative name.
+  url?: string; // Media URL.
+  mediaType?: string; // MIME type.
 }
 
+/**
+ * Main ChatPage Component
+ */
 export default function ChatPage() {
+  // Extract chatId from the URL dynamic segment.
   const { chatId } = useParams<{ chatId: string }>();
+  // Access state action to set the current chat title in the UI.
   const { setChatTitle } = useChatStore();
 
-  // Memoize transport to prevent re-creation on every render
+  /**
+   * Memoize the chat transport to ensure we don't reconnect on every render,
+   * but only when the chatId changes.
+   */
   const chatTransport = useMemo(() => {
     if (!chatId) return null;
     return new DefaultChatTransport({
       api: '/api/generate',
       headers: {
-        'X-Chat-Id': chatId,
+        'X-Chat-Id': chatId, // Include chatId in headers for server context.
       },
     });
   }, [chatId]); // Only recreate if chatId changes
 
+  /**
+   * Initialize the AI SDK's useChat hook for real-time interaction.
+   */
   const {
-    sendMessage,
-    messages,
-    setMessages,
-    status,
+    sendMessage, // Function to send a new user message.
+    messages, // Array of current chat messages.
+    setMessages, // Function to manually update message state.
+    status, // Current status of the chat (idle, loading, etc.).
   } = useChat({
     transport: chatTransport ?? undefined,
+    // Global error handler for chat operations.
     onError: (err) => {
       console.error('Chat error:', err);
       toast.error('Internal server error');
     },
+    // Callback triggered when the AI finishes generating a response.
     onFinish: (message) => {
-      // Persist assistant message with parts (including tool outputs)
-      const parts = (message as unknown as { message?: { parts?: unknown[] } })?.message?.parts ?? [];
+      // Extract parts from the finished message for database persistence.
+      const parts =
+        (message as unknown as { message?: { parts?: unknown[] } })?.message
+          ?.parts ?? [];
       if (!chatId || !parts || parts.length === 0) return;
+
+      // Persist the assistant message to the database.
       void fetch(`/api/chat/${chatId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,24 +95,32 @@ export default function ChatPage() {
       );
     },
   });
+
+  // Access URL search parameters (e.g., from initial message redirects).
   const searchParams = useSearchParams();
 
+  // Local state to track if historical messages are still being fetched.
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  // Refs to prevent duplicate initialization/message sending.
   const initialMessageSent = useRef(false);
   const messagesLoaded = useRef(false);
 
-  // Reset refs when chatId changes
+  // Reset refs when chatId changes to allow fresh loading/sending.
   useEffect(() => {
     initialMessageSent.current = false;
     messagesLoaded.current = false;
     setIsLoadingHistory(true);
   }, [chatId]);
 
+  /**
+   * Function to retry a failed assistant message by re-sending the preceding user message.
+   * @param messageIndex - The index of the message to retry.
+   */
   const handleRetry = (messageIndex: number) => {
     const target = messages[messageIndex];
     if (!target) return;
 
-    // Find the last user message before this assistant message
+    // Find the last user message before this assistant message.
     const previousUserMessage = [...messages]
       .slice(0, messageIndex)
       .reverse()
@@ -90,19 +131,22 @@ export default function ChatPage() {
       return;
     }
 
+    // Extract content and files from the previous user message.
     const prevParts = Array.isArray(previousUserMessage.parts)
       ? previousUserMessage.parts
       : [];
-    const textPart = prevParts.find((p: MessagePart) => p.type === 'text') as MessagePart | undefined;
+    const textPart = prevParts.find((p: MessagePart) => p.type === 'text') as
+      | MessagePart
+      | undefined;
     const filesParts = prevParts.filter(
       (p: MessagePart) => p.type === 'file' || p.type === 'attachment',
     ) as MessagePart[];
 
-    // Remove this assistant message and any subsequent messages
+    // Remove this assistant message and any subsequent messages to clean up the UI.
     const newMessages = messages.slice(0, messageIndex);
     setMessages(newMessages);
 
-    // Re-send the user message
+    // Re-send the user message to trigger a fresh AI response.
     if (filesParts.length > 0) {
       sendMessage({
         text: textPart?.text || 'See attached files',
@@ -121,7 +165,7 @@ export default function ChatPage() {
     }
   };
 
-  // Load chat history on initial mount or when chatId changes
+  // Load chat history on initial mount or when chatId changes.
   useEffect(() => {
     if (!chatId || messagesLoaded.current) return;
 
@@ -131,6 +175,7 @@ export default function ChatPage() {
         if (!res.ok) throw new Error('Failed to load chat');
         const data = await res.json();
 
+        // If messages are found, set them in the chat state.
         if (data.messages && data.messages.length > 0) {
           setMessages(data.messages);
           if (data.title) {
@@ -149,19 +194,23 @@ export default function ChatPage() {
     void loadHistory();
   }, [chatId, setMessages, setChatTitle]);
 
-  // Handle initial message from query params
+  // Handle initial message from query params (e.g., when redirected from home).
   useEffect(() => {
     if (isLoadingHistory || initialMessageSent.current) return;
 
     const initialMessage = searchParams.get('message');
     const initialFilesStr = searchParams.get('files');
 
+    // Only send the initial message if one is provided and no messages exist yet.
     if (initialMessage && messages.length === 0) {
       initialMessageSent.current = true;
 
+      // Parse files if they were passed in the URL.
       if (initialFilesStr) {
         try {
-          const files = JSON.parse(decodeURIComponent(initialFilesStr)) as Array<{
+          const files = JSON.parse(
+            decodeURIComponent(initialFilesStr),
+          ) as Array<{
             url: string;
             name: string;
             type: string;
@@ -185,15 +234,22 @@ export default function ChatPage() {
         sendMessage({ text: initialMessage });
       }
 
-      // Clear params without page reload
+      // Clear search params from URL without a page reload.
       const newUrl = window.location.pathname;
-      window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+      window.history.replaceState(
+        { ...window.history.state, as: newUrl, url: newUrl },
+        '',
+        newUrl,
+      );
     } else if (messages.length > 0) {
-      // Even if there's no initial message to send, we're not loading anymore
+      // Even if there's no initial message to send, we're not loading anymore if messages exist.
       setIsLoadingHistory(false);
     }
   }, [isLoadingHistory, searchParams, messages.length, sendMessage]);
 
+  /**
+   * Handler to copy message text to clipboard.
+   */
   const handleCopy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -204,6 +260,9 @@ export default function ChatPage() {
     }
   };
 
+  /**
+   * Handler for sending a new message.
+   */
   const handleSend = async (
     text: string,
     files?: Array<{
@@ -213,6 +272,7 @@ export default function ChatPage() {
       publicId: string;
     }>,
   ) => {
+    // If files are attached, format the payload accordingly.
     if (files && files.length > 0) {
       sendMessage({
         text: text || 'See attached files',
@@ -225,16 +285,20 @@ export default function ChatPage() {
         })),
       });
     } else {
+      // Standard text message.
       sendMessage({
         text,
       });
     }
   };
 
+  // Return null if chatId is missing.
   if (!chatId) return null;
 
   return (
+    // Main layout container for the chat interface.
     <div className="flex min-h-screen flex-col bg-background">
+      {/* Scrollable conversation display area. */}
       <div className="flex flex-1 min-h-0 max-w-3xl mx-auto w-full">
         <ChatConversationList
           messages={messages}
@@ -245,6 +309,7 @@ export default function ChatPage() {
         />
       </div>
 
+      {/* Sticky footer containing the message input. */}
       <div className="sticky bottom-0 flex w-full items-center justify-center bg-background/80 px-4 pb-6 pt-4 backdrop-blur">
         <div className="w-full max-w-3xl">
           <ChatInput onSend={handleSend} placeholder="Send a message" />

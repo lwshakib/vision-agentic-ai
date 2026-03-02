@@ -1,8 +1,8 @@
 ---
 name: 🚀 Feature Request
 about: Suggest an idea for the Vision Agentic AI platform
-title: "[FEAT] "
-labels: ["enhancement"]
+title: '[FEAT] '
+labels: ['enhancement']
 assignees: []
 ---
 

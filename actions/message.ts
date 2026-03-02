@@ -1,8 +1,17 @@
+/**
+ * Message Database Actions
+ * This module handles the persistence of chat messages to the database using Prisma.
+ * It includes security checks to ensure users only modify their own chats.
+ */
+
 import prisma from '@/lib/prisma';
 import { MessageRole } from '@/generated/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
 import { getUser } from './user';
 
+/**
+ * Core function to save a message (either user or assistant) to a chat session.
+ */
 export async function saveMessage({
   chatId,
   role,
@@ -12,12 +21,13 @@ export async function saveMessage({
   role: 'user' | 'assistant';
   parts: Prisma.InputJsonValue;
 }) {
+  // Step 1: Authenticate the user from headers.
   const user = await getUser();
   if (!user) {
     throw new Error('Unauthorized');
   }
 
-  // Verify chat belongs to user
+  // Step 2: Security check - Verify the target chat belongs to the authenticated user.
   const chat = await prisma.chat.findFirst({
     where: {
       id: chatId,
@@ -29,17 +39,22 @@ export async function saveMessage({
     throw new Error('Chat not found');
   }
 
+  // Step 3: Create the message record in the database.
   const message = await prisma.message.create({
     data: {
       chatId,
+      // Map simple strings to Prisma-generated enums.
       role: role === 'user' ? MessageRole.user : MessageRole.assistant,
-      parts,
+      parts, // JSON structure containing text and potential tool calls/results.
     },
   });
 
   return message;
 }
 
+/**
+ * Convenience wrapper for saving a user's prompt.
+ */
 export async function saveUserMessage({
   chatId,
   parts,
@@ -54,6 +69,9 @@ export async function saveUserMessage({
   });
 }
 
+/**
+ * Convenience wrapper for saving an AI's response.
+ */
 export async function saveAssistantMessage({
   chatId,
   parts,

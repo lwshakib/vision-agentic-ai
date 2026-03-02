@@ -1,19 +1,33 @@
+/**
+ * Text-to-Speech (TTS) Utility
+ * Converts text into audio using the Deepgram API.
+ * Automatically handles audio hosting on Cloudinary.
+ */
+
 import { v2 as cloudinary } from 'cloudinary';
 import { DEEPGRAM_API_KEY } from '@/lib/env';
 
-// Configure Cloudinary
+/**
+ * Configure Cloudinary for audio storage.
+ */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+/**
+ * Main TTS function.
+ * @param text - The content to be converted to speech.
+ */
 export async function textToSpeech({ text }: { text: string }) {
   try {
+    // Check for required API key.
     if (!DEEPGRAM_API_KEY) {
       throw new Error('Missing DEEPGRAM_API_KEY');
     }
 
+    // Step 1: Request audio generation from Deepgram.
     const response = await fetch(
       'https://api.deepgram.com/v1/speak?model=aura-2-thalia-en',
       {
@@ -21,12 +35,13 @@ export async function textToSpeech({ text }: { text: string }) {
         headers: {
           Authorization: `Token ${DEEPGRAM_API_KEY}`,
           'Content-Type': 'application/json',
-          Accept: 'audio/mpeg',
+          Accept: 'audio/mpeg', // Request MP3 format.
         },
         body: JSON.stringify({ text }),
       },
     );
 
+    // Handle Deepgram-specific errors.
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
@@ -34,10 +49,11 @@ export async function textToSpeech({ text }: { text: string }) {
       );
     }
 
+    // Convert the audio stream into a Buffer for Cloudinary.
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to Cloudinary
+    // Step 2: Upload the binary audio data to Cloudinary.
     const uploadResult = await new Promise<{
       secure_url: string;
       public_id: string;
@@ -46,7 +62,7 @@ export async function textToSpeech({ text }: { text: string }) {
         .upload_stream(
           {
             folder: 'vision-ai-studio/audio',
-            resource_type: 'video', // Audio is treated as video resource type in Cloudinary usually
+            resource_type: 'video', // Audio is treated as 'video' resource type in Cloudinary.
           },
           (error, result) => {
             if (error) {
@@ -64,6 +80,7 @@ export async function textToSpeech({ text }: { text: string }) {
         .end(buffer);
     });
 
+    // Return the successful audio URL and metadata.
     return {
       success: true,
       audioUrl: uploadResult.secure_url,
@@ -71,6 +88,7 @@ export async function textToSpeech({ text }: { text: string }) {
       text,
     };
   } catch (error) {
+    // Return a structured error response for UI handling.
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
