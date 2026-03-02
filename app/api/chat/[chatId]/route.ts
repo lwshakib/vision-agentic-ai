@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { MessageRole } from '@/generated/prisma/client';
 import { getUser } from '@/actions/user';
+import { generateChatTitle } from '@/llm/generate-title';
 
 type Params = {
   params: Promise<{ chatId: string }>;
@@ -44,6 +45,11 @@ export async function POST(req: NextRequest, { params }: Params) {
       id: chatId,
       userId: user.id,
     },
+    include: {
+      _count: {
+        select: { messages: true },
+      },
+    },
   });
 
   if (!existingChat) {
@@ -75,7 +81,24 @@ export async function POST(req: NextRequest, { params }: Params) {
     },
   });
 
-  return NextResponse.json(created);
+  // Generate title if this is the first user message
+  let generatedTitle: string | undefined = undefined;
+  if (
+    role === 'user' &&
+    existingChat._count.messages === 0 &&
+    (existingChat.title === 'New chat' || !existingChat.title)
+  ) {
+    const firstTextPart = persistedParts.find((p: any) => p.type === 'text');
+    if (firstTextPart?.text) {
+      generatedTitle = await generateChatTitle(firstTextPart.text);
+      await prisma.chat.update({
+        where: { id: chatId },
+        data: { title: generatedTitle },
+      });
+    }
+  }
+
+  return NextResponse.json({ ...created, title: generatedTitle });
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {

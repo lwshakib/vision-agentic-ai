@@ -97,14 +97,7 @@ function TemporaryChat() {
     transport: chatTransport,
     onError: (err) => {
       console.error('Temporary chat error:', err);
-      const message =
-        (err as any)?.message ||
-        (typeof err === 'string'
-          ? err
-          : 'Something went wrong while sending your message.');
-
-      setError(message);
-      toast.error(message);
+      toast.error('Internal server error');
     },
   });
 

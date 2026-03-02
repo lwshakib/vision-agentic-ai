@@ -68,6 +68,7 @@ export function SourceTrigger({
         )}
       >
         {showFavicon && (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
               href,
@@ -108,6 +109,7 @@ export function SourceContent({
         className="flex flex-col gap-2 p-3"
       >
         <div className="flex items-center gap-1.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
               href,

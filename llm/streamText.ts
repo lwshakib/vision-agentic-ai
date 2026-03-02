@@ -42,7 +42,7 @@ export async function streamText(
     toolChoice: 'auto',
     messages: modelMessages,
     onFinish,
-    temperature: 0.7,
+    temperature: 1,
     maxOutputTokens: MAXIMUM_OUTPUT_TOKENS,
   });
 }

@@ -1,33 +1,45 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { GOOGLE_API_KEY } from '@/lib/env';
 
+/**
+ * Shuffles and returns a single API key from the provided comma-separated string.
+ */
 export const getSingleAPIKey = () => {
   if (!GOOGLE_API_KEY) {
     throw new Error('GOOGLE_API_KEY is not set');
   }
 
-  return GOOGLE_API_KEY.split(',')[
-    Math.floor(Math.random() * GOOGLE_API_KEY.split(',').length)
-  ];
+  const keys = GOOGLE_API_KEY.split(',').map((k) => k.trim()).filter(Boolean);
+  if (keys.length === 0) {
+    throw new Error('No valid API keys found in GOOGLE_API_KEY');
+  }
+
+  return keys[Math.floor(Math.random() * keys.length)];
 };
 
+/**
+ * Shuffles and returns one of the available Gemini models.
+ */
 export const getModelName = () => {
   const availableModels = [
-    // "gemini-2.5-flash",
+    'gemini-2.5-flash',
     'gemini-2.5-flash-lite',
   ];
 
-  const randomModel =
-    availableModels[Math.floor(Math.random() * availableModels.length)];
-  return randomModel;
+  return availableModels[Math.floor(Math.random() * availableModels.length)];
 };
 
+/**
+ * Returns a freshly initialized Gemini model with a shuffled API key and model name.
+ * This ensures that every request potentially uses a different identity.
+ */
 export const GeminiModel = () => {
-  if (!GOOGLE_API_KEY) {
-    throw new Error('GOOGLE_API_KEY is not set');
-  }
-  const gemini = createGoogleGenerativeAI({
-    apiKey: getSingleAPIKey(),
+  const apiKey = getSingleAPIKey();
+  const modelName = getModelName();
+
+  const google = createGoogleGenerativeAI({
+    apiKey,
   });
-  return gemini(getModelName());
+
+  return google(modelName);
 };
