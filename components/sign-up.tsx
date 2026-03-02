@@ -19,6 +19,7 @@ export default function SignUp() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isEmailSent, setIsEmailSent] = useState(false);
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +30,7 @@ export default function SignUp() {
         email,
         password,
         name: `${firstName} ${lastName}`.trim(),
+        callbackURL: '/verify-email',
       });
 
       if (error) {
@@ -36,9 +38,7 @@ export default function SignUp() {
         return;
       }
 
-      toast.success('Account created successfully!');
-      router.push('/');
-      router.refresh();
+      setIsEmailSent(true);
     } catch (error) {
       toast.error('An unexpected error occurred');
     } finally {
@@ -58,6 +58,38 @@ export default function SignUp() {
       setIsGoogleLoading(false);
     }
   };
+
+  if (isEmailSent) {
+    return (
+      <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
+        <div className="bg-card m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border p-8 shadow-md">
+          <Link href="/" aria-label="go home">
+            <LogoIcon />
+          </Link>
+          <h1 className="mb-1 mt-4 text-xl font-semibold">Check your email</h1>
+          <p className="text-sm text-balance">
+            We've sent a verification link to <strong>{email}</strong>. Please
+            verify your email to continue.
+          </p>
+
+          <div className="mt-6 flex flex-col gap-3">
+            <Button asChild className="w-full">
+              <a
+                href="https://mail.google.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Go to Gmail
+              </a>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/sign-in">Back to Login</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
