@@ -3,12 +3,12 @@ import { saveImageToCloudinary } from '@/lib/save-image-to-cloudinary';
 
 export async function generateImage({
   prompt,
-  width = 1024,
-  height = 1024,
+  width = '1024',
+  height = '1024',
 }: {
   prompt: string;
-  width?: number;
-  height?: number;
+  width?: string;
+  height?: string;
 }) {
   if (!A4F_API_KEY) {
     throw new Error('Missing A4F_API_KEY');

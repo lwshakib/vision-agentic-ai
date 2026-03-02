@@ -26,9 +26,11 @@ import {
   SourceContent,
   SourceTrigger,
 } from '@/components/prompt-kit/source';
-import { ImageIcon, LoaderIcon, MessageSquare, CopyIcon } from 'lucide-react';
+import { ImageIcon, LoaderIcon, MessageSquare, CopyIcon, DownloadIcon } from 'lucide-react';
 import ChatInput from '@/components/chat-input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ThinkingDots } from '@/components/thinking-dots';
+import { Shimmer } from '@/components/ai-elements/shimmer';
 
 // Loose message type so this component can work with messages from `useChat`
 export type ChatMessage = any;
@@ -80,6 +82,17 @@ export function WebSearchLoading({ loadingText }: { loadingText: string }) {
   );
 }
 
+export function ImageGenerationLoading({ loadingText }: { loadingText: string }) {
+  return (
+    <div className="flex items-center gap-2 px-1 py-2">
+      <LoaderIcon className="h-3 w-3 animate-spin text-muted-foreground" />
+      <Shimmer className="text-xs font-medium text-muted-foreground">
+        {loadingText}
+      </Shimmer>
+    </div>
+  );
+}
+
 export function ChatConversationView({
   messages,
   status,
@@ -93,7 +106,7 @@ export function ChatConversationView({
     if (!isLoadingHistory && listEndRef.current) {
       listEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
-  }, [isLoadingHistory, messages.length]);
+  }, [isLoadingHistory, messages]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -519,7 +532,7 @@ export function ChatConversationView({
                                 if (isLoading) {
                                   return (
                                     <div key={key} className="my-2">
-                                      <WebSearchLoading loadingText="Generating image.." />
+                                      <ImageGenerationLoading loadingText="Generating image.." />
                                     </div>
                                   );
                                 }
@@ -530,38 +543,46 @@ export function ChatConversationView({
                                   output.image
                                 ) {
                                   const imageSrc = output.image;
+                                  const handleDownload = async () => {
+                                    try {
+                                      const response = await fetch(imageSrc);
+                                      const blob = await response.blob();
+                                      const blobUrl =
+                                        window.URL.createObjectURL(blob);
+                                      const link =
+                                        document.createElement('a');
+                                      link.href = blobUrl;
+                                      link.download = `generated-image-${Date.now()}.png`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                      window.URL.revokeObjectURL(blobUrl);
+                                    } catch (err) {
+                                      console.error('Download failed:', err);
+                                    }
+                                  };
+
                                   return (
-                                    <div
-                                      key={key}
-                                      className="my-3 rounded-lg border border-border/40 overflow-hidden bg-muted/30"
-                                    >
-                                      <div className="p-3 bg-muted/50 border-b border-border/40">
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                          <ImageIcon className="h-4 w-4" />
-                                          <span className="font-medium">
-                                            Generated Image
-                                          </span>
-                                        </div>
-                                        {input?.prompt && (
-                                          <p className="text-xs text-muted-foreground mt-1">
-                                            Prompt: &quot;{input.prompt}&quot;
-                                          </p>
-                                        )}
-                                      </div>
-                                      <div className="p-4 flex justify-center bg-background">
+                                    <div key={key} className="flex flex-col">
+                                      <div className="my-3 overflow-hidden rounded-md border border-border/40">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                           src={imageSrc}
                                           alt={
                                             input?.prompt || 'Generated image'
                                           }
-                                          className="max-w-full h-auto rounded-md shadow-sm"
-                                          style={{
-                                            maxWidth: '100%',
-                                            height: 'auto',
-                                          }}
+                                          className="h-auto w-full"
                                         />
                                       </div>
+                                      <MessageActions className="mt-1">
+                                        <MessageAction
+                                          label="Download"
+                                          onClick={handleDownload}
+                                          tooltip="Download this image"
+                                        >
+                                          <DownloadIcon className="size-4" />
+                                        </MessageAction>
+                                      </MessageActions>
                                     </div>
                                   );
                                 }
@@ -706,7 +727,13 @@ export function ChatConversationView({
                   );
                 })}
 
-                {status === 'streaming' && null}
+                {status === 'submitted' && (
+                  <Message from="assistant" key="thinking-indicator">
+                    <MessageContent>
+                      <ThinkingDots />
+                    </MessageContent>
+                  </Message>
+                )}
               </>
             )}
             <div ref={listEndRef} />

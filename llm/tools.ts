@@ -35,7 +35,7 @@ export const extractWebUrlTool: Tool = {
 
 export const generateImageTool: Tool = {
   description:
-    'Generate high-quality images using AI. Use this when the user explicitly asks to create, generate, or make an image, picture, photo, illustration, or artwork. The model used is Flux Schnell, which creates fast, high-quality images based on text prompts.',
+    'Generate high-quality images using AI. Use this when the user explicitly asks to create, generate, or make an image, picture, photo, illustration, or artwork. The model used is Imagen 3.5, which creates fast, high-quality images based on text prompts.',
   inputSchema: z.object({
     prompt: z
       .string()
@@ -43,23 +43,13 @@ export const generateImageTool: Tool = {
         'Detailed description of the image to generate. Be specific about style, composition, colors, subject, mood, and any other relevant details.',
       ),
     width: z
-      .number()
-      .int()
-      .min(256)
-      .max(2048)
-      .default(1024)
-      .describe('Width of the image in pixels'),
+      .enum(['1792', '1024'])
+      .default('1024')
+      .describe('Width of the image in pixels. Must be either 1792 or 1024.'),
     height: z
-      .number()
-      .int()
-      .min(256)
-      .max(2048)
-      .default(1024)
-      .describe('Height of the image in pixels'),
-    negative_prompt: z
-      .string()
-      .optional()
-      .describe('Things to avoid in the image'),
+      .enum(['1792', '1024'])
+      .default('1024')
+      .describe('Height of the image in pixels. Must be either 1792 or 1024.'),
   }),
   execute: generateImage,
 };
