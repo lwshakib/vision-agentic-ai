@@ -154,10 +154,10 @@ export function NavProjects({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                    className="focus:bg-red-500/10"
                     onSelect={() => onDeleteProject?.(project.id)}
                   >
-                    <Trash2 className="mr-2 size-4" />
+                    <Trash2 className="mr-2 size-4 text-muted-foreground" />
                     <span>Delete Project</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -276,9 +276,9 @@ export function NavProjects({
                               <DropdownMenuItem
                                 onSelect={() => onDeleteChat?.(subItem.id)}
                                 disabled={assigningChatId === subItem.id}
-                                className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                                className="focus:bg-red-500/10"
                               >
-                                <Trash2 className="mr-2 size-4" />
+                                <Trash2 className="mr-2 size-4 text-muted-foreground" />
                                 <span>Delete Chat</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>

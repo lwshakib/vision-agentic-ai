@@ -172,9 +172,9 @@ export function NavChats({
                 {/* Destructive chat deletion. */}
                 <DropdownMenuItem
                   onSelect={() => item.id && onDeleteChat?.(item.id)}
-                  className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                  className="focus:bg-red-500/10"
                 >
-                  <Trash2 className="mr-2 size-4" />
+                  <Trash2 className="mr-2 size-4 text-muted-foreground" />
                   <span>Delete Chat</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
