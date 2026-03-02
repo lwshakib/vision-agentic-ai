@@ -159,9 +159,9 @@ export function NavUser({
 
             <DropdownMenuSeparator />
 
-            {/* Feature Groups (currently disabled placeholders). */}
+            {/* Feature Groups. */}
             <DropdownMenuGroup>
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={() => router.push('/pro')}>
                 <Sparkles size={16} />
                 Upgrade to Pro
               </DropdownMenuItem>
@@ -170,15 +170,15 @@ export function NavUser({
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={() => router.push('/account')}>
                 <BadgeCheck size={16} />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={() => router.push('/billing')}>
                 <CreditCard size={16} />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={() => router.push('/notifications')}>
                 <Bell size={16} />
                 Notifications
               </DropdownMenuItem>
