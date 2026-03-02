@@ -162,10 +162,6 @@ export function NavChats({
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
 
-                <DropdownMenuItem disabled>
-                  <Forward className="text-muted-foreground mr-2 size-4" />
-                  <span>Share Chat (N/A)</span>
-                </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
 
