@@ -30,7 +30,7 @@ export default function SignUp() {
         email,
         password,
         name: `${firstName} ${lastName}`.trim(),
-        callbackURL: '/verify-email',
+        callbackURL: '/verify-email?success=true',
       });
 
       if (error) {

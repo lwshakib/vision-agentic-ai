@@ -17,6 +17,13 @@ function VerifyEmailContent() {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    const success = searchParams.get('success');
+    if (success === 'true') {
+      setStatus('success');
+      toast.success('Email verified successfully!');
+      return;
+    }
+
     const token = searchParams.get('token');
     if (!token) {
       setStatus('error');
