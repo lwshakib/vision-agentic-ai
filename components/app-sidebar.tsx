@@ -37,6 +37,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarTrigger,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -494,12 +497,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="overflow-hidden">
-        {isLoadingChats || isLoadingProjects ? (
-          <SidebarSkeleton />
-        ) : (
-          <>
-            <NavMain items={data.navMain} />
-            <ScrollArea className="flex-1">
+        <NavMain items={data.navMain} />
+        <ScrollArea className="flex-1">
+          {isLoadingChats || isLoadingProjects ? (
+            <SidebarSkeleton />
+          ) : (
+            <>
               <NavProjects
                 projects={projects}
                 onOpenProject={loadProjectChats}
@@ -517,9 +520,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 onDeleteChat={handleDeleteChat}
                 assigningChatId={assigningChatId}
               />
-            </ScrollArea>
-          </>
-        )}
+            </>
+          )}
+        </ScrollArea>
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
@@ -565,55 +568,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
 function SidebarSkeleton() {
   return (
-    <div className="flex flex-col gap-6 px-2 py-1">
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-full" />
-        <div className="grid grid-cols-2 gap-2">
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <Skeleton key={idx} className="h-9 w-full" />
-          ))}
-        </div>
-      </div>
+    <div className="flex flex-col gap-2 p-0">
+      {/* NavProjects Skeleton */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Projects</SidebarGroupLabel>
+        <SidebarMenu className="gap-2">
+          <SidebarMenuItem>
+            <SidebarMenuSkeleton showIcon />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
 
-      <div className="space-y-3">
-        <Skeleton className="h-4 w-20" />
-        <div className="space-y-2">
-          {Array.from({ length: 3 }).map((_, idx) => (
-            <div key={idx} className="space-y-2 rounded-lg border p-3">
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-4 w-4 rounded-full" />
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="ml-auto h-4 w-4 rounded-full" />
-              </div>
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, subIdx) => (
-                  <div key={subIdx} className="flex items-center gap-2">
-                    <Skeleton className="h-3.5 w-3.5 rounded-full" />
-                    <Skeleton className="h-3.5 flex-1" />
-                    <Skeleton className="h-3.5 w-10" />
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* NavChats Skeleton */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Chats</SidebarGroupLabel>
+        <SidebarMenu className="gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SidebarMenuItem key={`chat-${i}`}>
+              <SidebarMenuSkeleton showIcon />
+            </SidebarMenuItem>
           ))}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <Skeleton className="h-4 w-16" />
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="flex items-center gap-2 rounded-lg px-2 py-2"
-            >
-              <Skeleton className="h-4 w-4 rounded-full" />
-              <Skeleton className="h-4 flex-1" />
-              <Skeleton className="h-4 w-4 rounded-full" />
-            </div>
-          ))}
-        </div>
-      </div>
+        </SidebarMenu>
+      </SidebarGroup>
     </div>
   );
 }
