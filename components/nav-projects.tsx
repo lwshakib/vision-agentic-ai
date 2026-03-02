@@ -42,6 +42,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -60,6 +61,7 @@ export function NavProjects({
   onMoveChat, // logic to re-assign a chat to a different project.
   onRemoveFromProject, // logic to detach a chat (back to general library).
   onDeleteChat, // logic for hard deleting a chat.
+  onDeleteProject, // logic for deleting a project.
   assigningChatId, // loading state indicator for a specific chat being processed.
 }: {
   projects: {
@@ -77,6 +79,7 @@ export function NavProjects({
   ) => void | Promise<void>;
   onRemoveFromProject?: (chatId: string, fromProjectId: string) => void;
   onDeleteChat?: (chatId: string) => void;
+  onDeleteProject?: (projectId: string) => void;
   assigningChatId?: string | null;
 }) {
   const { isMobile } = useSidebar(); // Adaptive UI state.
@@ -109,16 +112,55 @@ export function NavProjects({
               }
             }}
           >
-            <SidebarMenuItem>
-              {/* Project Title Row. */}
+            <SidebarMenuItem className="group/project relative">
+              {/* Trigger: Project icon on the left to toggle chats. */}
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={project.title}>
-                  <FolderKanban />
-                  <span>{project.title}</span>
-                  {/* Chevron rotates based on open state via Tailwind data attributes. */}
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarMenuButton>
+                <button
+                  className="absolute left-1 top-1.5 z-20 flex size-5 items-center justify-center rounded-sm text-sidebar-foreground hover:bg-sidebar-accent"
+                  title="Toggle Project"
+                >
+                  <FolderKanban className="size-4" />
+                </button>
               </CollapsibleTrigger>
+
+              {/* Navigation: Clicking the text goes to the project page. */}
+              <SidebarMenuButton asChild tooltip={project.title}>
+                <Link href={`/project/${project.id}`} className="pl-8!">
+                  <span className="truncate">{project.title}</span>
+                </Link>
+              </SidebarMenuButton>
+
+              {/* Action: Three-dot icon replaces the chevron. Provide project actions. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuAction
+                    className="group-data-[state=open]/collapsible:rotate-0"
+                  >
+                    <MoreHorizontal />
+                    <span className="sr-only">Project Actions</span>
+                  </SidebarMenuAction>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-48 rounded-lg"
+                  side={isMobile ? 'bottom' : 'right'}
+                  align={isMobile ? 'end' : 'start'}
+                >
+                  <DropdownMenuItem
+                    onSelect={() => onCreateProject?.()}
+                  >
+                    <FolderPlus className="mr-2 size-4 text-muted-foreground" />
+                    <span>New Project</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                    onSelect={() => onDeleteProject?.(project.id)}
+                  >
+                    <Trash2 className="mr-2 size-4" />
+                    <span>Delete Project</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Nested Chats List. */}
               <CollapsibleContent>

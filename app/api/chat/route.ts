@@ -40,18 +40,24 @@ export async function GET() {
 /**
  * POST Handler - Creates a new, blank chat session for the current user.
  */
-export async function POST() {
+export async function POST(req: Request) {
   // Authentication check.
   const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Parse optional projectId from request body.
+  const body = await req.json().catch(() => ({}));
+  const projectId = typeof body?.projectId === 'string' ? body.projectId : null;
+
   // Create a new chat record in the database with a placeholder title.
   const chat = await prisma.chat.create({
     data: {
       userId: user.id,
       title: 'New chat', // Default title, typically updated after the first message.
+      projectId,
+      isOnProject: !!projectId,
     },
     select: {
       id: true, // Only returning the ID is sufficient for the client to redirect.

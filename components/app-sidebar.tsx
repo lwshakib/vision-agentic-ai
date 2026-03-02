@@ -470,6 +470,41 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     [deleteChat, router, fetchChats, fetchProjects],
   );
 
+  /**
+   * Handler for deleting an entire project.
+   */
+  const handleDeleteProject = React.useCallback(
+    async (projectId: string) => {
+      // Affirmative consent check for project-level deletion.
+      if (
+        !window.confirm(
+          'Are you sure you want to delete this project? All associated chats will be removed.',
+        )
+      ) {
+        return;
+      }
+
+      // Optimistically remove from state.
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+
+      try {
+        const res = await fetch(`/api/projects/${projectId}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) {
+          throw new Error('Failed to delete project');
+        }
+        toast.success('Project deleted successfully');
+      } catch (error) {
+        console.error('Project deletion failed', error);
+        toast.error('Failed to eliminate project');
+        // Reconciliation: Fetch full project list if sync fails.
+        fetchProjects();
+      }
+    },
+    [fetchProjects],
+  );
+
   // Initial data load on component mount.
   React.useEffect(() => {
     fetchChats();
@@ -516,6 +551,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 onMoveChat={handleMoveChatToProject}
                 onRemoveFromProject={handleRemoveChatFromProject}
                 onDeleteChat={handleDeleteChat}
+                onDeleteProject={handleDeleteProject}
                 assigningChatId={assigningChatId}
               />
               {/* Individual unassigned chat list. */}
