@@ -88,7 +88,7 @@ export function NavProjects({
       <SidebarMenu>
         {/* Empty State: Prompt user to create their first project. */}
         {projects.length === 0 && (
-          <SidebarMenuItem>
+          <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
             <SidebarMenuButton onClick={() => onCreateProject?.()}>
               + Add Project
             </SidebarMenuButton>
