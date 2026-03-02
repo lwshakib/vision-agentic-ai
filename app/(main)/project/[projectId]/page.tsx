@@ -57,13 +57,18 @@ export default function ProjectPage() {
 
       const projectData = await projectRes.json();
       const chatsData = await chatsRes.json();
-      
-      setProject({ title: projectData.title });
-      setChats(chatsData.map((c: any) => ({
+
+      const mappedChats = chatsData.map((c: any) => ({
         id: c.id,
         title: c.title || 'Untitled chat',
         url: `/~/${c.id}`,
-      })));
+      }));
+      
+      setProject({ title: projectData.title });
+      setChats(mappedChats);
+
+      // Synchronize with global sidebar store.
+      useChatStore.getState().setProjectChats(projectId, mappedChats);
     } catch (error) {
       console.error('Error loading project:', error);
       toast.error('Failed to load project details');
@@ -97,6 +102,18 @@ export default function ProjectPage() {
 
       const data = await res.json();
       
+      const chatEntry = {
+        id: data.chatId,
+        title: 'New chat',
+        url: `/~/${data.chatId}`,
+      };
+
+      // Update the global store for the sidebar.
+      useChatStore.getState().addProjectChat(projectId, chatEntry);
+
+      // Update local state.
+      setChats((prev) => [chatEntry, ...prev]);
+
       // Navigate to the new chat page with the initial message/files as params.
       const params = new URLSearchParams();
       params.set('message', message);

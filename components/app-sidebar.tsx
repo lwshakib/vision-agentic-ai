@@ -124,17 +124,19 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   // Destructure state and actions from the global chat store.
-  const { chats, setChats, addChat, chatTitles, deleteChat } = useChatStore();
-
-  // Local state for managing the list of projects and their individual loading states.
-  const [projects, setProjects] = React.useState<
-    {
-      id: string;
-      title: string;
-      chats?: { id: string; title: string; url: string }[];
-      isLoading?: boolean;
-    }[]
-  >([]);
+  const {
+    chats,
+    setChats,
+    addChat,
+    chatTitles,
+    deleteChat,
+    projects,
+    setProjects,
+    setProjectChats,
+    updateProject,
+    removeProject,
+    addProjectChat,
+  } = useChatStore();
 
   // State to track which chat is currently being moved between projects.
   const [assigningChatId, setAssigningChatId] = React.useState<string | null>(
@@ -192,6 +194,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [chats, chatTitles]);
 
   /**
+   * Memoized list of projects for display, merging base titles with any active generated titles from the store.
+   */
+  const displayProjects = React.useMemo(() => {
+    return projects.map((project) => ({
+      ...project,
+      chats: project.chats?.map((chat) => ({
+        ...chat,
+        title: chatTitles[chat.id] || chat.title,
+      })),
+    }));
+  }, [projects, chatTitles]);
+
+  /**
    * Fetches the list of all projects owned by the user.
    */
   const fetchProjects = React.useCallback(async () => {
@@ -217,58 +232,47 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     } finally {
       setIsLoadingProjects(false);
     }
-  }, []);
+  }, [setProjects]);
 
   /**
    * Fetches chats scoped specifically to a single project.
    * Triggered when a project folder is expanded in the UI.
    */
-  const loadProjectChats = React.useCallback(async (projectId: string) => {
-    let shouldFetch = true;
-    setProjects((prev) => {
-      const project = prev.find((p) => p.id === projectId);
+  const loadProjectChats = React.useCallback(
+    async (projectId: string) => {
+      const project = projects.find((p) => p.id === projectId);
       // Skip fetch if already loaded or currently loading.
       if (!project || project.chats || project.isLoading) {
-        shouldFetch = false;
-        return prev;
+        return;
       }
 
       // Mark this specific project as loading.
-      return prev.map((p) =>
-        p.id === projectId ? { ...p, isLoading: true } : p,
-      );
-    });
+      updateProject(projectId, { isLoading: true });
 
-    if (!shouldFetch) return;
+      try {
+        const res = await fetch(`/api/projects/${projectId}/chats`);
+        if (!res.ok) {
+          throw new Error('Failed to fetch project chats');
+        }
 
-    try {
-      const res = await fetch(`/api/projects/${projectId}/chats`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch project chats');
+        const json = await res.json();
+        if (!Array.isArray(json)) return;
+
+        const mapped = json.map((chat: { id: string; title?: string }) => ({
+          id: chat.id,
+          title: chat.title || 'Untitled chat',
+          url: `/~/${chat.id}`,
+        }));
+
+        // Update the projects list with the newly loaded chat data.
+        setProjectChats(projectId, mapped);
+      } catch (error) {
+        console.error('Unable to load project chats', error);
+        updateProject(projectId, { isLoading: false });
       }
-
-      const json = await res.json();
-      if (!Array.isArray(json)) return;
-
-      const mapped = json.map((chat: { id: string; title?: string }) => ({
-        id: chat.id,
-        title: chat.title || 'Untitled chat',
-        url: `/~/${chat.id}`,
-      }));
-
-      // Update the projects list with the newly loaded chat data.
-      setProjects((prev) =>
-        prev.map((p) =>
-          p.id === projectId ? { ...p, chats: mapped, isLoading: false } : p,
-        ),
-      );
-    } catch (error) {
-      console.error('Unable to load project chats', error);
-      setProjects((prev) =>
-        prev.map((p) => (p.id === projectId ? { ...p, isLoading: false } : p)),
-      );
-    }
-  }, []);
+    },
+    [projects, updateProject, setProjectChats],
+  );
 
   /**
    * Orchestrates moving a chat from one project (or no project) to another.
@@ -292,46 +296,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         // Remove from the 'All Chats' list if it was previously unassigned.
         setChats(chats.filter((chat) => chat.id !== chatId));
 
-        // Update projects state to reflect the transition.
-        setProjects((prev) =>
-          prev.map((project) => {
-            // Remove from previous project list if applicable.
-            if (fromProjectId && project.id === fromProjectId) {
-              return {
-                ...project,
-                chats: (project.chats ?? []).filter((c) => c.id !== chatId),
-              };
-            }
+        const chatEntry = {
+          id: updated.id,
+          title: updated.title || 'Untitled chat',
+          url: `/~/${updated.id}`,
+        };
 
-            // Add to the new target project.
-            if (project.id !== projectId) return project;
+        // If fromProjectId is provided, remove chat from that project in store.
+        if (fromProjectId) {
+          setProjectChats(
+            fromProjectId,
+            (
+              projects.find((p) => p.id === fromProjectId)?.chats ?? []
+            ).filter((c) => c.id !== chatId),
+          );
+        }
 
-            const chatEntry = {
-              id: updated.id,
-              title: updated.title || 'Untitled chat',
-              url: `/~/${updated.id}`,
-            };
-
-            const existingChats = project.chats ?? [];
-            const alreadyPresent = existingChats.some(
-              (c) => c.id === chatEntry.id,
-            );
-
-            return {
-              ...project,
-              chats: alreadyPresent
-                ? existingChats
-                : [...existingChats, chatEntry],
-            };
-          }),
-        );
+        // Add to the new project in store.
+        addProjectChat(projectId, chatEntry);
       } catch (error) {
         console.error('Unable to move chat to project', error);
       } finally {
         setAssigningChatId(null);
       }
     },
-    [chats, setChats],
+    [chats, setChats, projects, setProjectChats, addProjectChat],
   );
 
   /**
@@ -354,14 +343,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         const updated = await res.json();
 
         // Update project state to remove the chat.
-        setProjects((prev) =>
-          prev.map((project) =>
-            project.id === fromProjectId
-              ? {
-                  ...project,
-                  chats: (project.chats ?? []).filter((c) => c.id !== chatId),
-                }
-              : project,
+        setProjectChats(
+          fromProjectId,
+          (projects.find((p) => p.id === fromProjectId)?.chats ?? []).filter(
+            (c) => c.id !== chatId,
           ),
         );
 
@@ -377,7 +362,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setAssigningChatId(null);
       }
     },
-    [addChat],
+    [addChat, projects, setProjectChats],
   );
 
   /**
@@ -407,21 +392,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           throw new Error('Failed to create project');
         }
 
-        const project = await res.json();
+        const projectData = await res.json();
         const projectEntry = {
-          id: project.id as string,
-          title: project.title as string,
+          id: projectData.id as string,
+          title: projectData.title as string,
           chats: [],
         };
 
         // Add the new project to the list locally.
-        setProjects((prev) => [projectEntry, ...prev]);
+        setProjects([projectEntry, ...projects]);
         setCreateProjectOpen(false);
         setNewProjectTitle('');
 
         // If a chat was waiting for this project, move it now.
         if (pendingChatId) {
-          await handleMoveChatToProject(pendingChatId, project.id);
+          await handleMoveChatToProject(pendingChatId, projectData.id);
           setPendingChatId(null);
         }
       } catch (error) {
@@ -430,7 +415,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setIsCreatingProject(false);
       }
     },
-    [handleMoveChatToProject, newProjectTitle, pendingChatId],
+    [handleMoveChatToProject, newProjectTitle, pendingChatId, projects, setProjects],
   );
 
   /**
@@ -440,12 +425,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     async (chatId: string) => {
       // Optimistic delete: remove from UI immediately for perceived performance.
       deleteChat(chatId);
-      setProjects((prev) =>
-        prev.map((p) => ({
-          ...p,
-          chats: p.chats?.filter((c) => c.id !== chatId),
-        })),
-      );
 
       // If the user is currently viewing the deleted chat, redirect them home.
       if (window.location.pathname.includes(chatId)) {
@@ -485,7 +464,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
 
       // Optimistically remove from state.
-      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      removeProject(projectId);
 
       try {
         const res = await fetch(`/api/projects/${projectId}`, {
@@ -502,7 +481,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         fetchProjects();
       }
     },
-    [fetchProjects],
+    [fetchProjects, removeProject],
   );
 
   // Initial data load on component mount.
@@ -545,7 +524,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <>
               {/* Project navigation and management. */}
               <NavProjects
-                projects={projects}
+                projects={displayProjects}
                 onOpenProject={loadProjectChats}
                 onCreateProject={(chatId) => openCreateProjectDialog(chatId)}
                 onMoveChat={handleMoveChatToProject}
@@ -612,6 +591,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   );
 }
+
 
 /**
  * Skeleton UI displayed during the initial loading phase.

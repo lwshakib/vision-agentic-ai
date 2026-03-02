@@ -8,7 +8,8 @@
 'use client';
 
 import Link from 'next/link';
-// Import a diverse set of icons for project and chat management.
+import { motion, AnimatePresence } from 'motion/react';
+// Import a set of polished icons for project and chat management.
 import {
   ChevronRight,
   FolderKanban,
@@ -165,112 +166,127 @@ export function NavProjects({
               {/* Nested Chats List. */}
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {project.chats?.map((subItem) => (
-                    <SidebarMenuSubItem
-                      key={subItem.id}
-                      className="group/subitem"
-                    >
-                      {/* Individual Chat Link. */}
-                      <SidebarMenuSubButton asChild>
-                        <Link href={subItem.url}>
-                          <MessageSquare className="size-4" />
-                          <span>{subItem.title}</span>
-                        </Link>
-                      </SidebarMenuSubButton>
+                  <AnimatePresence initial={false}>
+                    {project.chats?.map((subItem) => (
+                      <motion.div
+                        key={subItem.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <SidebarMenuSubItem className="group/subitem">
+                          {/* Individual Chat Link. */}
+                          <SidebarMenuSubButton asChild>
+                            <Link href={subItem.url}>
+                              <MessageSquare className="size-4" />
+                              <span>{subItem.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
 
-                      {/* Chat Action Menu (Hidden until hover). */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/subitem:opacity-100 p-1 rounded hover:bg-sidebar-accent">
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">More</span>
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          className="w-48 rounded-lg"
-                          side={isMobile ? 'bottom' : 'right'}
-                          align={isMobile ? 'end' : 'start'}
-                        >
-                          <DropdownMenuItem>
-                            <MessageSquare className="text-muted-foreground mr-2 size-4" />
-                            <span>View Chat</span>
-                          </DropdownMenuItem>
-
-                          {/* Move Chat Sub-menu. */}
-                          <DropdownMenuSub>
-                            <DropdownMenuSubTrigger>
-                              <Forward className="text-muted-foreground mr-2 size-4" />
-                              <span>Move to project</span>
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="w-60">
-                              {/* Filter current project out of target list. */}
-                              {projects
-                                .filter((p) => p.id !== project.id)
-                                .map((p) => (
-                                  <DropdownMenuItem
-                                    key={p.id}
-                                    onSelect={() =>
-                                      onMoveChat?.(subItem.id, p.id, project.id)
-                                    }
-                                    disabled={assigningChatId === subItem.id}
-                                  >
-                                    {/* Show loader icon if this specific chat is being moved. */}
-                                    {assigningChatId === subItem.id ? (
-                                      <Loader2 className="mr-2 size-4 animate-spin text-muted-foreground" />
-                                    ) : (
-                                      <FolderKanban className="mr-2 size-4 text-muted-foreground" />
-                                    )}
-                                    <span>{p.title}</span>
-                                  </DropdownMenuItem>
-                                ))}
-                              {/* Edge Case: No other projects exist. */}
-                              {projects.filter((p) => p.id !== project.id)
-                                .length === 0 && (
-                                <DropdownMenuItem disabled>
-                                  <span className="text-muted-foreground">
-                                    No other projects
-                                  </span>
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              {/* Create NEW project and put this chat in it. */}
-                              <DropdownMenuItem
-                                onSelect={() => onCreateProject?.(subItem.id)}
-                              >
-                                <FolderPlus className="mr-2 size-4 text-muted-foreground" />
-                                <span>Create project</span>
+                          {/* Chat Action Menu (Hidden until hover). */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/subitem:opacity-100 p-1 rounded hover:bg-sidebar-accent">
+                                <MoreHorizontal className="size-4" />
+                                <span className="sr-only">More</span>
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              className="w-48 rounded-lg"
+                              side={isMobile ? 'bottom' : 'right'}
+                              align={isMobile ? 'end' : 'start'}
+                            >
+                              <DropdownMenuItem>
+                                <MessageSquare className="text-muted-foreground mr-2 size-4" />
+                                <span>View Chat</span>
                               </DropdownMenuItem>
-                            </DropdownMenuSubContent>
-                          </DropdownMenuSub>
 
-                          <DropdownMenuSeparator />
+                              {/* Move Chat Sub-menu. */}
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                  <Forward className="text-muted-foreground mr-2 size-4" />
+                                  <span>Move to project</span>
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent className="w-60">
+                                  {/* Filter current project out of target list. */}
+                                  {projects
+                                    .filter((p) => p.id !== project.id)
+                                    .map((p) => (
+                                      <DropdownMenuItem
+                                        key={p.id}
+                                        onSelect={() =>
+                                          onMoveChat?.(
+                                            subItem.id,
+                                            p.id,
+                                            project.id,
+                                          )
+                                        }
+                                        disabled={
+                                          assigningChatId === subItem.id
+                                        }
+                                      >
+                                        {/* Show loader icon if this specific chat is being moved. */}
+                                        {assigningChatId === subItem.id ? (
+                                          <Loader2 className="mr-2 size-4 animate-spin text-muted-foreground" />
+                                        ) : (
+                                          <FolderKanban className="mr-2 size-4 text-muted-foreground" />
+                                        )}
+                                        <span>{p.title}</span>
+                                      </DropdownMenuItem>
+                                    ))}
+                                  {/* Edge Case: No other projects exist. */}
+                                  {projects.filter((p) => p.id !== project.id)
+                                    .length === 0 && (
+                                    <DropdownMenuItem disabled>
+                                      <span className="text-muted-foreground">
+                                        No other projects
+                                      </span>
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuSeparator />
+                                  {/* Create NEW project and put this chat in it. */}
+                                  <DropdownMenuItem
+                                    onSelect={() =>
+                                      onCreateProject?.(subItem.id)
+                                    }
+                                  >
+                                    <FolderPlus className="mr-2 size-4 text-muted-foreground" />
+                                    <span>Create project</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuSubContent>
+                              </DropdownMenuSub>
 
-                          {/* Detach Chat Action. */}
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              onRemoveFromProject?.(subItem.id, project.id)
-                            }
-                            disabled={assigningChatId === subItem.id}
-                          >
-                            <FolderMinus className="mr-2 size-4 text-muted-foreground" />
-                            <span>Remove from project</span>
-                          </DropdownMenuItem>
+                              <DropdownMenuSeparator />
 
-                          <DropdownMenuSeparator />
+                              {/* Detach Chat Action. */}
+                              <DropdownMenuItem
+                                onSelect={() =>
+                                  onRemoveFromProject?.(subItem.id, project.id)
+                                }
+                                disabled={assigningChatId === subItem.id}
+                              >
+                                <FolderMinus className="mr-2 size-4 text-muted-foreground" />
+                                <span>Remove from project</span>
+                              </DropdownMenuItem>
 
-                          {/* Hard Delete Action. */}
-                          <DropdownMenuItem
-                            onSelect={() => onDeleteChat?.(subItem.id)}
-                            disabled={assigningChatId === subItem.id}
-                            className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
-                          >
-                            <Trash2 className="mr-2 size-4" />
-                            <span>Delete Chat</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </SidebarMenuSubItem>
-                  ))}
+                              <DropdownMenuSeparator />
+
+                              {/* Hard Delete Action. */}
+                              <DropdownMenuItem
+                                onSelect={() => onDeleteChat?.(subItem.id)}
+                                disabled={assigningChatId === subItem.id}
+                                className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                              >
+                                <Trash2 className="mr-2 size-4" />
+                                <span>Delete Chat</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </SidebarMenuSubItem>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
 
                   {/* Local project loading spinner (during API fetch). */}
                   {project.isLoading && (
