@@ -11,8 +11,8 @@ import prisma from '@/lib/prisma';
 import { MessageRole } from '@/generated/prisma/client';
 // Import the current user's retrieval action.
 import { getUser } from '@/actions/user';
-// Import utility for dynamically generating a concise title for new chats.
-import { generateChatTitle } from '@/llm/generate-title';
+// Import the dynamic text generation utility.
+import { generateText } from '@/llm/generate-text';
 
 /**
  * Type definition for the route parameters, accommodating Nextjs 15+ promise-based params.
@@ -115,29 +115,42 @@ export async function POST(req: NextRequest, { params }: Params) {
     },
   });
 
-  // Automatically generate a descriptive title if this is the user's very first message in the chat.
-  let generatedTitle: string | undefined = undefined;
+  // Return the created message object.
+  const responseData: any = { ...created };
+
+  // Automatically generate a descriptive title if this is the assistant's very first message in the chat.
   if (
-    role === 'user' &&
-    existingChat._count.messages === 0 &&
+    role === 'assistant' &&
+    existingChat._count.messages === 1 &&
     (existingChat.title === 'New chat' || !existingChat.title)
   ) {
-    // Find the primary text component of the message to use as input for the title generator.
-    const firstTextPart = persistedParts.find(
-      (p: Record<string, unknown>) => p.type === 'text',
-    );
-    if (firstTextPart?.text) {
-      generatedTitle = await generateChatTitle(firstTextPart.text);
-      // Update the chat record with the new title.
-      await prisma.chat.update({
-        where: { id: chatId },
-        data: { title: generatedTitle },
-      });
+    // Retrieve the user's opening message to serve as the context for title generation.
+    const userMessage = await prisma.message.findFirst({
+      where: {
+        chatId: existingChat.id,
+        role: MessageRole.user,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (userMessage) {
+      const userParts = userMessage.parts as any[];
+      const firstTextPart = userParts.find(
+        (p: Record<string, unknown>) => p.type === 'text',
+      );
+      if (firstTextPart?.text) {
+        const generatedTitle = await generateChatTitle(firstTextPart.text);
+        // Persist the new title.
+        await prisma.chat.update({
+          where: { id: chatId },
+          data: { title: generatedTitle },
+        });
+        responseData.title = generatedTitle;
+      }
     }
   }
 
-  // Return the created message object and optionally the updated title.
-  return NextResponse.json({ ...created, title: generatedTitle });
+  return NextResponse.json(responseData);
 }
 
 /**
@@ -234,4 +247,40 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   });
 
   return NextResponse.json({ success: true });
+}
+
+/**
+ * Generates a short, descriptive title (3-5 words) based on the opening message.
+ * @param firstMessage - The starting prompt from the user.
+ */
+async function generateChatTitle(firstMessage: string): Promise<string> {
+  try {
+    // Call the model with specific instructions for title creation using GLM-4.7-Flash.
+    const { text } = await generateText({
+      messages: [
+        {
+          role: 'user',
+          content: `Extract a very short, concise, and descriptive title (3-5 words maximum) for a chat started with this message. Do not use quotes or special characters: "${firstMessage}"`,
+        },
+      ],
+    });
+
+
+    /**
+     * Post-processing:
+     * - Remove any lingering quotes or special formatting characters.
+     * - Truncate to a reasonable character limit for UI safety.
+     * - Fallback to 'New Chat' if the model returns an empty or invalid string.
+     */
+    return (
+      text
+        .replace(/["'˙.]/g, '')
+        .trim()
+        .slice(0, 50) || 'New Chat'
+    );
+  } catch (error) {
+    // If title generation fails, use a generic fallback instead of crashing.
+    console.error('Failed to generate chat title:', error);
+    return 'New Chat';
+  }
 }

@@ -19,8 +19,6 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.0",
-    "@ai-sdk/react": "^3.0.1",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
@@ -54,7 +52,6 @@
     "@react-email/components": "^1.0.8",
     "@tavily/core": "^0.6.3",
     "@xyflow/react": "^12.10.0",
-    "ai": "^6.0.1",
     "better-auth": "^1.4.8",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.8.0",
@@ -85,6 +82,7 @@
     "use-stick-to-bottom": "^1.1.1",
     "vaul": "^1.1.2",
     "zod": "^4.2.1",
+    "zod-to-json-schema": "^3.25.1",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

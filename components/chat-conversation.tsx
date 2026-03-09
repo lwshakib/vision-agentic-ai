@@ -16,15 +16,14 @@ import {
   SearchLoading as SearchLoadingUI,
   ToolLoading as ToolLoadingUI,
 } from './chats/tool-status';
-import type { UIMessage } from 'ai';
+import type { ChatMessage, ChatStatus } from '@/hooks/use-chat';
 
-// Re-export UIMessage type for consistency across the chat architecture.
-export type ChatMessage = UIMessage;
+export type { ChatMessage };
 
 // Detailed props interface for the main view.
 type ChatConversationViewProps = {
   messages: ChatMessage[]; // Array of message objects to render.
-  status: string; // Current status of the AI (e.g., 'generating', 'idle').
+  status: ChatStatus; // Current status of the AI (e.g., 'generating', 'idle').
   isLoadingHistory: boolean; // Whether historical messages are still being fetched from the DB.
   onSend: (
     text: string,

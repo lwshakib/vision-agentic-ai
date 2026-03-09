@@ -1,5 +1,5 @@
 import { CLOUDFLARE_API_KEY, FLUX_KLEIN_WORKER_URL } from '@/lib/env';
-import { saveImageToCloudinary } from '@/lib/save-image-to-cloudinary';
+import { saveImageToCloudinary } from '@/lib/cloudinary';
 
 /**
  * Supported generation modes for the Flux Klein model.

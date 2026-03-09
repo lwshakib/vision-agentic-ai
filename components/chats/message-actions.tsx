@@ -1,11 +1,11 @@
 'use client';
 
-import { CopyIcon, RotateCcw } from 'lucide-react';
+import { CopyIcon } from 'lucide-react';
 import {
   MessageAction,
   MessageActions,
 } from '@/components/ai-elements/message';
-import type { UIMessage } from 'ai';
+import type { ChatMessage } from '@/hooks/use-chat';
 
 interface TextPart {
   type: string;
@@ -13,7 +13,7 @@ interface TextPart {
 }
 
 interface MessageActionsListProps {
-  message: UIMessage;
+  message: ChatMessage;
   onCopy: (text: string) => void;
   onRetry?: () => void;
 }
@@ -44,15 +44,6 @@ export function MessageActionsList({
       >
         <CopyIcon className="size-4" />
       </MessageAction>
-      {onRetry && (
-        <MessageAction
-          label="Retry"
-          onClick={onRetry}
-          tooltip="Regenerate response"
-        >
-          <RotateCcw className="size-4" />
-        </MessageAction>
-      )}
     </MessageActions>
   );
 }

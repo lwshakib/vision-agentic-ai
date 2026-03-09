@@ -1,13 +1,17 @@
 /**
  * AI Tool Definitions
- * Defines the executable functions available to the Gemini models.
+ * Defines the executable functions available to the models.
  * Each tool includes a name, description, input schema (via Zod), and an execute function.
  */
 
-import type { Tool } from 'ai';
+export interface Tool {
+  description: string;
+  inputSchema: any;
+  execute: (args: any) => Promise<any>;
+}
+
 import { z } from 'zod';
-import { webSearch } from './web-search';
-import { extractWebUrl } from './extract-web-url';
+import { webSearch, extractWebUrl } from '@/lib/tavily';
 import { generateImage } from './generate-image';
 import { textToSpeech } from './text-to-speech';
 
@@ -86,9 +90,15 @@ export const generateImageTool: Tool = {
  */
 export const textToSpeechTool: Tool = {
   description:
-    "Convert text to speech using an AI model. Use this when the user asks to 'say', 'speak', 'read out loud', or convert text to audio.",
+    "Convert text to speech using an AI model. Use this when the user asks to 'say', 'speak', 'read out loud', or convert text to audio. You can also specify an optional 'voice' (model ID) from the speaker registry.",
   inputSchema: z.object({
     text: z.string().describe('The text to convert to speech'),
+    voice: z
+      .string()
+      .optional()
+      .describe(
+        "The model ID of the speaker to use (e.g., 'orpheus', 'luna', 'zeus'). If not provided, it defaults to 'orpheus'.",
+      ),
   }),
   execute: textToSpeech,
 };

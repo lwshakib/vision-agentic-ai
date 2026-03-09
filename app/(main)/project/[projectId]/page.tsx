@@ -12,7 +12,7 @@ import { FolderKanban, MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import ChatInput from '@/components/chat-input';
-import { useChatStore } from '@/lib/store';
+import { useChatStore } from '@/hooks/use-chat-store';
 import Link from 'next/link';
 
 /**

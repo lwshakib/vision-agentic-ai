@@ -9,7 +9,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import type { FileUIPart, UIMessage } from 'ai';
+import type { ChatMessage } from '@/hooks/use-chat';
+
+export type FileUIPart = {
+  url: string;
+  filename?: string;
+  mediaType?: string;
+};
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -28,7 +34,7 @@ import {
 import { Streamdown } from 'streamdown';
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
-  from: UIMessage['role'];
+  from: ChatMessage['role'];
 };
 
 export const Message = ({ className, from, ...props }: MessageProps) => (
@@ -219,7 +225,7 @@ export const MessageBranchContent = ({
 };
 
 export type MessageBranchSelectorProps = HTMLAttributes<HTMLDivElement> & {
-  from: UIMessage['role'];
+  from: ChatMessage['role'];
 };
 
 export const MessageBranchSelector = ({

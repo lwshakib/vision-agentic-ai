@@ -8,7 +8,7 @@ import {
 } from '@/components/ai-elements/message';
 import { ChatMessageParts } from './message-parts';
 import { MessageActionsList } from './message-actions';
-import type { UIMessage } from 'ai';
+import type { ChatMessage } from '@/hooks/use-chat';
 
 interface MessagePartItem {
   type: string;
@@ -19,13 +19,13 @@ interface MessagePartItem {
   mediaType?: string;
 }
 
-interface MessageWithFiles extends UIMessage {
+interface MessageWithFiles extends ChatMessage {
   files?: MessagePartItem[];
   version?: number | string;
 }
 
 interface MessageItemProps {
-  message: UIMessage;
+  message: ChatMessage;
   onCopy: (text: string) => void;
   onRetry?: () => void;
 }
@@ -64,7 +64,6 @@ export function ChatMessageItem({
             <MessageAttachment
               key={file.id || file.url}
               data={{
-                type: 'file',
                 url: file.url || '',
                 mediaType:
                   file.mediaType || file.type || 'application/octet-stream',

@@ -10,17 +10,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 // Import Next.js hooks for accessing URL parameters and search queries.
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-// Import AI SDK for AI-driven chat capabilities.
-import { useChat } from '@ai-sdk/react';
-// Import AI SDK transport for communication with the API.
-import { DefaultChatTransport } from 'ai';
+import { useChat } from '@/hooks/use-chat';
 // Import custom components.
 import ChatInput from '@/components/chat-input';
 import { ChatConversationList } from '@/components/chats/conversation-list';
 // Import utility for notifications.
 import { toast } from 'sonner';
 // Import global state for chat management.
-import { useChatStore } from '@/lib/store';
+import { useChatStore } from '@/hooks/use-chat-store';
 
 /**
  * Interface representing a component part of a chat message (text, file, etc.).
@@ -47,21 +44,7 @@ export default function ChatPage() {
   const router = useRouter();
 
   /**
-   * Memoize the chat transport to ensure we don't reconnect on every render,
-   * but only when the chatId changes.
-   */
-  const chatTransport = useMemo(() => {
-    if (!chatId) return null;
-    return new DefaultChatTransport({
-      api: '/api/generate',
-      headers: {
-        'X-Chat-Id': chatId, // Include chatId in headers for server context.
-      },
-    });
-  }, [chatId]); // Only recreate if chatId changes
-
-  /**
-   * Initialize the AI SDK's useChat hook for real-time interaction.
+   * Initialize custom useChat hook for real-time interaction.
    */
   const {
     sendMessage, // Function to send a new user message.
@@ -69,7 +52,9 @@ export default function ChatPage() {
     setMessages, // Function to manually update message state.
     status, // Current status of the chat (idle, loading, etc.).
   } = useChat({
-    transport: chatTransport ?? undefined,
+    headers: {
+      'X-Chat-Id': chatId || '', // Include chatId in headers for server context.
+    },
     // Global error handler for chat operations.
     onError: (err) => {
       console.error('Chat error:', err);
@@ -95,9 +80,7 @@ export default function ChatPage() {
     // Callback triggered when the AI finishes generating a response.
     onFinish: (message) => {
       // Extract parts from the finished message for database persistence.
-      const parts =
-        (message as unknown as { message?: { parts?: unknown[] } })?.message
-          ?.parts ?? [];
+      const parts = message.parts ?? [];
       if (!chatId || !parts || parts.length === 0) return;
 
       // Persist the assistant message to the database.
@@ -108,9 +91,18 @@ export default function ChatPage() {
           role: 'assistant',
           parts,
         }),
-      }).catch((err) =>
-        console.error('Failed to save assistant message:', err),
-      );
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            const data = await res.json();
+            if (data.title) {
+              setChatTitle(chatId, data.title);
+            }
+          }
+        })
+        .catch((err) =>
+          console.error('Failed to save assistant message:', err),
+        );
     },
   });
 

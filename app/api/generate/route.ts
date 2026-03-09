@@ -9,7 +9,7 @@ import { streamText } from '@/llm/streamText';
 import { NextResponse } from 'next/server';
 // Import utility for retrieving the current user's session.
 import { getUser } from '@/actions/user';
-import { checkAndManageCredits, consumeCredit } from '@/lib/credits';
+import { checkAndManageCredits, consumeCredit } from '@/actions/credits';
 
 /**
  * Configure the route's maximum execution duration.
@@ -47,22 +47,19 @@ export async function POST(req: Request) {
     }
 
     // Trigger the core LLM streaming process.
-    const result = await streamText(messages);
+    const stream = await streamText(messages);
 
     // If generation starts successfully, consume one credit.
     await consumeCredit(user.id);
 
-    /**
-     * Convert the raw stream result into a format optimized for the frontend UI.
-     * This includes specific flags for structured intelligence like reasoning passes and source citations.
-     */
-    const response = result.toUIMessageStreamResponse({
-      sendReasoning: true, // Enable step-by-step thinking visibility.
-      sendSources: true, // Enable web search or document citations.
+    // Return the stream as text/event-stream.
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
-
-    // Return the stream directly to the client.
-    return response;
   } catch (error: unknown) {
     // Log failures and return an appropriate 500 error code.
     console.error('Error in chat API:', error);

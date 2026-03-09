@@ -21,15 +21,14 @@ import { ConversationSkeleton } from './chat-skeleton';
 // Import low-level message display components.
 import { Message, MessageContent } from '@/components/ai-elements/message';
 // Import the animated dots shown while waiting for an AI response.
-import { ThinkingDots } from '@/components/thinking-dots';
-import type { UIMessage } from 'ai';
+import type { ChatMessage, ChatStatus } from '@/hooks/use-chat';
 
 /**
  * Interface for the list component's props.
  */
 interface ChatConversationListProps {
-  messages: UIMessage[]; // The actual array of chat messages.
-  status: string; // The current chat status (idle, submitted, streaming).
+  messages: ChatMessage[]; // The actual array of chat messages.
+  status: ChatStatus; // The current chat status (idle, submitted, streaming).
   isLoadingHistory: boolean; // Flag for initial data fetch state.
   onCopy: (text: string) => void; // Clipboard callback.
   onRetry?: (messageIndex: number) => void; // Logic for re-running a failed prompt.
@@ -123,14 +122,7 @@ export function ChatConversationList({
               />
             ))}
 
-            {/* If a message was just submitted but streaming hasn't started yet, show "Thinking...". */}
-            {status === 'submitted' && (
-              <Message from="assistant" key="thinking-indicator">
-                <MessageContent>
-                  <ThinkingDots />
-                </MessageContent>
-              </Message>
-            )}
+
           </>
         )}
         {/* Invisible anchor for the scroll-into-view logic. */}

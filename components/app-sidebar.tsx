@@ -59,7 +59,7 @@ import { useRouter } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Logo } from './logo';
 // Import global state store for chat-related data.
-import { useChatStore } from '@/lib/store';
+import { useChatStore } from '@/hooks/use-chat-store';
 
 /**
  * Static navigation data for consistently rendered links.

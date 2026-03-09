@@ -12,18 +12,13 @@ import ChatInput from '@/components/chat-input';
 // Import Next.js navigation hooks.
 import { useRouter, useSearchParams } from 'next/navigation';
 // Import AI SDK hooks for handling real-time chat interactions.
-import { useChat } from '@ai-sdk/react';
-// Import the default transport configuration for the AI SDK.
-import { DefaultChatTransport } from 'ai';
-// Import toast for notifications.
+import { useChat, type ChatMessage } from '@/hooks/use-chat';
 import { toast } from 'sonner';
-// Import components for viewing conversations.
 import {
   ChatConversationView,
-  type ChatMessage,
 } from '@/components/chat-conversation';
 // Import global store for managing chat history/sidebar state.
-import { useChatStore } from '@/lib/store';
+import { useChatStore } from '@/hooks/use-chat-store';
 
 /**
  * Type definition for file metadata shared between the input and server.
@@ -122,18 +117,8 @@ function TemporaryChat() {
   const [isLoadingHistory] = useState(false);
   const router = useRouter();
 
-  // Memoize the chat transport to prevent unnecessary re-creations.
-  const chatTransport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: '/api/generate', // Directly calls the AI generation endpoint.
-      }),
-    [],
-  );
-
-  // Use the AI SDK's chat hook for state and messaging management.
+  // Use the custom chat hook for state and messaging management.
   const { sendMessage, messages, status } = useChat({
-    transport: chatTransport,
     onError: (err) => {
       console.error('Temporary chat error:', err);
       try {
