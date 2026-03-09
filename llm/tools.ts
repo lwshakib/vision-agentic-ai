@@ -50,12 +50,12 @@ export const extractWebUrlTool: Tool = {
 
 /**
  * tool: generateImage
- * Purpose: Generates high-quality visuals using the A4F (Imagen 3.5) model.
- * Supports square, portrait, and landscape aspect ratios.
+ * Purpose: Generates high-quality visuals using the FLUX.2 [klein] 9B model.
+ * Supports flexible dimensions and advanced generation modes.
  */
 export const generateImageTool: Tool = {
   description:
-    'Generate high-quality images using AI. Use this when the user explicitly asks to create, generate, or make an image, picture, photo, illustration, or artwork. The model used is Imagen 3.5, which creates fast, high-quality images based on text prompts.',
+    'Generate high-quality images using AI. Use this when the user explicitly asks to create, generate, or make an image, picture, photo, illustration, or artwork. The model used is FLUX.2 [klein] 9B, which creates fast, high-quality images based on text prompts. Supports any custom width and height.',
   inputSchema: z.object({
     prompt: z
       .string()
@@ -63,13 +63,19 @@ export const generateImageTool: Tool = {
         'Detailed description of the image to generate. Be specific about style, composition, colors, subject, mood, and any other relevant details.',
       ),
     width: z
-      .enum(['1792', '1024'])
-      .default('1024')
-      .describe('Width of the image in pixels. Must be either 1792 or 1024.'),
+      .number()
+      .default(1024)
+      .describe('Width of the image in pixels. Defaults to 1024.'),
     height: z
-      .enum(['1792', '1024'])
-      .default('1024')
-      .describe('Height of the image in pixels. Must be either 1792 or 1024.'),
+      .number()
+      .default(1024)
+      .describe('Height of the image in pixels. Defaults to 1024.'),
+    mode: z
+      .enum(['text-to-image', 'image-to-image', 'blend', 'inpaint'])
+      .default('text-to-image')
+      .describe('The generation mode to use.'),
+    seed: z.number().optional().describe('Seed for deterministic results.'),
+    steps: z.number().default(28).describe('Number of optimization steps (20-35).'),
   }),
   execute: generateImage,
 };

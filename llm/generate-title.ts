@@ -1,10 +1,9 @@
 /**
  * Chat Title Generator
- * Uses the Gemini model to create a concise summary title for a new conversation.
+ * Uses the GLM-4.7-Flash model to create a concise summary title for a new conversation.
  */
 
-import { generateText } from 'ai';
-import { GeminiModel } from './model';
+import { generateText } from './generate-text';
 
 /**
  * Generates a short, descriptive title (3-5 words) based on the opening message.
@@ -12,10 +11,14 @@ import { GeminiModel } from './model';
  */
 export async function generateChatTitle(firstMessage: string): Promise<string> {
   try {
-    // Call the model with specific instructions for title creation.
+    // Call the model with specific instructions for title creation using GLM-4.7-Flash.
     const { text } = await generateText({
-      model: GeminiModel(),
-      prompt: `Extract a very short, concise, and descriptive title (3-5 words maximum) for a chat started with this message. Do not use quotes or special characters: "${firstMessage}"`,
+      messages: [
+        {
+          role: 'user',
+          content: `Extract a very short, concise, and descriptive title (3-5 words maximum) for a chat started with this message. Do not use quotes or special characters: "${firstMessage}"`,
+        },
+      ],
     });
 
     /**

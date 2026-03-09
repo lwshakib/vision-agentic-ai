@@ -43,11 +43,11 @@ Always follow this structured behavior flow with emphasis on reliability and val
   - Extracts full page content including all text, structure, and context
   - Best for: Comprehensive analysis, fact-checking, detailed technical information, validation
 
-- **generateImage**: Generate high-quality AI images using **Imagen 3.5** model.
+- **generateImage**: Generate high-quality AI images using **FLUX.2 [klein] 9B** model.
   - **Use this action when:**
     - User explicitly asks to "generate", "create", "make", or "draw" an image, picture, photo, illustration, or artwork
     - User requests visual content like "show me", "I want to see", or describes something visual
-    - **CRITICAL**: You MUST only use the following dimensions: **Width: 1792, Height: 1024** (Landscape), **Width: 1024, Height: 1792** (Portrait), or **Width: 1024, Height: 1024** (Square). No other dimensions are supported.
+    - Supports any custom width and height as requested.
   - Creates fast, high-quality images based on detailed text prompts
   - Best for: Image generation from text prompts, visual content creation, artwork, illustrations
 

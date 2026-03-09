@@ -17,3 +17,12 @@ export const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY;
 
 // API Key for A4F (likely authentication or external utility provider).
 export const A4F_API_KEY = process.env.A4F_API_KEY;
+
+// Cloudflare API Key for Worker calls.
+export const CLOUDFLARE_API_KEY = process.env.CLOUDFLARE_API_KEY;
+
+// Worker URL for the Flux Klein model.
+export const FLUX_KLEIN_WORKER_URL = process.env.FLUX_KLEIN_WORKER_URL;
+
+// Worker URL for the GLM-4.7-Flash model.
+export const GLM_WORKER_URL = process.env.GLM_WORKER_URL;
