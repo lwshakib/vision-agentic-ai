@@ -132,51 +132,62 @@ export function useChat({
               
               if (data.type === 'content') {
                 assistantMessage.content += data.delta;
-                // Update parts as well
-                const textPart = assistantMessage.parts?.find(p => p.type === 'text');
-                if (textPart) {
-                  textPart.text = assistantMessage.content;
+                
+                const parts = [...(assistantMessage.parts || [])];
+                const lastPart = parts[parts.length - 1];
+                
+                if (lastPart?.type === 'text') {
+                  parts[parts.length - 1] = { ...lastPart, text: (lastPart.text || '') + data.delta };
                 } else {
-                  assistantMessage.parts = [{ type: 'text', text: assistantMessage.content }];
+                  parts.push({ type: 'text', text: data.delta });
                 }
+                assistantMessage.parts = parts;
               } else if (data.type === 'reasoning') {
                 assistantMessage.reasoning = (assistantMessage.reasoning || '') + data.delta;
-                // Update or add reasoning part
-                const reasoningPart = assistantMessage.parts?.find(p => p.type === 'reasoning');
-                if (reasoningPart) {
-                  reasoningPart.text = assistantMessage.reasoning;
-                  reasoningPart.isStreaming = true;
+                
+                const parts = [...(assistantMessage.parts || [])];
+                const lastPart = parts[parts.length - 1];
+                
+                if (lastPart?.type === 'reasoning') {
+                  parts[parts.length - 1] = { 
+                    ...lastPart, 
+                    text: (lastPart.text || '') + data.delta,
+                    isStreaming: true 
+                  };
                 } else {
-                  assistantMessage.parts = [
-                    ...(assistantMessage.parts || []),
-                    { type: 'reasoning', text: assistantMessage.reasoning, isStreaming: true }
-                  ];
+                  parts.push({ 
+                    type: 'reasoning', 
+                    text: data.delta, 
+                    isStreaming: true 
+                  });
                 }
+                assistantMessage.parts = parts;
               } else if (data.type === 'tool_call') {
-                 assistantMessage.parts = [
-                   ...(assistantMessage.parts || []),
-                   { 
-                     type: `tool-${data.name}`, 
-                     input: data.args ? JSON.parse(data.args) : {},
-                     state: 'input-available' 
-                   }
-                 ];
+                const parts = [...(assistantMessage.parts || [])];
+                parts.push({ 
+                  type: `tool-${data.name}`, 
+                  input: data.args ? JSON.parse(data.args) : {},
+                  state: 'input-available' 
+                });
+                assistantMessage.parts = parts;
               } else if (data.type === 'tool_result') {
-                 // Update the corresponding tool_call part or add a result part
-                 const toolPart = assistantMessage.parts?.find(p => p.type === `tool-${data.name}` && p.state !== 'output-available');
-                 if (toolPart) {
-                   toolPart.output = data.result;
-                   toolPart.state = 'output-available';
+                 const parts = [...(assistantMessage.parts || [])];
+                 const toolIndex = parts.findLastIndex(p => p.type === `tool-${data.name}` && p.state !== 'output-available');
+                 
+                 if (toolIndex !== -1) {
+                   parts[toolIndex] = {
+                     ...parts[toolIndex],
+                     output: data.result,
+                     state: 'output-available'
+                   };
                  } else {
-                   assistantMessage.parts = [
-                     ...(assistantMessage.parts || []),
-                     { 
-                       type: `tool-${data.name}`, 
-                       output: data.result,
-                       state: 'output-available' 
-                     }
-                   ];
+                   parts.push({ 
+                     type: `tool-${data.name}`, 
+                     output: data.result,
+                     state: 'output-available' 
+                   });
                  }
+                 assistantMessage.parts = parts;
               }
 
               // Update the UI
