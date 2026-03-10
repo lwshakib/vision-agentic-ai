@@ -12,8 +12,6 @@ interface ToolTextToSpeechProps {
   voice?: string;
 }
 
-import { ToolCard } from './tool-card';
-
 export function ToolAudioPlayer({ audioUrl, text, voice }: ToolTextToSpeechProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -74,59 +72,62 @@ export function ToolAudioPlayer({ audioUrl, text, voice }: ToolTextToSpeechProps
   };
 
   return (
-    <ToolCard
-      icon={MusicIcon}
-      title="AI Generated Speech"
-      subtitle={text}
-      badge={voice || 'HYPERION'}
-      onDownload={handleDownload}
-    >
-      <div className="flex items-center justify-between gap-3 p-4 bg-card/50">
-        <div className="flex items-center gap-4 overflow-hidden">
-          {/* Modern Icon Container */}
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-inner">
-            <MusicIcon className={cn("size-6", isPlaying && "animate-pulse")} />
-          </div>
-
-          {/* Info Section */}
-          <div className="flex flex-col overflow-hidden">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-tight">Synthesized Audio</span>
-              {voice && (
-                <span className="rounded-full bg-muted/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground border border-muted">
-                  {voice}
-                </span>
-              )}
-            </div>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">
-              {isPlaying ? 'Now Playing' : 'Ready to play'}
-            </span>
-          </div>
+    <div className="flex items-center justify-between gap-3 p-3 my-2 w-full max-w-sm rounded-2xl border bg-card/60 shadow-sm backdrop-blur-sm transition-all hover:bg-card/80">
+      <div className="flex items-center gap-4 overflow-hidden">
+        {/* Modern Icon Container */}
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner">
+          <MusicIcon className={cn("size-5", isPlaying && "animate-pulse")} />
         </div>
 
-        {/* Action Section */}
-        <div className="flex items-center gap-2 px-1">
-          <audio ref={audioRef} src={audioUrl} className="hidden" />
-          
-          <Button
-            size="icon"
-            variant="outline"
-            className={cn(
-              "size-10 rounded-full transition-all active:scale-95",
-              isPlaying 
-                ? 'border-primary bg-primary text-primary-foreground shadow-lg' 
-                : 'border-primary/20 bg-primary/5 hover:bg-primary/10 hover:text-primary'
+        {/* Info Section */}
+        <div className="flex flex-col overflow-hidden">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold tracking-tight">Synthesized Audio</span>
+            {voice && (
+              <span className="rounded-full bg-muted/50 px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground border border-muted">
+                {voice}
+              </span>
             )}
-            onClick={handleTogglePlay}
-          >
-            {isPlaying ? (
-              <PauseIcon className="size-4 fill-current" />
-            ) : (
-              <PlayIcon className="size-4 fill-current" />
-            )}
-          </Button>
+          </div>
+          <span className="text-[10px] tracking-wide text-muted-foreground/80 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+            {isPlaying ? 'Now playing · ' + (text?.substring(0, 20) || '') + '...' : 'Ready to play'}
+          </span>
         </div>
       </div>
-    </ToolCard>
+
+      {/* Action Section */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <audio ref={audioRef} src={audioUrl} className="hidden" />
+        
+        <Button
+          size="icon"
+          variant="ghost"
+          className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          onClick={handleDownload}
+          title="Download Audio"
+        >
+          <DownloadIcon className="size-4" />
+        </Button>
+
+        <Button
+          size="icon"
+          variant="outline"
+          className={cn(
+            "size-9 rounded-full transition-all active:scale-95",
+            isPlaying 
+              ? 'border-foreground bg-foreground text-background shadow-sm' 
+              : 'border-muted bg-background hover:bg-muted/50'
+          )}
+          onClick={handleTogglePlay}
+        >
+          {isPlaying ? (
+            <PauseIcon className="size-4 fill-current" />
+          ) : (
+            <PlayIcon className="size-4 fill-current" />
+          )}
+        </Button>
+      </div>
+    </div>
   );
 }
+
