@@ -88,8 +88,12 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // Parse payload from the request body.
   const body = await req.json();
-  const role: 'user' | 'assistant' =
-    body?.role === 'assistant' ? 'assistant' : 'user';
+  const inputRole = body?.role as string;
+  let role: MessageRole = MessageRole.user;
+  
+  if (inputRole === 'assistant') role = MessageRole.assistant;
+  else if (inputRole === 'system') role = MessageRole.system;
+  else if (inputRole === 'tool') role = MessageRole.tool;
   const messageText =
     typeof body?.message === 'string' ? body.message.trim() : '';
   const parts = Array.isArray(body?.parts) ? body.parts : undefined;
@@ -110,7 +114,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const created = await prisma.message.create({
     data: {
       chatId: existingChat.id,
-      role: role === 'assistant' ? MessageRole.assistant : MessageRole.user,
+      role: role,
       parts: persistedParts,
     },
   });

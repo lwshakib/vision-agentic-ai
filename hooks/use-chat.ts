@@ -109,13 +109,68 @@ export function useChat({
             ...(headers || {}),
           },
           body: JSON.stringify({
-            messages: [...messages, userMessage].map((m) => ({
-              role: m.role,
-              content:
+            messages: [...messages, userMessage].flatMap((m) => {
+              const textContent =
                 m.content ||
                 m.parts?.find((p) => p.type === 'text')?.text ||
-                '',
-            })),
+                '';
+
+              const imageParts =
+                m.parts
+                  ?.filter(
+                    (p) =>
+                      p.type === 'file' &&
+                      p.mediaType?.startsWith('image/'),
+                  )
+                  .map((p) => ({
+                    type: 'image_url',
+                    image_url: { url: p.url, detail: 'high' },
+                  })) || [];
+
+              const commonContent = imageParts.length > 0
+                ? [{ type: 'text', text: textContent }, ...imageParts]
+                : textContent;
+
+              // If assistant message has tool results in its parts, we must emit both the assistant message and tool messages
+              if (m.role === 'assistant') {
+                const toolCalls = m.parts
+                  ?.filter((p) => p.type?.startsWith('tool-') && p.input)
+                  .map((p) => ({
+                    id: p.id || `call_${nanoid()}`,
+                    type: 'function',
+                    function: {
+                      name: p.type.replace('tool-', ''),
+                      arguments: JSON.stringify(p.input),
+                    },
+                  }));
+
+                const msgs: any[] = [];
+                msgs.push({
+                  role: 'assistant',
+                  content: commonContent,
+                  tool_calls: toolCalls?.length ? toolCalls : undefined,
+                });
+
+                // Add corresponding tool messages for any completed calls
+                m.parts?.forEach((p) => {
+                  if (p.type?.startsWith('tool-') && p.state === 'output-available') {
+                    msgs.push({
+                      role: 'tool',
+                      tool_call_id: p.id || msgs[0].tool_calls?.find((tc: any) => tc.function.name === p.type.replace('tool-', ''))?.id,
+                      name: p.type.replace('tool-', ''),
+                      content: JSON.stringify(p.output),
+                    });
+                  }
+                });
+
+                return msgs;
+              }
+
+              return {
+                role: m.role,
+                content: commonContent,
+              };
+            }),
           }),
         });
 
@@ -213,6 +268,7 @@ export function useChat({
               } else if (data.type === 'tool_call') {
                 const parts = [...(assistantMessage.parts || [])];
                 parts.push({
+                  id: data.id,
                   type: `tool-${data.name}`,
                   input: data.args ? JSON.parse(data.args) : {},
                   state: 'input-available',
@@ -222,18 +278,21 @@ export function useChat({
                 const parts = [...(assistantMessage.parts || [])];
                 const toolIndex = parts.findLastIndex(
                   (p) =>
+                    p.id === data.id || (
                     p.type === `tool-${data.name}` &&
-                    p.state !== 'output-available',
+                    p.state !== 'output-available')
                 );
 
                 if (toolIndex !== -1) {
                   parts[toolIndex] = {
                     ...parts[toolIndex],
+                    id: data.id || parts[toolIndex].id,
                     output: data.result,
                     state: 'output-available',
                   };
                 } else {
                   parts.push({
+                    id: data.id,
                     type: `tool-${data.name}`,
                     output: data.result,
                     state: 'output-available',

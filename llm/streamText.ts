@@ -6,7 +6,7 @@ import { TOKEN_LIMIT_THRESHOLD } from '@/lib/constants';
 
 export interface Message {
   role: 'user' | 'assistant' | 'system' | 'tool';
-  content: string;
+  content: any;
   name?: string;
   tool_call_id?: string;
   tool_calls?: any[];
@@ -15,7 +15,7 @@ export interface Message {
 /**
  * Executes the tool calling loop and streams results.
  */
-export async function streamText(messages: Message[]) {
+export async function streamText(messages: any[]) {
   if (!GLM_WORKER_URL || !CLOUDFLARE_API_KEY) {
     throw new Error('Missing GLM configuration');
   }
@@ -173,25 +173,40 @@ export async function streamText(messages: Message[]) {
           for (const tc of cleanToolCalls) {
             const tool = tools[tc.function.name];
             if (tool) {
-              sendChunk({ type: 'tool_call', name: tc.function.name, args: tc.function.arguments });
+              sendChunk({
+                type: 'tool_call',
+                id: tc.id,
+                name: tc.function.name,
+                args: tc.function.arguments,
+              });
               try {
                 const args = JSON.parse(tc.function.arguments);
                 const result = await tool.execute(args);
-                sendChunk({ type: 'tool_result', name: tc.function.name, result });
+                sendChunk({
+                  type: 'tool_result',
+                  id: tc.id,
+                  name: tc.function.name,
+                  result,
+                });
                 currentMessages.push({
                   role: 'tool',
                   tool_call_id: tc.id,
                   name: tc.function.name,
-                  content: JSON.stringify(result)
+                  content: JSON.stringify(result),
                 });
               } catch (e) {
                 const errorMsg = e instanceof Error ? e.message : 'Unknown error';
-                sendChunk({ type: 'tool_result', name: tc.function.name, error: errorMsg });
+                sendChunk({
+                  type: 'tool_result',
+                  id: tc.id,
+                  name: tc.function.name,
+                  error: errorMsg,
+                });
                 currentMessages.push({
                   role: 'tool',
                   tool_call_id: tc.id,
                   name: tc.function.name,
-                  content: `Error: ${errorMsg}`
+                  content: `Error: ${errorMsg}`,
                 });
               }
             }
