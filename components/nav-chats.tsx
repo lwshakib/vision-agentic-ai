@@ -40,6 +40,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { truncate } from '@/lib/utils';
 
 /**
  * Component to display a flat list of chats with individual action menus.
@@ -88,11 +89,11 @@ export function NavChats({
         {chats.map((item) => (
           <SidebarMenuItem key={item.id || item.name}>
             {/* Primary link to the chat session. */}
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip={item.name}>
               <Link href={item.url}>
                 {/* Dynamically render icon or fallback to default MessageSquare. */}
                 {item.icon ? <item.icon /> : <MessageSquare />}
-                <span>{item.name}</span>
+                <span>{truncate(item.name, 28)}</span>
               </Link>
             </SidebarMenuButton>
 

@@ -32,6 +32,7 @@ interface ChatStore {
   chatTitles: Record<string, string>; // Local overrides for titles (useful for real-time updates).
   chats: Chat[]; // The master list of unassigned chats shown in the sidebar.
   projects: Project[]; // The list of projects and their nested chats.
+  messageCredits: number | null; // Track remaining credits for the session.
 
   // Action to update the title of a specific chat session.
   setChatTitle: (chatId: string, title: string) => void;
@@ -48,6 +49,7 @@ interface ChatStore {
   addProjectChat: (projectId: string, chat: Chat) => void;
   updateProject: (projectId: string, updates: Partial<Project>) => void;
   removeProject: (projectId: string) => void;
+  setMessageCredits: (credits: number) => void;
 }
 
 /**
@@ -57,6 +59,9 @@ export const useChatStore = create<ChatStore>((set) => ({
   chatTitles: {},
   chats: [],
   projects: [],
+  messageCredits: null,
+
+  setMessageCredits: (credits) => set({ messageCredits: credits }),
 
   /**
    * Updates a chat's title in both the lookup map and the list.

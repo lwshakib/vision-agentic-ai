@@ -41,6 +41,11 @@ export async function generateFile(
 ): Promise<GenerateFileResult> {
   const { fileName, type, content } = options;
   
+  // Ensure content is a string. If the LLM passes an object (common for JSON requests), stringify it.
+  const normalizedContent = typeof content === 'string' 
+    ? content 
+    : JSON.stringify(content, null, 2);
+  
   // Defensive checks to prevent "Cannot read properties of undefined"
   if (!fileName) {
     console.warn('[GENERATE_FILE] Missing fileName, using default.');
@@ -53,7 +58,7 @@ export async function generateFile(
   try {
     let buffer: Buffer;
 
-    switch (type) {
+    switch (safeType) {
       case 'pdf': {
         const doc = new jsPDF();
         const bodyFontSize = 10;
@@ -68,7 +73,7 @@ export async function generateFile(
 
         // Split content into blocks (paragraphs or tables)
         // This is a simple parser to identify tables
-        const lines = content.split('\n');
+        const lines = normalizedContent.split('\n');
         let i = 0;
         while (i < lines.length) {
           const line = lines[i].trim();
@@ -202,14 +207,14 @@ export async function generateFile(
       case 'csv':
       case 'json':
       case 'markdown': {
-        buffer = Buffer.from(content, 'utf-8');
+        buffer = Buffer.from(normalizedContent, 'utf-8');
         break;
       }
       default:
-        throw new Error(`Unsupported file type: ${type}`);
+        throw new Error(`Unsupported file type: ${safeType}`);
     }
 
-    const uploadResult = await saveFileToCloudinary(buffer, fullFileName, type);
+    const uploadResult = await saveFileToCloudinary(buffer, fullFileName, safeType);
 
     return {
       success: true,

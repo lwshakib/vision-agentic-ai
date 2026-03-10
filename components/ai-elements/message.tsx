@@ -32,6 +32,7 @@ import {
   useState,
 } from 'react';
 import { Streamdown } from 'streamdown';
+import { CodeBlock, CodeBlockCopyButton } from './code-block';
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: ChatMessage['role'];
@@ -316,6 +317,32 @@ export const MessageBranchPage = ({
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
+export const MarkdownComponents: ComponentProps<typeof Streamdown>['components'] = {
+  code({ node, inline, className, children, ...props }: any) {
+    const match = /language-(\w+)/.exec(className || '');
+    const isCodeBlock = !inline && match;
+
+    if (isCodeBlock) {
+      return (
+        <CodeBlock
+          className="not-prose my-4"
+          code={String(children).replace(/\n$/, '')}
+          language={match[1] as any}
+          {...props}
+        >
+          <CodeBlockCopyButton />
+        </CodeBlock>
+      );
+    }
+
+    return (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    );
+  },
+};
+
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (
     <Streamdown
@@ -323,6 +350,7 @@ export const MessageResponse = memo(
         'size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0',
         className,
       )}
+      components={MarkdownComponents}
       {...props}
     />
   ),

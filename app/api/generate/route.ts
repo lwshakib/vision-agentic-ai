@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     const stream = await streamText(messages);
 
     // If generation starts successfully, consume one credit.
-    await consumeCredit(user.id);
+    const updatedUser = await consumeCredit(user.id);
 
     // Return the stream as text/event-stream.
     return new Response(stream, {
@@ -58,6 +58,7 @@ export async function POST(req: Request) {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
+        'X-Message-Credits': updatedUser.messageCredits.toString(),
       },
     });
   } catch (error: unknown) {

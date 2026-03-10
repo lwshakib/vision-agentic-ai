@@ -124,6 +124,11 @@ export function useChat({
           throw new Error(errorData);
         }
 
+        const remainingCredits = response.headers.get('X-Message-Credits');
+        if (remainingCredits !== null) {
+          useChatStore.getState().setMessageCredits(parseInt(remainingCredits, 10));
+        }
+
         setStatus('streaming');
         const reader = response.body?.getReader();
         if (!reader) throw new Error('No body');

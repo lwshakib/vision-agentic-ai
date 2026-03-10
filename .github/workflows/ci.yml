@@ -37,22 +37,35 @@ jobs:
       - name: Build
         run: bun run build
         env:
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          # --- Application Configuration ---
           BETTER_AUTH_URL: 'http://localhost:3000'
           NEXT_PUBLIC_BASE_URL: 'http://localhost:3000'
+
+          # --- Authentication ---
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+          # --- Database ---
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          A4F_API_KEY: ${{ secrets.A4F_API_KEY }}
-          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
-          VAPI_PRIVATE_KEY: ${{ secrets.VAPI_PRIVATE_KEY }}
-          VAPI_PUBLIC_KEY: ${{ secrets.VAPI_PUBLIC_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+
+          # --- Cloudinary ---
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+
+          # --- AI Workers & Cloudflare ---
+          AURA_2_EN_WORKER_URL: ${{ secrets.AURA_2_EN_WORKER_URL }}
+          BGE_M3_WORKER_URL: ${{ secrets.BGE_M3_WORKER_URL }}
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
+          FLUX_2_KLEIN_9B_WORKER_URL: ${{ secrets.FLUX_2_KLEIN_9B_WORKER_URL }}
+          FLUX_WORKER_URL: ${{ secrets.FLUX_WORKER_URL }}
+          GLM_WORKER_URL: ${{ secrets.GLM_WORKER_URL }}
+          WHISPER_LARGE_V3_TURBO_WORKER_URL: ${{ secrets.WHISPER_LARGE_V3_TURBO_WORKER_URL }}
+
+          # --- External APIs ---
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -78,22 +91,35 @@ jobs:
       - name: Run E2E Tests
         run: bun run test:e2e
         env:
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          # --- Application Configuration ---
           BETTER_AUTH_URL: 'http://localhost:3000'
           NEXT_PUBLIC_BASE_URL: 'http://localhost:3000'
+
+          # --- Authentication ---
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+          # --- Database ---
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          A4F_API_KEY: ${{ secrets.A4F_API_KEY }}
-          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
-          VAPI_PRIVATE_KEY: ${{ secrets.VAPI_PRIVATE_KEY }}
-          VAPI_PUBLIC_KEY: ${{ secrets.VAPI_PUBLIC_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+
+          # --- Cloudinary ---
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+
+          # --- AI Workers & Cloudflare ---
+          AURA_2_EN_WORKER_URL: ${{ secrets.AURA_2_EN_WORKER_URL }}
+          BGE_M3_WORKER_URL: ${{ secrets.BGE_M3_WORKER_URL }}
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
+          FLUX_2_KLEIN_9B_WORKER_URL: ${{ secrets.FLUX_2_KLEIN_9B_WORKER_URL }}
+          FLUX_WORKER_URL: ${{ secrets.FLUX_WORKER_URL }}
+          GLM_WORKER_URL: ${{ secrets.GLM_WORKER_URL }}
+          WHISPER_LARGE_V3_TURBO_WORKER_URL: ${{ secrets.WHISPER_LARGE_V3_TURBO_WORKER_URL }}
+
+          # --- External APIs ---
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4

@@ -43,6 +43,10 @@ import { useRouter } from 'next/navigation';
 // Import Skeleton for loading states.
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Import global state store for chat-related data.
+import { useChatStore } from '@/hooks/use-chat-store';
+import { useEffect } from 'react';
+
 /**
  * Main NavUser component.
  */
@@ -60,6 +64,14 @@ export function NavUser({
 
   // Real-time authentication session hook.
   const { data: session, isPending } = authClient.useSession();
+  const { messageCredits, setMessageCredits } = useChatStore();
+
+  // Sync session credits with store on mount or session change.
+  useEffect(() => {
+    if (session?.user && messageCredits === null) {
+      setMessageCredits((session.user as any).messageCredits ?? 0);
+    }
+  }, [session, messageCredits, setMessageCredits]);
 
   /**
    * Derive the current user object.
@@ -136,8 +148,7 @@ export function NavUser({
                   variant="outline"
                   className="h-4 px-1 text-[9px] font-bold border-primary/20 bg-primary/5 text-primary"
                 >
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  {(session?.user as any)?.messageCredits ?? 0}/10
+                  {messageCredits ?? 0}/10
                 </Badge>
                 <ChevronsUpDown className="size-3 text-muted-foreground" />
               </div>

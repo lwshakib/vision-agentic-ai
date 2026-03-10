@@ -13,3 +13,13 @@ import { twMerge } from 'tailwind-merge';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+/**
+ * Truncates a string to a specified length and adds an ellipsis.
+ * @param str - The string to truncate.
+ * @param length - The maximum length before truncation.
+ */
+export function truncate(str: string, length: number) {
+  if (!str) return '';
+  return str.length > length ? str.substring(0, length) + '...' : str;
+}

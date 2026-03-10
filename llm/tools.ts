@@ -120,7 +120,7 @@ export const generateFileTool: Tool = {
       .describe('The type of file to generate.'),
     content: z
       .string()
-      .describe('The full text content to be included in the file.'),
+      .describe('The full text content to be included in the file. For JSON files, provide a properly stringified JSON string.'),
   }),
   execute: generateFile,
 };
