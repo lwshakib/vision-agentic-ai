@@ -51,6 +51,7 @@ export default function ChatPage() {
     messages, // Array of current chat messages.
     setMessages, // Function to manually update message state.
     status, // Current status of the chat (idle, loading, etc.).
+    stop, // Function to abort the current AI generation request
   } = useChat({
     headers: {
       'X-Chat-Id': chatId || '', // Include chatId in headers for server context.
@@ -322,7 +323,12 @@ export default function ChatPage() {
       {/* Sticky footer containing the message input. */}
       <div className="sticky bottom-0 flex w-full items-center justify-center bg-background/80 px-4 pb-6 pt-4 backdrop-blur">
         <div className="w-full max-w-3xl">
-          <ChatInput onSend={handleSend} placeholder="Send a message" />
+          <ChatInput 
+            onSend={handleSend} 
+            onStop={stop}
+            placeholder="Send a message" 
+            isGenerating={status === 'submitted' || status === 'streaming'} 
+          />
         </div>
       </div>
     </div>

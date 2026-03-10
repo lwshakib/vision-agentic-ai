@@ -118,7 +118,7 @@ function TemporaryChat() {
   const router = useRouter();
 
   // Use the custom chat hook for state and messaging management.
-  const { sendMessage, messages, status } = useChat({
+  const { sendMessage, messages, status, stop } = useChat({
     onError: (err) => {
       console.error('Temporary chat error:', err);
       try {
@@ -194,6 +194,7 @@ function TemporaryChat() {
       status={status}
       isLoadingHistory={isLoadingHistory}
       onSend={handleSend}
+      onStop={stop}
       onCopy={handleCopy}
     />
   );

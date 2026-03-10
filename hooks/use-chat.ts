@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { nanoid } from 'nanoid';
 import { useChatStore } from '@/hooks/use-chat-store';
 
@@ -36,6 +36,14 @@ export function useChat({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>('idle');
   const setChatTitle = useChatStore((state) => state.setChatTitle);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const stop = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
 
   const sendMessage = useCallback(
     async ({ text, files }: SendMessageOptions) => {
@@ -90,8 +98,12 @@ export function useChat({
       let reasoningStartTime: number | null = null;
 
       try {
+        const abortController = new AbortController();
+        abortControllerRef.current = abortController;
+
         const response = await fetch(api, {
           method: 'POST',
+          signal: abortController.signal,
           headers: {
             'Content-Type': 'application/json',
             ...(headers || {}),
@@ -271,7 +283,48 @@ export function useChat({
           ),
         );
         onFinish?.(assistantMessage);
-      } catch (err) {
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          // If aborted, we handle finishing the message up to the point it stopped.
+          setStatus('idle');
+          if (assistantMessage.isStreaming) {
+            assistantMessage.isStreaming = false;
+            // append aborted to reasoning/content to indicate
+            if (assistantMessage.reasoning && !assistantMessage.content) {
+               assistantMessage.reasoning += '\\n\\n[Aborted]';
+            } else {
+               assistantMessage.content += '\\n\\n[Aborted]';
+            }
+            const finalParts = [...(assistantMessage.parts || [])];
+            const lastReasoningIndex = finalParts.findLastIndex(
+              (p) => p.type === 'reasoning' && p.isStreaming,
+            );
+            if (lastReasoningIndex !== -1 && reasoningStartTime) {
+              finalParts[lastReasoningIndex] = {
+                ...finalParts[lastReasoningIndex],
+                isStreaming: false,
+                duration: Math.max(
+                  1,
+                  Math.ceil((Date.now() - reasoningStartTime) / 1000),
+                ),
+              };
+            }
+            assistantMessage = {
+              ...assistantMessage,
+              parts: finalParts.map((p) =>
+                p.type === 'reasoning' ? { ...p, isStreaming: false } : p,
+              ),
+            };
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessageId ? { ...assistantMessage } : m,
+              ),
+            );
+            onFinish?.(assistantMessage);
+          }
+          return;
+        }
+        
         setStatus('error');
         setMessages((prev) =>
           prev.map((m) =>
@@ -279,6 +332,8 @@ export function useChat({
           ),
         );
         onError?.(err instanceof Error ? err : new Error(String(err)));
+      } finally {
+        abortControllerRef.current = null;
       }
     },
     [api, headers, messages, onFinish, onError]
@@ -289,5 +344,6 @@ export function useChat({
     setMessages,
     status,
     sendMessage,
+    stop,
   };
 }

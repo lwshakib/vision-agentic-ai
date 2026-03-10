@@ -23,7 +23,7 @@ export function MessageActionsList({
   onCopy,
   onRetry,
 }: MessageActionsListProps) {
-  if (message.role !== 'assistant' || message.isStreaming) return null;
+  if (message.isStreaming) return null;
 
   const fullText = Array.isArray(message.parts)
     ? (message.parts as TextPart[])
@@ -36,7 +36,7 @@ export function MessageActionsList({
   if (!fullText) return null;
 
   return (
-    <MessageActions className="mt-1">
+    <MessageActions className={`mt-1 ${message.role === 'user' ? 'justify-end' : ''}`}>
       <MessageAction
         label="Copy"
         onClick={() => onCopy(fullText)}

@@ -27,6 +27,7 @@ import {
   ArrowUp,
   VideoIcon,
   FileIcon,
+  Square,
 } from 'lucide-react';
 // Import Cloudinary upload utilities and progress types.
 import {
@@ -361,8 +362,10 @@ type FileInfo = {
 
 type ChatInputProps = {
   onSend?: (message: string, files?: FileInfo[]) => Promise<void> | void;
+  onStop?: () => void;
   placeholder?: string;
   className?: string;
+  isGenerating?: boolean;
 };
 
 /**
@@ -370,8 +373,10 @@ type ChatInputProps = {
  */
 export default function ChatInput({
   onSend,
+  onStop,
   placeholder = 'Ask anything',
   className,
+  isGenerating = false,
 }: ChatInputProps) {
   // DOM references for elements and recording states.
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -396,7 +401,12 @@ export default function ChatInput({
   /**
    * Orchestrates the primary sending logic, combining text and uploaded files.
    */
-  const handleSend = async () => {
+  const handleSendOrStop = async () => {
+    if (isGenerating && onStop) {
+      onStop();
+      return;
+    }
+    
     if ((!hasText && !hasFiles) || isSubmitting) return;
     const text = value.trim();
 
@@ -767,7 +777,7 @@ export default function ChatInput({
                     // Send on Enter (if no Shift key).
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      handleSend();
+                      handleSendOrStop();
                     }
                   }}
                   placeholder={placeholder}
@@ -795,13 +805,14 @@ export default function ChatInput({
                       <Mic size={18} />
                     </button>
 
-                    {/* Send button with context-aware icon. */}
                     <button
-                      onClick={handleSend}
-                      disabled={(!hasText && !hasFiles) || isSubmitting}
-                      className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleSendOrStop}
+                      disabled={(!isGenerating && !hasText && !hasFiles) || isSubmitting}
+                      className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                     >
-                      {hasText || hasFiles ? (
+                      {isGenerating ? (
+                        <Square fill="currentColor" size={14} />
+                      ) : hasText || hasFiles ? (
                         <ArrowUp size={18} />
                       ) : (
                         <AudioLines size={18} />
@@ -827,7 +838,7 @@ export default function ChatInput({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      handleSend();
+                      handleSendOrStop();
                     }
                   }}
                   placeholder={placeholder}
@@ -845,11 +856,13 @@ export default function ChatInput({
                 </button>
 
                 <button
-                  onClick={handleSend}
-                  disabled={(!hasText && !hasFiles) || isSubmitting}
-                  className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleSendOrStop}
+                  disabled={(!isGenerating && !hasText && !hasFiles) || isSubmitting}
+                  className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                 >
-                  {hasText || hasFiles ? (
+                  {isGenerating ? (
+                    <Square fill="currentColor" size={14} />
+                  ) : hasText || hasFiles ? (
                     <ArrowUp size={18} />
                   ) : (
                     <AudioLines size={18} />

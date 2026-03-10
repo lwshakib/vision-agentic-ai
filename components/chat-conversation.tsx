@@ -36,6 +36,7 @@ type ChatConversationViewProps = {
   ) => void | Promise<void>; // Callback for dispatching new user messages.
   onCopy: (text: string) => void | Promise<void>; // Utility for copying message text.
   onRetry?: (messageIndex: number) => void; // Optional logic for re-triggering a failed AI response.
+  onStop?: () => void; // Logic to stop generating responses.
 };
 
 /**
@@ -64,6 +65,7 @@ export function ChatConversationView({
   onSend,
   onCopy,
   onRetry,
+  onStop,
 }: ChatConversationViewProps) {
   return (
     // Main layout container: full screen height, vertical flex.
@@ -82,7 +84,12 @@ export function ChatConversationView({
       {/* Floating glassmorphism footer containing the chat input. */}
       <div className="sticky bottom-0 flex w-full items-center justify-center bg-background/80 px-4 pb-6 pt-4 backdrop-blur">
         <div className="w-full max-w-3xl">
-          <ChatInput onSend={onSend} placeholder="Send a message" />
+          <ChatInput 
+            onSend={onSend} 
+            onStop={onStop}
+            placeholder="Send a message" 
+            isGenerating={status === 'submitted' || status === 'streaming'}
+          />
         </div>
       </div>
     </div>
