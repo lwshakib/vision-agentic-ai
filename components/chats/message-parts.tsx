@@ -154,15 +154,7 @@ export function ChatMessageParts({
 
               if (hasOutput && output?.results?.length > 0) {
                 return (
-                  <ToolCard
-                    key={key}
-                    icon={GlobeIcon}
-                    title="Search Results"
-                    subtitle={input?.query}
-                    badge="Verified Sources"
-                  >
-                    <ToolSearchResults results={output.results} />
-                  </ToolCard>
+                  <ToolSearchResults key={key} results={output.results} />
                 );
               }
               return null;
@@ -198,14 +190,7 @@ export function ChatMessageParts({
 
               if (hasOutput && output?.results?.length > 0) {
                 return (
-                  <ToolCard
-                    key={key}
-                    icon={GlobeIcon}
-                    title="Extracted Content"
-                    badge={`${output.results.length} Sources`}
-                  >
-                    <ToolSearchResults results={output.results} />
-                  </ToolCard>
+                  <ToolSearchResults key={key} results={output.results} />
                 );
               }
               return null;
