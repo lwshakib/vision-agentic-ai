@@ -1,4 +1,4 @@
-import { CLOUDFLARE_API_KEY, FLUX_KLEIN_WORKER_URL } from '@/lib/env';
+import { CLOUDFLARE_API_KEY, FLUX_2_KLEIN_9B_WORKER_URL } from '@/lib/env';
 import { saveImageToCloudinary } from '@/lib/cloudinary';
 
 /**
@@ -93,7 +93,7 @@ export const generateImage = async (
 
     if (!isFormDataNeeded) {
       // Simple Text-to-Image (JSON)
-      response = await fetch(FLUX_KLEIN_WORKER_URL!, {
+      response = await fetch(FLUX_2_KLEIN_9B_WORKER_URL!, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ export const generateImage = async (
         }
       }
 
-      response = await fetch(FLUX_KLEIN_WORKER_URL!, {
+      response = await fetch(FLUX_2_KLEIN_9B_WORKER_URL!, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${CLOUDFLARE_API_KEY}`,
