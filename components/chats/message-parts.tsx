@@ -21,6 +21,7 @@ interface MessagePart {
   text?: string;
   reasoning?: string;
   isStreaming?: boolean;
+  duration?: number;
   sources?: SourceItem[];
   input?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   output?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -80,10 +81,11 @@ export function ChatMessageParts({
           if (part.type === 'reasoning') {
             const reasoningText = part.reasoning ?? part.text ?? '';
             const isStreaming = Boolean(part.isStreaming);
+            const duration = typeof part.duration === 'number' ? part.duration : undefined;
             if (!reasoningText) return null;
 
             return (
-              <Reasoning key={key} className="w-full" isStreaming={isStreaming}>
+              <Reasoning key={key} className="w-full" isStreaming={isStreaming} duration={duration}>
                 <ReasoningTrigger />
                 <ReasoningContent>{reasoningText}</ReasoningContent>
               </Reasoning>

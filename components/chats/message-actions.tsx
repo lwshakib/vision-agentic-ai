@@ -23,7 +23,7 @@ export function MessageActionsList({
   onCopy,
   onRetry,
 }: MessageActionsListProps) {
-  if (message.role !== 'assistant') return null;
+  if (message.role !== 'assistant' || message.isStreaming) return null;
 
   const fullText = Array.isArray(message.parts)
     ? (message.parts as TextPart[])

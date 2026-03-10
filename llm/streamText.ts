@@ -2,6 +2,7 @@ import { CLOUDFLARE_API_KEY, GLM_WORKER_URL } from '@/lib/env';
 import { tools } from './tools';
 import { SYSTEM_PROMPT } from './prompts';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { manageContext } from './summarizer';
 
 export interface Message {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -23,7 +24,7 @@ export async function streamText(messages: Message[]) {
   
   return new ReadableStream({
     async start(controller) {
-      let currentMessages: any[] = [
+      let currentMessages: any[] = await manageContext([
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages.map(m => ({
           role: m.role,
@@ -32,7 +33,7 @@ export async function streamText(messages: Message[]) {
           tool_call_id: m.tool_call_id,
           name: m.name
         }))
-      ];
+      ]);
 
       const formattedTools = Object.entries(tools).map(([name, tool]) => ({
         type: 'function',
@@ -54,6 +55,9 @@ export async function streamText(messages: Message[]) {
         while (stepCount < MAX_STEPS) {
           stepCount++;
           
+          // Ensure we are within context limits before each call
+          currentMessages = await manageContext(currentMessages);
+
           const response = await fetch(GLM_WORKER_URL!, {
             method: 'POST',
             headers: {

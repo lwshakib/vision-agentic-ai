@@ -12,6 +12,7 @@ export type ChatMessage = {
   reasoning?: string;
   version?: number | string;
   files?: any[];
+  isStreaming?: boolean;
 };
 
 export type ChatStatus = 'idle' | 'submitted' | 'streaming' | 'error';
@@ -83,22 +84,27 @@ export function useChat({
         role: 'assistant',
         content: '',
         parts: [],
-        reasoning: ''
+        reasoning: '',
+        isStreaming: true,
       };
+      let reasoningStartTime: number | null = null;
 
       try {
         const response = await fetch(api, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(headers || {})
+            ...(headers || {}),
           },
           body: JSON.stringify({
-            messages: [...messages, userMessage].map(m => ({
+            messages: [...messages, userMessage].map((m) => ({
               role: m.role,
-              content: m.content || (m.parts?.find(p => p.type === 'text')?.text || '')
-            }))
-          })
+              content:
+                m.content ||
+                m.parts?.find((p) => p.type === 'text')?.text ||
+                '',
+            })),
+          }),
         });
 
         if (!response.ok) {
@@ -113,7 +119,7 @@ export function useChat({
         const decoder = new TextDecoder();
         let buffer = '';
 
-        setMessages(prev => [...prev, assistantMessage]);
+        setMessages((prev) => [...prev, assistantMessage]);
 
         while (true) {
           const { done, value } = await reader.read();
@@ -126,72 +132,110 @@ export function useChat({
           for (const line of lines) {
             const trimmedLine = line.trim();
             if (!trimmedLine.startsWith('data: ')) continue;
-            
+
             try {
               const data = JSON.parse(trimmedLine.slice(6));
-              
+
+              // If we get content or tool but were reasoning, mark it as finished
+              if (data.type !== 'reasoning') {
+                const parts = [...(assistantMessage.parts || [])];
+                const lastReasoningIndex = parts.findLastIndex(
+                  (p) => p.type === 'reasoning' && p.isStreaming,
+                );
+                if (lastReasoningIndex !== -1 && reasoningStartTime) {
+                  parts[lastReasoningIndex] = {
+                    ...parts[lastReasoningIndex],
+                    isStreaming: false,
+                    duration: Math.max(
+                      1,
+                      Math.ceil((Date.now() - reasoningStartTime) / 1000),
+                    ),
+                  };
+                  reasoningStartTime = null;
+                  assistantMessage.parts = parts;
+                }
+              }
+
               if (data.type === 'content') {
                 assistantMessage.content += data.delta;
-                
+
                 const parts = [...(assistantMessage.parts || [])];
                 const lastPart = parts[parts.length - 1];
-                
+
                 if (lastPart?.type === 'text') {
-                  parts[parts.length - 1] = { ...lastPart, text: (lastPart.text || '') + data.delta };
+                  parts[parts.length - 1] = {
+                    ...lastPart,
+                    text: (lastPart.text || '') + data.delta,
+                  };
                 } else {
                   parts.push({ type: 'text', text: data.delta });
                 }
                 assistantMessage.parts = parts;
               } else if (data.type === 'reasoning') {
-                assistantMessage.reasoning = (assistantMessage.reasoning || '') + data.delta;
-                
+                if (!reasoningStartTime) reasoningStartTime = Date.now();
+                assistantMessage.reasoning =
+                  (assistantMessage.reasoning || '') + data.delta;
+
                 const parts = [...(assistantMessage.parts || [])];
                 const lastPart = parts[parts.length - 1];
-                
+
                 if (lastPart?.type === 'reasoning') {
-                  parts[parts.length - 1] = { 
-                    ...lastPart, 
+                  parts[parts.length - 1] = {
+                    ...lastPart,
                     text: (lastPart.text || '') + data.delta,
-                    isStreaming: true 
+                    isStreaming: true,
                   };
                 } else {
-                  parts.push({ 
-                    type: 'reasoning', 
-                    text: data.delta, 
-                    isStreaming: true 
+                  parts.push({
+                    type: 'reasoning',
+                    text: data.delta,
+                    isStreaming: true,
                   });
                 }
                 assistantMessage.parts = parts;
               } else if (data.type === 'tool_call') {
                 const parts = [...(assistantMessage.parts || [])];
-                parts.push({ 
-                  type: `tool-${data.name}`, 
+                parts.push({
+                  type: `tool-${data.name}`,
                   input: data.args ? JSON.parse(data.args) : {},
-                  state: 'input-available' 
+                  state: 'input-available',
                 });
                 assistantMessage.parts = parts;
               } else if (data.type === 'tool_result') {
-                 const parts = [...(assistantMessage.parts || [])];
-                 const toolIndex = parts.findLastIndex(p => p.type === `tool-${data.name}` && p.state !== 'output-available');
-                 
-                 if (toolIndex !== -1) {
-                   parts[toolIndex] = {
-                     ...parts[toolIndex],
-                     output: data.result,
-                     state: 'output-available'
-                   };
-                 } else {
-                   parts.push({ 
-                     type: `tool-${data.name}`, 
-                     output: data.result,
-                     state: 'output-available' 
-                   });
-                 }
-                 assistantMessage.parts = parts;
+                const parts = [...(assistantMessage.parts || [])];
+                const toolIndex = parts.findLastIndex(
+                  (p) =>
+                    p.type === `tool-${data.name}` &&
+                    p.state !== 'output-available',
+                );
+
+                if (toolIndex !== -1) {
+                  parts[toolIndex] = {
+                    ...parts[toolIndex],
+                    output: data.result,
+                    state: 'output-available',
+                  };
+                } else {
+                  parts.push({
+                    type: `tool-${data.name}`,
+                    output: data.result,
+                    state: 'output-available',
+                  });
+                }
+                assistantMessage.parts = parts;
               }
 
               // Update the UI
-              setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...assistantMessage, parts: [...(assistantMessage.parts || [])] } : m));
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMessageId
+                    ? {
+                        ...assistantMessage,
+                        parts: [...(assistantMessage.parts || [])],
+                      }
+                    : m,
+                ),
+              );
             } catch (e) {
               // Ignore
             }
@@ -199,14 +243,41 @@ export function useChat({
         }
 
         setStatus('idle');
-        // Final update to set isStreaming to false
-        assistantMessage.parts = assistantMessage.parts?.map(p => 
-          p.type === 'reasoning' ? { ...p, isStreaming: false } : p
+        // Final update to set isStreaming to false for any remaining reasoning blocks
+        const finalParts = [...(assistantMessage.parts || [])];
+        const lastReasoningIndex = finalParts.findLastIndex(
+          (p) => p.type === 'reasoning' && p.isStreaming,
         );
-        setMessages(prev => prev.map(m => m.id === assistantMessageId ? { ...assistantMessage } : m));
+        if (lastReasoningIndex !== -1 && reasoningStartTime) {
+          finalParts[lastReasoningIndex] = {
+            ...finalParts[lastReasoningIndex],
+            isStreaming: false,
+            duration: Math.max(
+              1,
+              Math.ceil((Date.now() - reasoningStartTime) / 1000),
+            ),
+          };
+        }
+        assistantMessage = {
+          ...assistantMessage,
+          isStreaming: false,
+          parts: finalParts.map((p) =>
+            p.type === 'reasoning' ? { ...p, isStreaming: false } : p,
+          ),
+        };
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessageId ? { ...assistantMessage } : m,
+          ),
+        );
         onFinish?.(assistantMessage);
       } catch (err) {
         setStatus('error');
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessageId ? { ...m, isStreaming: false } : m,
+          ),
+        );
         onError?.(err instanceof Error ? err : new Error(String(err)));
       }
     },
