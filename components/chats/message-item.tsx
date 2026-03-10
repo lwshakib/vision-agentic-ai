@@ -44,17 +44,28 @@ export function ChatMessageItem({
         part.type === 'file' || part.type === 'attachment',
     ) || [];
 
-  const allFiles = [
-    ...messageFiles,
-    ...fileParts.map((part: MessagePartItem) => ({
-      type: part.type,
-      id: part.id || part.url,
-      url: part.url || '',
-      name: part.name || part.filename,
-      filename: part.filename || part.name,
-      mediaType: part.mediaType || part.type,
-    })),
-  ];
+  // De-duplicate files between message.files and message.parts
+  const uniqueFilesMap = new Map<string, any>();
+
+  // Helper to add a file to the map if it's unique
+  const addFile = (file: any) => {
+    const key = file.id || file.publicId || file.url;
+    if (key && !uniqueFilesMap.has(key)) {
+      uniqueFilesMap.set(key, {
+        type: file.type,
+        id: key,
+        url: file.url || '',
+        name: file.name || file.filename,
+        filename: file.filename || file.name,
+        mediaType: file.mediaType || file.type,
+      });
+    }
+  };
+
+  messageFiles.forEach(addFile);
+  fileParts.forEach(addFile);
+
+  const allFiles = Array.from(uniqueFilesMap.values());
 
   return (
     <Message from={message.role} key={message.id}>
