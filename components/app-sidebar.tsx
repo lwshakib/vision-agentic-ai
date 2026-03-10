@@ -520,36 +520,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       {/* Main Content Area: Search, Projects, and Chats lists. */}
-      <SidebarContent className="overflow-hidden">
+      <SidebarContent className="gap-0 overflow-hidden">
         <NavMain items={data.navMain} />
-        <ScrollArea className="flex-1">
-          {/* Show skeletons while initial data is loading. */}
-          {isLoadingChats || isLoadingProjects ? (
-            <SidebarSkeleton />
-          ) : (
-            <>
-              {/* Project navigation and management. */}
-              <NavProjects
-                projects={displayProjects}
-                onOpenProject={loadProjectChats}
-                onCreateProject={(chatId) => openCreateProjectDialog(chatId)}
-                onMoveChat={handleMoveChatToProject}
-                onRemoveFromProject={handleRemoveChatFromProject}
-                onDeleteChat={handleDeleteChat}
-                onDeleteProject={handleDeleteProject}
-                assigningChatId={assigningChatId}
-              />
-              {/* Individual unassigned chat list. */}
-              <NavChats
-                chats={displayChats}
-                projects={projects}
-                onMoveToProject={handleMoveChatToProject}
-                onCreateProject={openCreateProjectDialog}
-                onDeleteChat={handleDeleteChat}
-                assigningChatId={assigningChatId}
-              />
-            </>
-          )}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="flex flex-col gap-2 pb-4">
+            {/* Show skeletons while initial data is loading. */}
+            {isLoadingChats || isLoadingProjects ? (
+              <SidebarSkeleton />
+            ) : (
+              <>
+                {/* Project navigation and management. */}
+                <NavProjects
+                  projects={displayProjects}
+                  onOpenProject={loadProjectChats}
+                  onCreateProject={(chatId) => openCreateProjectDialog(chatId)}
+                  onMoveChat={handleMoveChatToProject}
+                  onRemoveFromProject={handleRemoveChatFromProject}
+                  onDeleteChat={handleDeleteChat}
+                  onDeleteProject={handleDeleteProject}
+                  assigningChatId={assigningChatId}
+                />
+                {/* Individual unassigned chat list. */}
+                <NavChats
+                  chats={displayChats}
+                  projects={projects}
+                  onMoveToProject={handleMoveChatToProject}
+                  onCreateProject={openCreateProjectDialog}
+                  onDeleteChat={handleDeleteChat}
+                  assigningChatId={assigningChatId}
+                />
+              </>
+            )}
+          </div>
         </ScrollArea>
       </SidebarContent>
 

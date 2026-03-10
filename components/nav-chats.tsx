@@ -125,15 +125,6 @@ export function NavChats({
                     <span>Move to project</span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-60">
-                    {/* Secondary option if no projects exist yet. */}
-                    {projects.length === 0 && (
-                      <DropdownMenuItem
-                        onSelect={() => onCreateProject?.(item.id)}
-                      >
-                        <FolderPlus className="text-muted-foreground mr-2 size-4" />
-                        <span>Create project</span>
-                      </DropdownMenuItem>
-                    )}
                     {/* List existing projects as valid drop targets. */}
                     {projects.map((project) => (
                       <DropdownMenuItem
@@ -152,13 +143,13 @@ export function NavChats({
                         <span>{project.title}</span>
                       </DropdownMenuItem>
                     ))}
-                    <DropdownMenuSeparator />
+                    {projects.length > 0 && <DropdownMenuSeparator />}
                     {/* Immediate trigger to create a NEW project for this chat. */}
                     <DropdownMenuItem
                       onSelect={() => onCreateProject?.(item.id)}
                     >
                       <FolderPlus className="text-muted-foreground mr-2 size-4" />
-                      <span>Create new project</span>
+                      <span>Create project</span>
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
