@@ -70,11 +70,8 @@ export function ChatConversationList({
       const isInitialScroll = !initialScrollDone.current;
 
       const scroll = () => {
-        // Scroll to the end of the list.
-        // Use 'auto' (instant) for initial loads or fast streaming; 'smooth' for casual additions.
         listEndRef.current?.scrollIntoView({
-          behavior:
-            isInitialScroll || status === 'streaming' ? 'auto' : 'smooth',
+          behavior: isInitialScroll || status === 'streaming' ? 'auto' : 'smooth',
           block: 'end',
         });
 
@@ -86,10 +83,12 @@ export function ChatConversationList({
 
       // Ensure the DOM has finished painting before attempting to scroll.
       const raf = requestAnimationFrame(() => {
-        setTimeout(scroll, isInitialScroll ? 0 : 50);
-        // Double-tap scroll on initial load to handle image heights or delayed renders.
+        setTimeout(scroll, isInitialScroll ? 0 : 30);
+        
+        // Double-check scroll on initial load to account for images or late renders.
         if (isInitialScroll) {
-          setTimeout(scroll, 200);
+          setTimeout(scroll, 150);
+          setTimeout(scroll, 500);
         }
       });
       return () => cancelAnimationFrame(raf);
@@ -98,12 +97,11 @@ export function ChatConversationList({
 
   return (
     <Conversation>
-      <ConversationContent>
+      <ConversationContent className="pb-0 pt-4">
         {/* State 1: Loading History. Show placeholders. */}
         {isLoadingHistory ? (
           <ConversationSkeleton />
-        ) : /* State 2: No Messages. Show welcome UI. */
-        messages.length === 0 ? (
+        ) : messages.length === 0 ? (
           <ConversationEmptyState
             icon={<MessageSquare className="size-12" />}
             title={emptyTitle}
@@ -121,12 +119,11 @@ export function ChatConversationList({
                 onRetry={onRetry ? () => onRetry(index) : undefined}
               />
             ))}
-
-
           </>
         )}
-        {/* Invisible anchor for the scroll-into-view logic. */}
-        <div ref={listEndRef} />
+        {/* Invisible anchor for the scroll-into-view logic and bottom spacing. */}
+        {/* Using a tall spacer ensures scrollIntoView reaches the absolute bottom of the container. */}
+        <div ref={listEndRef} className="h-32 w-full shrink-0" />
       </ConversationContent>
       {/* Optional button to manually reset scroll to bottom. */}
       <ConversationScrollButton />

@@ -15,6 +15,9 @@ import { ToolImage } from './tool-image';
 import { ToolSearchResults } from './tool-search';
 import { ToolAudioPlayer } from './tool-audio';
 import { ToolLoading, SearchLoading, ToolError } from './tool-status';
+import { ToolFileDownload } from './tool-file';
+import { ToolCard } from './tool-card';
+import { ImageIcon, MusicIcon, FileTextIcon, GlobeIcon, SearchIcon } from 'lucide-react';
 
 interface MessagePart {
   type: string;
@@ -137,14 +140,30 @@ export function ChatMessageParts({
                   ? `Searching web for "${input.query}"..`
                   : 'Searching web..';
                 return (
-                  <div key={key} className="my-2">
-                    <ToolLoading loadingText={text} />
-                  </div>
+                  <ToolCard
+                    key={key}
+                    icon={SearchIcon}
+                    title={text.endsWith('..') ? text.slice(0, -2) + '...' : text}
+                    isLoading={true}
+                    isSimpleLoading={true}
+                  >
+                    {null}
+                  </ToolCard>
                 );
               }
 
               if (hasOutput && output?.results?.length > 0) {
-                return <ToolSearchResults key={key} results={output.results} />;
+                return (
+                  <ToolCard
+                    key={key}
+                    icon={GlobeIcon}
+                    title="Search Results"
+                    subtitle={input?.query}
+                    badge="Verified Sources"
+                  >
+                    <ToolSearchResults results={output.results} />
+                  </ToolCard>
+                );
               }
               return null;
             }
@@ -165,14 +184,29 @@ export function ChatMessageParts({
                     ? `Extracting content from ${urls.length} URL${urls.length > 1 ? 's' : ''}..`
                     : 'Extracting content..';
                 return (
-                  <div key={key} className="my-2">
-                    <ToolLoading loadingText={text} />
-                  </div>
+                  <ToolCard
+                    key={key}
+                    icon={GlobeIcon}
+                    title={text.endsWith('..') ? text.slice(0, -2) + '...' : text}
+                    isLoading={true}
+                    isSimpleLoading={true}
+                  >
+                    {null}
+                  </ToolCard>
                 );
               }
 
               if (hasOutput && output?.results?.length > 0) {
-                return <ToolSearchResults key={key} results={output.results} />;
+                return (
+                  <ToolCard
+                    key={key}
+                    icon={GlobeIcon}
+                    title="Extracted Content"
+                    badge={`${output.results.length} Sources`}
+                  >
+                    <ToolSearchResults results={output.results} />
+                  </ToolCard>
+                );
               }
               return null;
             }
@@ -188,9 +222,15 @@ export function ChatMessageParts({
 
               if (isLoading) {
                 return (
-                  <div key={key} className="my-2">
-                    <ToolLoading loadingText="Generating image from your image.." />
-                  </div>
+                  <ToolCard
+                    key={key}
+                    icon={ImageIcon}
+                    title="Generating image from your image..."
+                    isLoading={true}
+                    isSimpleLoading={true}
+                  >
+                    {null}
+                  </ToolCard>
                 );
               }
 
@@ -200,6 +240,9 @@ export function ChatMessageParts({
                     key={key}
                     imageSrc={output.image}
                     prompt={input?.prompt}
+                    options={{
+                      model: input?.model || 'ImageToImage',
+                    }}
                   />
                 );
               }
@@ -209,7 +252,7 @@ export function ChatMessageParts({
                   <ToolError
                     key={key}
                     title="Image generation failed"
-                    error={output.error}
+                    error="The system encountered an error while processing your image."
                   />
                 );
               }
@@ -226,9 +269,15 @@ export function ChatMessageParts({
 
               if (isLoading) {
                 return (
-                  <div key={key} className="my-2">
-                    <ToolLoading loadingText="Generating image.." />
-                  </div>
+                  <ToolCard
+                    key={key}
+                    icon={ImageIcon}
+                    title="Generating image..."
+                    isLoading={true}
+                    isSimpleLoading={true}
+                  >
+                    {null}
+                  </ToolCard>
                 );
               }
 
@@ -238,6 +287,11 @@ export function ChatMessageParts({
                     key={key}
                     imageSrc={output.image}
                     prompt={input?.prompt}
+                    options={{
+                      model: input?.model || 'FLUX.2',
+                      width: input?.width,
+                      height: input?.height,
+                    }}
                   />
                 );
               }
@@ -247,7 +301,7 @@ export function ChatMessageParts({
                   <ToolError
                     key={key}
                     title="Image generation failed"
-                    error={output.error}
+                    error="The system encountered an error while generating your visual."
                   />
                 );
               }
@@ -264,9 +318,15 @@ export function ChatMessageParts({
 
               if (isLoading) {
                 return (
-                  <div key={key} className="my-2">
-                    <SearchLoading loadingText="Generating speech..." />
-                  </div>
+                  <ToolCard
+                    key={key}
+                    icon={MusicIcon}
+                    title="Generating speech..."
+                    isLoading={true}
+                    isSimpleLoading={true}
+                  >
+                    {null}
+                  </ToolCard>
                 );
               }
 
@@ -276,6 +336,7 @@ export function ChatMessageParts({
                     key={key}
                     audioUrl={output.audioUrl}
                     text={input?.text}
+                    voice={input?.voice}
                   />
                 );
               }
@@ -285,7 +346,53 @@ export function ChatMessageParts({
                   <ToolError
                     key={key}
                     title="Speech generation failed"
-                    error={output.error}
+                    error="The system encountered an error while synthesizing your audio."
+                  />
+                );
+              }
+            }
+
+            // Generate File
+            if (toolCall.type === 'tool-generateFile') {
+              const input = toolCall.input;
+              const output = toolCall.output;
+              const isLoading =
+                toolCall.state === 'input-streaming' ||
+                toolCall.state === 'input-available';
+              const hasOutput = toolCall.state === 'output-available' && output;
+
+              if (isLoading) {
+                const type = input?.type?.toUpperCase() || 'FILE';
+                return (
+                  <ToolCard
+                    key={key}
+                    icon={FileTextIcon}
+                    title={`Generating ${type.toLowerCase()}...`}
+                    isLoading={true}
+                    isSimpleLoading={true}
+                  >
+                    {null}
+                  </ToolCard>
+                );
+              }
+
+              if (hasOutput && output.success && output.url) {
+                return (
+                  <ToolFileDownload
+                    key={key}
+                    url={output.url}
+                    fileName={output.fileName}
+                    type={input?.type || 'file'}
+                  />
+                );
+              }
+
+              if (hasOutput && !output.success) {
+                return (
+                  <ToolError
+                    key={key}
+                    title="File generation failed"
+                    error="The system encountered an error while creating your document."
                   />
                 );
               }

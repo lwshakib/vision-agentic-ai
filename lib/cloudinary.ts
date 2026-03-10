@@ -79,3 +79,41 @@ export async function saveImageToCloudinary(file: string | Buffer) {
     public_id: result.public_id,
   };
 }
+
+/**
+ * Persists a generic file buffer to Cloudinary.
+ * @param buffer - The binary file data.
+ * @param fileName - The name of the file (optional).
+ * @param format - The file extension/format (e.g., 'pdf', 'csv').
+ * @returns Object with the secure URL and public ID.
+ */
+export async function saveFileToCloudinary(
+  buffer: Buffer,
+  fileName?: string,
+  format?: string
+) {
+  return new Promise<{ url: string; publicId: string }>((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        {
+          folder: 'vision-agentic-ai/files',
+          resource_type: 'raw',
+          public_id: fileName?.split('.')[0], // Use filename as public ID if provided
+          format: format,
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else if (result) {
+            resolve({
+              url: result.secure_url,
+              publicId: result.public_id,
+            });
+          } else {
+            reject(new Error('File upload returned no result'));
+          }
+        }
+      )
+      .end(buffer);
+  });
+}

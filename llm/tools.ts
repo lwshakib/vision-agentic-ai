@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { webSearch, extractWebUrl } from '@/lib/tavily';
 import { generateImage } from './generate-image';
 import { textToSpeech } from './text-to-speech';
+import { generateFile } from './generate-file';
 
 /**
  * tool: webSearch
@@ -104,6 +105,27 @@ export const textToSpeechTool: Tool = {
 };
 
 /**
+ * tool: generateFile
+ * Purpose: Generates PDF, CSV, JSON, or Markdown files based on text content.
+ */
+export const generateFileTool: Tool = {
+  description:
+    'Generate a downloadable file (PDF, CSV, JSON, or Markdown) from text content. Use this when the user explicitly asks to "generate a PDF", "create a CSV", "make a JSON file", etc. The file will be uploaded and a link will be provided.',
+  inputSchema: z.object({
+    fileName: z
+      .string()
+      .describe('The name of the file to create (e.g., "report", "data").'),
+    type: z
+      .enum(['pdf', 'csv', 'json', 'markdown'])
+      .describe('The type of file to generate.'),
+    content: z
+      .string()
+      .describe('The full text content to be included in the file.'),
+  }),
+  execute: generateFile,
+};
+
+/**
  * The consolidated tools collection exported for use in the main model streaming function.
  */
 export const tools: Record<string, Tool> = {
@@ -111,4 +133,5 @@ export const tools: Record<string, Tool> = {
   extractWebUrl: extractWebUrlTool,
   generateImage: generateImageTool,
   textToSpeech: textToSpeechTool,
+  generateFile: generateFileTool,
 };

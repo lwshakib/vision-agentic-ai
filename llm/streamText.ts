@@ -2,7 +2,7 @@ import { CLOUDFLARE_API_KEY, GLM_WORKER_URL } from '@/lib/env';
 import { tools } from './tools';
 import { SYSTEM_PROMPT } from './prompts';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { manageContext } from './summarizer';
+import { TOKEN_LIMIT_THRESHOLD } from '@/lib/constants';
 
 export interface Message {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -24,7 +24,25 @@ export async function streamText(messages: Message[]) {
   
   return new ReadableStream({
     async start(controller) {
-      let currentMessages: any[] = await manageContext([
+      const sendChunk = (data: any) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+      };
+
+      // Manage context window by removing oldest messages if limit is exceeded
+      const { estimateMessageTokens } = await import('./token-utils');
+      
+      const manageContext = (msgs: any[]) => {
+        const systemMsg = msgs.find(m => m.role === 'system');
+        let otherMsgs = msgs.filter(m => m.role !== 'system');
+        
+        while (estimateMessageTokens([systemMsg, ...otherMsgs]) > TOKEN_LIMIT_THRESHOLD && otherMsgs.length > 0) {
+          otherMsgs.shift(); // Remove oldest message
+        }
+        
+        return [systemMsg, ...otherMsgs].filter(Boolean);
+      };
+
+      let currentMessages = manageContext([
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages.map(m => ({
           role: m.role,
@@ -47,16 +65,12 @@ export async function streamText(messages: Message[]) {
       const MAX_STEPS = 10;
       let stepCount = 0;
 
-      const sendChunk = (data: any) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-      };
-
       try {
         while (stepCount < MAX_STEPS) {
           stepCount++;
           
-          // Ensure we are within context limits before each call
-          currentMessages = await manageContext(currentMessages);
+          // Real-time context pruning before each LLM call
+          currentMessages = manageContext(currentMessages);
 
           const response = await fetch(GLM_WORKER_URL!, {
             method: 'POST',
@@ -110,7 +124,6 @@ export async function streamText(messages: Message[]) {
                   }
 
                   // Handle Reasoning (assuming GLM returns it in reasoning_content or similar)
-                  // If GLM doesn't support reasoning field yet, we still check.
                   if (delta.reasoning_content) {
                     reasoningContent += delta.reasoning_content;
                     sendChunk({ type: 'reasoning', delta: delta.reasoning_content });
