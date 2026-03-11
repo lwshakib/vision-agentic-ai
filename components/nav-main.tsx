@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 // Import functional and utility icons.
 import { MessageCircle, SquarePen, type LucideIcon } from 'lucide-react';
 
@@ -16,6 +17,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
 // Import Command Palette UI components for search functionality.
 import {
   CommandDialog,
@@ -26,7 +28,6 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 /**
  * Main navigation component with integrated search.
@@ -38,8 +39,15 @@ export function NavMain({
     title: string;
     url: string;
     icon: LucideIcon;
+    shortcut?: string;
   }[];
 }) {
+  const router = useRouter();
+  const [isMac, setIsMac] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
+  }, []);
   // state for the search dialog and results.
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
@@ -129,11 +137,19 @@ export function NavMain({
   return (
     <>
       {/* Primary Sidebar Navigation Group. */}
-      <SidebarGroup>
-        <SidebarMenu>
+      <SidebarGroup asChild>
+        <section aria-labelledby="nav-main-label">
+          <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild tooltip={item.title}>
+              <SidebarMenuButton
+                asChild
+                tooltip={
+                  item.shortcut
+                    ? `${item.title} (${isMac ? '⌘' : 'Ctrl'}+${item.shortcut})`
+                    : item.title
+                }
+              >
                 <Link
                   href={item.url}
                   onClick={(e) => {
@@ -146,15 +162,26 @@ export function NavMain({
                 >
                   <item.icon />
                   <span>{item.title}</span>
+                  {item.shortcut && (
+                    <KbdGroup className="ml-auto group-data-[collapsible=icon]:hidden">
+                      <Kbd className="h-4 min-w-4 px-1 text-[10px]">
+                        {isMac ? '⌘' : 'Ctrl'}
+                      </Kbd>
+                      <Kbd className="h-4 min-w-4 px-1 text-[10px]">
+                        {item.shortcut}
+                      </Kbd>
+                    </KbdGroup>
+                  )}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
+        </section>
       </SidebarGroup>
 
       {/* Global Search Dialog (Command Palette). */}
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog open={open} onOpenChange={setOpen} shouldFilter={false}>
         <CommandInput
           placeholder="Search chats..."
           value={query}
@@ -162,52 +189,63 @@ export function NavMain({
             setQuery(val);
           }}
         />
-        <CommandList className="overflow-y-hidden">
-          {/* Scrollable container for hits. */}
-          <ScrollArea className="h-[300px]">
-            {/* Empty state messaging. */}
-            <CommandEmpty>
-              {query ? 'No results found.' : 'Start typing to search chats.'}
-            </CommandEmpty>
+        <CommandList>
+          {/* Empty state messaging. */}
+          <CommandEmpty>
+            {query ? 'No results found.' : 'Start typing to search chats.'}
+          </CommandEmpty>
 
-            {/* Results Group. */}
-            <CommandGroup heading="Chats">
-              {/* Spinner for active API calls. */}
-              {isLoading && (
-                <CommandItem disabled>
+          {/* Results Group. */}
+          <CommandGroup
+            asChild
+            heading={results.length > 0 ? 'Chats' : ''}
+          >
+            <section>
+            {/* Spinner for active API calls. */}
+            {isLoading && (
+              <CommandItem disabled>
+                <MessageCircle className="mr-2 size-4" />
+                <span>Searching...</span>
+              </CommandItem>
+            )}
+            {/* Iteratively render matching chat links. */}
+            {results.map((chat) => (
+              <CommandItem
+                key={chat.id}
+                onSelect={() => {
+                  setOpen(false); // Close modal on selection.
+                  router.push(chat.url);
+                }}
+                asChild
+              >
+                <Link href={chat.url}>
                   <MessageCircle className="mr-2 size-4" />
-                  <span>Searching...</span>
-                </CommandItem>
-              )}
-              {/* Iteratively render matching chat links. */}
-              {results.map((chat) => (
-                <CommandItem
-                  key={chat.id}
-                  onSelect={() => {
-                    setOpen(false); // Close modal on selection.
-                  }}
-                  asChild
-                >
-                  <Link href={chat.url}>
-                    <MessageCircle className="mr-2 size-4" />
-                    <span>{chat.title}</span>
-                  </Link>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-
-            <CommandSeparator />
-
-            {/* Context Actions. */}
-            <CommandGroup heading="">
-              <CommandItem asChild>
-                <Link href="/">
-                  <SquarePen className="mr-2 size-4" />
-                  <span>New chat</span>
+                  <span>{chat.title}</span>
                 </Link>
               </CommandItem>
-            </CommandGroup>
-          </ScrollArea>
+            ))}
+            </section>
+          </CommandGroup>
+
+          <CommandSeparator />
+
+          {/* Context Actions. */}
+          <CommandGroup asChild heading="Actions">
+            <section>
+            <CommandItem
+              onSelect={() => {
+                setOpen(false);
+                router.push('/');
+              }}
+              asChild
+            >
+              <Link href="/">
+                <SquarePen className="mr-2 size-4" />
+                <span>New chat</span>
+              </Link>
+            </CommandItem>
+            </section>
+          </CommandGroup>
         </CommandList>
       </CommandDialog>
     </>

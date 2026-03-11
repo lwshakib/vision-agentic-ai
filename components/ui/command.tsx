@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { Command as CommandPrimitive } from 'cmdk';
+import { Slot } from '@radix-ui/react-slot';
 import { SearchIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -15,10 +16,13 @@ import {
 
 function Command({
   className,
+  asChild = false,
   ...props
-}: React.ComponentProps<typeof CommandPrimitive>) {
+}: React.ComponentProps<typeof CommandPrimitive> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot : CommandPrimitive;
+
   return (
-    <CommandPrimitive
+    <Comp
       data-slot="command"
       className={cn(
         'bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md',
@@ -29,19 +33,23 @@ function Command({
   );
 }
 
+interface CommandDialogProps extends React.ComponentProps<typeof Dialog> {
+  title?: string;
+  description?: string;
+  className?: string;
+  showCloseButton?: boolean;
+  shouldFilter?: boolean;
+}
+
 function CommandDialog({
   title = 'Command Palette',
   description = 'Search for a command to run...',
   children,
   className,
   showCloseButton = true,
+  shouldFilter,
   ...props
-}: React.ComponentProps<typeof Dialog> & {
-  title?: string;
-  description?: string;
-  className?: string;
-  showCloseButton?: boolean;
-}) {
+}: CommandDialogProps) {
   return (
     <Dialog {...props}>
       <DialogHeader className="sr-only">
@@ -52,7 +60,10 @@ function CommandDialog({
         className={cn('overflow-hidden p-0', className)}
         showCloseButton={showCloseButton}
       >
-        <Command className="[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+        <Command
+          shouldFilter={shouldFilter}
+          className="[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
+        >
           {children}
         </Command>
       </DialogContent>
@@ -112,10 +123,15 @@ function CommandEmpty({
 
 function CommandGroup({
   className,
+  asChild = false,
   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Group>) {
+}: React.ComponentProps<typeof CommandPrimitive.Group> & {
+  asChild?: boolean;
+}) {
+  const Comp = asChild ? Slot : CommandPrimitive.Group;
+
   return (
-    <CommandPrimitive.Group
+    <Comp
       data-slot="command-group"
       className={cn(
         'text-foreground [&_[cmdk-group-heading]]:text-muted-foreground overflow-hidden p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium',

@@ -85,6 +85,7 @@ const data = {
       title: 'Search Chats',
       url: '#',
       icon: Search,
+      shortcut: 'K',
     },
     {
       title: 'Library',
