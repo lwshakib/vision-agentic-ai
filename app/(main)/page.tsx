@@ -6,7 +6,7 @@
 'use client';
 
 // Import essential React and UI hooks.
-import { useMemo, useState, Suspense } from 'react';
+import { useMemo, useState, Suspense, useCallback, useRef, useEffect } from 'react';
 // Import custom ChatInput component for user message entry.
 import ChatInput from '@/components/chat-input';
 // Import Next.js navigation hooks.
@@ -85,6 +85,11 @@ function PromptInputContent() {
     router.push(`/~/${data.chatId}?${params.toString()}`);
   };
 
+  // Voice Mode State
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const { messageCredits } = useChatStore();
+
   return (
     // Centered layout for the initial prompt input.
     <div className="bg-background min-h-screen w-full flex flex-col items-center justify-center px-4 py-6 text-center">
@@ -101,7 +106,20 @@ function PromptInputContent() {
 
         {/* Input area. */}
         <div className="w-full max-w-(--breakpoint-md) mx-auto">
-          <ChatInput onSend={handleSend} />
+          <ChatInput 
+            onSend={handleSend} 
+            isVoiceMode={isVoiceMode}
+            onVoiceModeChange={(value) => {
+              if (value && messageCredits !== null && messageCredits <= 0) {
+                toast.error('Limit Reached', {
+                  description: 'You have reached your daily limit of 10 messages. Please upgrade to Pro to continue.',
+                });
+                return;
+              }
+              setIsVoiceMode(value);
+            }}
+            isSpeaking={isSpeaking}
+          />
         </div>
       </div>
     </div>
@@ -117,6 +135,72 @@ function TemporaryChat() {
   const [isLoadingHistory] = useState(false);
   const router = useRouter();
 
+  const { messageCredits } = useChatStore();
+
+  // Voice Mode State
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const toastRef = useRef<any>(null);
+  const ttsAbortControllerRef = useRef<AbortController | null>(null);
+
+  /**
+   * TTS Playback Logic
+   */
+  const speak = useCallback(async (text: string) => {
+    if (!text || !isVoiceMode) return;
+
+    if (ttsAbortControllerRef.current) {
+      ttsAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    ttsAbortControllerRef.current = controller;
+
+    const ttsPromise = (async () => {
+      const res = await fetch('/api/voice-agent/tts', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice: 'orpheus' }),
+      });
+
+      if (!res.ok) throw new Error('Speech generation failed');
+      const data = await res.json();
+      if (!data.audioUrl) throw new Error('No audio URL returned');
+      return data.audioUrl;
+    })();
+
+    const tId = toast.promise(ttsPromise, {
+      loading: 'Processing audio...',
+      success: 'Audio ready',
+      error: 'Speech generation failed',
+    });
+    toastRef.current = tId;
+
+    try {
+      setIsSpeaking(true);
+      const audioUrl = await ttsPromise;
+
+      if (audioUrl) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => setIsSpeaking(false);
+        
+        await audio.play();
+      } else {
+        setIsSpeaking(false);
+      }
+    } catch (error) {
+      console.error('Speech playback failed:', error);
+      setIsSpeaking(false);
+    }
+  }, [isVoiceMode]);
+
   // Use the custom chat hook for state and messaging management.
   const { sendMessage, messages, status, stop } = useChat({
     onError: (err) => {
@@ -124,6 +208,7 @@ function TemporaryChat() {
       try {
         const errorData = JSON.parse(err.message);
         if (errorData.error === 'Credit exhausted') {
+          setIsVoiceMode(false);
           toast.error('Limit Reached', {
             description:
               errorData.message ||
@@ -140,7 +225,37 @@ function TemporaryChat() {
       }
       toast.error('Internal server error');
     },
+    onFinish: (message) => {
+      if (isVoiceMode && message.content) {
+        speak(message.content);
+      }
+    },
   });
+
+  // Wrap the stop function to also handle audio and toasts
+  const handleStop = useCallback(() => {
+    stop(); // Abort LLM stream
+    if (ttsAbortControllerRef.current) {
+      ttsAbortControllerRef.current.abort();
+      ttsAbortControllerRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (toastRef.current) {
+      toast.dismiss(toastRef.current);
+      toastRef.current = null;
+    }
+    setIsSpeaking(false);
+  }, [stop]);
+
+  // Stop everything if exiting Voice Mode
+  useEffect(() => {
+    if (!isVoiceMode) {
+      handleStop();
+    }
+  }, [isVoiceMode, handleStop]);
 
   /**
    * Helper to copy message text to clipboard.
@@ -194,8 +309,19 @@ function TemporaryChat() {
       status={status}
       isLoadingHistory={isLoadingHistory}
       onSend={handleSend}
-      onStop={stop}
+      onStop={handleStop}
       onCopy={handleCopy}
+      isVoiceMode={isVoiceMode}
+      onVoiceModeChange={(value) => {
+        if (value && messageCredits !== null && messageCredits <= 0) {
+          toast.error('Limit Reached', {
+            description: 'You have reached your daily limit of 10 messages. Please upgrade to Pro to continue.',
+          });
+          return;
+        }
+        setIsVoiceMode(value);
+      }}
+      isSpeaking={isSpeaking}
     />
   );
 }

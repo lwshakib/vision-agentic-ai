@@ -37,6 +37,9 @@ type ChatConversationViewProps = {
   onCopy: (text: string) => void | Promise<void>; // Utility for copying message text.
   onRetry?: (messageIndex: number) => void; // Optional logic for re-triggering a failed AI response.
   onStop?: () => void; // Logic to stop generating responses.
+  isVoiceMode?: boolean;
+  onVoiceModeChange?: (value: boolean) => void;
+  isSpeaking?: boolean;
 };
 
 /**
@@ -55,9 +58,6 @@ export const ImageGenerationLoading = ({
   loadingText: string;
 }) => <ToolLoadingUI loadingText={loadingText} />;
 
-/**
- * Core component that renders the full chat page layout.
- */
 export function ChatConversationView({
   messages,
   status,
@@ -66,6 +66,9 @@ export function ChatConversationView({
   onCopy,
   onRetry,
   onStop,
+  isVoiceMode,
+  onVoiceModeChange,
+  isSpeaking,
 }: ChatConversationViewProps) {
   return (
     // Main layout container: full screen height, vertical flex.
@@ -89,6 +92,9 @@ export function ChatConversationView({
             onStop={onStop}
             placeholder="Send a message" 
             isGenerating={status === 'submitted' || status === 'streaming'}
+            isVoiceMode={isVoiceMode}
+            onVoiceModeChange={onVoiceModeChange}
+            isSpeaking={isSpeaking}
           />
         </div>
       </div>
