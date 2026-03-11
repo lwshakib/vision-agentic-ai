@@ -201,7 +201,7 @@ export function NavMain({
             {/* Context Actions. */}
             <CommandGroup heading="">
               <CommandItem asChild>
-                <Link href="/~">
+                <Link href="/">
                   <SquarePen className="mr-2 size-4" />
                   <span>New chat</span>
                 </Link>
