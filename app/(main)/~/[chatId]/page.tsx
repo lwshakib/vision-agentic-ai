@@ -47,6 +47,8 @@ export default function ChatPage() {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const toastRef = useRef<any>(null);
+  const ttsAbortControllerRef = useRef<AbortController | null>(null);
 
   /**
    * TTS Playback Logic
@@ -54,9 +56,16 @@ export default function ChatPage() {
   const speak = useCallback(async (text: string) => {
     if (!text || !isVoiceMode) return;
 
+    if (ttsAbortControllerRef.current) {
+      ttsAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    ttsAbortControllerRef.current = controller;
+
     const ttsPromise = (async () => {
       const res = await fetch('/api/voice-agent/tts', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, voice: 'orpheus' }),
       });
@@ -67,11 +76,12 @@ export default function ChatPage() {
       return data.audioUrl;
     })();
 
-    toast.promise(ttsPromise, {
+    const tId = toast.promise(ttsPromise, {
       loading: 'Processing audio...',
       success: 'Audio ready',
       error: 'Speech generation failed',
     });
+    toastRef.current = tId;
 
     try {
       setIsSpeaking(true);
@@ -93,15 +103,6 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error('Speech playback failed:', error);
-      setIsSpeaking(false);
-    }
-  }, [isVoiceMode]);
-
-  // Stop speech if exiting Voice Mode
-  useEffect(() => {
-    if (!isVoiceMode && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
       setIsSpeaking(false);
     }
   }, [isVoiceMode]);
@@ -177,6 +178,31 @@ export default function ChatPage() {
       }
     },
   });
+
+  // Wrap the stop function to also handle audio and toasts
+  const handleStop = useCallback(() => {
+    stop(); // Abort LLM stream
+    if (ttsAbortControllerRef.current) {
+      ttsAbortControllerRef.current.abort();
+      ttsAbortControllerRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (toastRef.current) {
+      toast.dismiss(toastRef.current);
+      toastRef.current = null;
+    }
+    setIsSpeaking(false);
+  }, [stop]);
+
+  // Stop everything if exiting Voice Mode
+  useEffect(() => {
+    if (!isVoiceMode) {
+      handleStop();
+    }
+  }, [isVoiceMode, handleStop]);
 
   // Access URL search parameters (e.g., from initial message redirects).
   const searchParams = useSearchParams();
@@ -388,15 +414,6 @@ export default function ChatPage() {
     }
   }, [sendMessage]);
 
-  // Wrap the stop function to also handle audio playback
-  const handleStop = useCallback(() => {
-    stop();
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    setIsSpeaking(false);
-  }, [stop]);
 
   // Return null if chatId is missing.
   if (!chatId) return null;
