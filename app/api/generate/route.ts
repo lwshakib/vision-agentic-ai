@@ -28,9 +28,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Parse the request body for the current message history.
+    // Parse the request body for current context and message history.
     const body = await req.json();
-    const { messages } = body;
+    const { messages, isVoiceMode } = body;
 
     // Credit Management
     const { canProceed } = await checkAndManageCredits(user.id);
@@ -46,8 +46,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Trigger the core LLM streaming process.
-    const stream = await streamText(messages);
+    // Trigger the core LLM streaming process with optional voice mode formatting.
+    const stream = await streamText(messages, { isVoiceMode: Boolean(isVoiceMode) });
 
     // If generation starts successfully, consume one credit.
     const updatedUser = await consumeCredit(user.id);

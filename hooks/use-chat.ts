@@ -20,6 +20,7 @@ export type ChatStatus = 'idle' | 'submitted' | 'streaming' | 'error';
 interface SendMessageOptions {
   text: string;
   files?: any[];
+  isVoiceMode?: boolean;
 }
 
 export function useChat({
@@ -46,7 +47,7 @@ export function useChat({
   }, []);
 
   const sendMessage = useCallback(
-    async ({ text, files }: SendMessageOptions) => {
+    async ({ text, files, isVoiceMode }: SendMessageOptions) => {
       setStatus('submitted');
 
       const userMessage: ChatMessage = {
@@ -109,6 +110,7 @@ export function useChat({
             ...(headers || {}),
           },
           body: JSON.stringify({
+            isVoiceMode: Boolean(isVoiceMode),
             messages: [...messages, userMessage].flatMap((m) => {
               const textContent =
                 m.content ||

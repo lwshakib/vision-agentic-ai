@@ -39,6 +39,11 @@ function PromptInputContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Voice Mode State
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const { messageCredits } = useChatStore();
+
   // Determine if the current view should be a temporary (non-persisted) chat.
   const isTemporaryChat = searchParams?.get('temporary-chat') === 'true';
 
@@ -81,14 +86,13 @@ function PromptInputContent() {
       params.set('files', encodeURIComponent(JSON.stringify(files)));
     }
 
+    if (isVoiceMode) {
+      params.set('voiceMode', 'true');
+    }
+
     // Redirect the user to the newly created chat details page.
     router.push(`/~/${data.chatId}?${params.toString()}`);
   };
-
-  // Voice Mode State
-  const [isVoiceMode, setIsVoiceMode] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const { messageCredits } = useChatStore();
 
   return (
     // Centered layout for the initial prompt input.
@@ -286,6 +290,7 @@ function TemporaryChat() {
     if (files && files.length > 0) {
       sendMessage({
         text: text || 'See attached files',
+        isVoiceMode,
         files: files.map((file) => ({
           id: file.publicId,
           name: file.name,
@@ -298,6 +303,7 @@ function TemporaryChat() {
       // Otherwise just send the plain text.
       sendMessage({
         text,
+        isVoiceMode,
       });
     }
   };

@@ -15,7 +15,7 @@ export interface Message {
 /**
  * Executes the tool calling loop and streams results.
  */
-export async function streamText(messages: any[]) {
+export async function streamText(messages: any[], options?: { isVoiceMode?: boolean }) {
   if (!GLM_WORKER_URL || !CLOUDFLARE_API_KEY) {
     throw new Error('Missing GLM configuration');
   }
@@ -42,8 +42,24 @@ export async function streamText(messages: any[]) {
         return [systemMsg, ...otherMsgs].filter(Boolean);
       };
 
+      let systemPrompt = SYSTEM_PROMPT;
+      
+      if (options?.isVoiceMode) {
+        systemPrompt = `${SYSTEM_PROMPT}
+
+[CRITICAL VOICE MODE OVERRIDE]
+YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MARKDOWN FORMATTING (BOLDING, TABLES, HEADERS, BULLET POINTS) ARE NOW SUSPENDED.
+- RESPOND IN PLAIN TEXT ONLY.
+- ABSOLUTELY NO MARKDOWN CHARACTERS (No **, #, -, \`, etc.).
+- DO NOT USE TABLES.
+- DO NOT BOLD OR ITALICIZE ANY TEXT.
+- Use natural, spoken paragraphs only.
+- If you need to list items, say "first," "second," etc., as part of a sentence.
+- Speak exactly like a human talking to a friend.`;
+      }
+
       let currentMessages = manageContext([
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         ...messages.map(m => ({
           role: m.role,
           content: m.content,

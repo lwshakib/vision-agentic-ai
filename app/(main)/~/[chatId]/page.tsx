@@ -43,8 +43,9 @@ export default function ChatPage() {
   const { setChatTitle, messageCredits, setMessageCredits } = useChatStore();
   const router = useRouter();
 
+  const searchParams = useSearchParams();
   // Voice Mode State
-  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(searchParams.get('voiceMode') === 'true');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const toastRef = useRef<any>(null);
@@ -204,8 +205,6 @@ export default function ChatPage() {
     }
   }, [isVoiceMode, handleStop]);
 
-  // Access URL search parameters (e.g., from initial message redirects).
-  const searchParams = useSearchParams();
 
   // Local state to track if historical messages are still being fetched.
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -327,6 +326,8 @@ export default function ChatPage() {
     if (initialMessage && messages.length === 0) {
       initialMessageSent.current = true;
 
+      const initialVoiceMode = searchParams.get('voiceMode') === 'true';
+
       // Parse files if they were passed in the URL.
       if (initialFilesStr) {
         try {
@@ -340,6 +341,7 @@ export default function ChatPage() {
           }>;
           sendMessage({
             text: initialMessage,
+            isVoiceMode: initialVoiceMode,
             files: files.map((file) => ({
               id: file.publicId,
               name: file.name,
@@ -350,10 +352,10 @@ export default function ChatPage() {
           });
         } catch (e) {
           console.error('Failed to parse initial files:', e);
-          sendMessage({ text: initialMessage });
+          sendMessage({ text: initialMessage, isVoiceMode: initialVoiceMode });
         }
       } else {
-        sendMessage({ text: initialMessage });
+        sendMessage({ text: initialMessage, isVoiceMode: initialVoiceMode });
       }
 
       // Clear search params from URL without a page reload.
@@ -398,6 +400,7 @@ export default function ChatPage() {
     if (files && files.length > 0) {
       sendMessage({
         text: text || 'See attached files',
+        isVoiceMode,
         files: files.map((file) => ({
           id: file.publicId,
           name: file.name,
@@ -410,9 +413,10 @@ export default function ChatPage() {
       // Standard text message.
       sendMessage({
         text,
+        isVoiceMode,
       });
     }
-  }, [sendMessage]);
+  }, [sendMessage, isVoiceMode]);
 
 
   // Return null if chatId is missing.
