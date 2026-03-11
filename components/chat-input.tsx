@@ -867,7 +867,7 @@ export default function ChatInput({
                   {/* Bottom-left: Attach button. */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-9 w-9 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center"
+                    className="h-10 w-10 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
                   >
                     <Plus size={18} />
                   </button>
@@ -879,7 +879,7 @@ export default function ChatInput({
                         {/* Mute Toggle */}
                         <button
                           onClick={() => setIsMuted(!isMuted)}
-                          className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+                          className={`h-10 w-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
                             isMuted ? 'bg-red-500/20 text-red-500' : 'bg-neutral-700 text-white'
                           }`}
                         >
@@ -889,7 +889,7 @@ export default function ChatInput({
                         {voiceStatus === 'connecting' ? (
                           <button
                             onClick={() => onVoiceModeChange?.(false)}
-                            className="flex items-center gap-2 px-4 h-9 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all animate-in fade-in zoom-in-95"
+                            className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-700 text-white transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
                           >
                             <X size={16} />
                             <span className="text-sm font-medium">Cancel</span>
@@ -900,7 +900,7 @@ export default function ChatInput({
                               setVoiceStatus('ending');
                               setTimeout(() => onVoiceModeChange?.(false), 800);
                             }}
-                            className="group flex items-center gap-3 px-4 h-9 rounded-full bg-white text-black hover:bg-neutral-200 transition-all animate-in fade-in zoom-in-95"
+                            className="group flex items-center gap-3 px-5 h-10 rounded-full bg-white text-black transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
                           >
                             <div className="flex items-center gap-[1px] h-3">
                               {[1, 2, 3, 4].map((i) => (
@@ -917,7 +917,7 @@ export default function ChatInput({
                             <span className="text-sm font-bold uppercase tracking-wider">End</span>
                           </button>
                         ) : voiceStatus === 'ending' ? (
-                          <div className="flex items-center gap-2 px-4 h-9 rounded-full bg-neutral-800 border border-neutral-700 animate-pulse">
+                          <div className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-800 border border-neutral-700 animate-pulse">
                             <span className="text-sm font-medium text-neutral-400">Ending...</span>
                           </div>
                         ) : null}
@@ -927,7 +927,7 @@ export default function ChatInput({
                         <button
                           onClick={startRecording}
                           disabled={isTranscribing}
-                          className="h-9 w-9 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="h-10 w-10 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                         >
                           <Mic size={18} />
                         </button>
@@ -943,7 +943,7 @@ export default function ChatInput({
                             }
                           }}
                           disabled={isSubmitting}
-                          className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                          className="h-10 w-10 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                         >
                           {isGenerating ? (
                             <Square fill="currentColor" size={14} />
@@ -963,7 +963,7 @@ export default function ChatInput({
               <>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-9 w-9 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center"
+                  className="h-10 w-10 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
                 >
                   <Plus size={18} />
                 </button>
@@ -984,13 +984,13 @@ export default function ChatInput({
                   disabled={isSubmitting}
                 />
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 h-10">
                   {isVoiceMode ? (
                     <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
                       {/* Mute Toggle */}
                       <button
                         onClick={() => setIsMuted(!isMuted)}
-                        className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+                        className={`h-10 w-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
                           isMuted ? 'bg-red-500/20 text-red-500' : 'bg-neutral-700 text-white'
                         }`}
                       >
@@ -1001,7 +1001,7 @@ export default function ChatInput({
                       {voiceStatus === 'connecting' ? (
                         <button
                           onClick={() => onVoiceModeChange?.(false)}
-                          className="flex items-center gap-2 px-3 h-9 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all font-semibold"
+                          className="flex items-center gap-2 px-3 h-10 rounded-full bg-neutral-700 text-white transition-all hover:scale-105 active:scale-95 font-semibold"
                         >
                           <X size={16} />
                           <span className="text-xs">Cancel</span>
@@ -1012,7 +1012,7 @@ export default function ChatInput({
                             setVoiceStatus('ending');
                             setTimeout(() => onVoiceModeChange?.(false), 800);
                           }}
-                          className="group flex items-center gap-2 px-3 h-9 rounded-full bg-white text-black hover:bg-muted/50 transition-all"
+                          className="group flex items-center gap-2 px-3 h-10 rounded-full bg-white text-black transition-all hover:scale-105 active:scale-95"
                         >
                           <div className="flex items-center gap-[1px] h-3">
                             {[1, 2, 3, 4].map((i) => (
@@ -1029,7 +1029,7 @@ export default function ChatInput({
                           <span className="text-xs font-bold uppercase">End</span>
                         </button>
                       ) : (
-                        <div className="px-3 h-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center">
+                        <div className="px-3 h-10 rounded-full bg-neutral-800 border border-neutral-700 flex items-center">
                           <span className="text-xs font-medium text-neutral-400">Ending...</span>
                         </div>
                       )}
@@ -1039,7 +1039,7 @@ export default function ChatInput({
                       <button
                         onClick={startRecording}
                         disabled={isTranscribing}
-                        className="h-9 w-9 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-10 w-10 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                       >
                         <Mic size={18} />
                       </button>
@@ -1055,7 +1055,7 @@ export default function ChatInput({
                           }
                         }}
                         disabled={isSubmitting}
-                        className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                        className="h-10 w-10 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                       >
                         {isGenerating ? (
                           <Square fill="currentColor" size={14} />
