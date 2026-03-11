@@ -109,7 +109,8 @@ export function useFlux({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const audioCtx = new AudioContextClass({
         sampleRate: 16000, 
       });
       audioCtxRef.current = audioCtx;
@@ -144,9 +145,9 @@ export function useFlux({
       source.connect(processor);
       processor.connect(audioCtx.destination);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error starting Flux:', err);
-      onError?.(err.message || 'Failed to start ASR');
+      onError?.(err instanceof Error ? err.message : 'Failed to start ASR');
       cleanup();
     }
   }, [cleanup, onTranscript, onFinalTranscript, onError]);

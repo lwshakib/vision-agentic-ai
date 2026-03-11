@@ -12,6 +12,11 @@ type MessagePart = {
   name?: string; // Name of the file.
   filename?: string; // Alternative name field.
   id?: string; // ID of the part.
+  output?: {
+    success?: boolean;
+    image?: string;
+    prompt?: string;
+  };
 };
 
 /**
@@ -83,7 +88,7 @@ export async function GET() {
         // 2. Process Assistant-generated images (type: 'tool-generateImage').
         // The output contains 'image' (URL) and 'prompt' (which we'll use for alt text).
         const isGeneratedImage = type === 'tool-generateImage';
-        const output = (part as any).output;
+        const output = part.output;
         
         if (isGeneratedImage && output?.success && output?.image) {
           allImages.push({

@@ -6,9 +6,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import prisma from '@/lib/prisma';
-import { getUser } from '@/actions/user';
-import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import { authClient } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';

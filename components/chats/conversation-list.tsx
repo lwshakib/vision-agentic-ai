@@ -16,10 +16,9 @@ import {
 } from '@/components/ai-elements/conversation';
 import { MessageSquare } from 'lucide-react';
 // Import individual message item and loading skeleton.
+// Import individual message item and loading skeleton.
 import { ChatMessageItem } from './message-item';
 import { ConversationSkeleton } from './chat-skeleton';
-// Import low-level message display components.
-import { Message, MessageContent } from '@/components/ai-elements/message';
 // Import the animated dots shown while waiting for an AI response.
 import type { ChatMessage, ChatStatus } from '@/hooks/use-chat';
 

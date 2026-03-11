@@ -14,7 +14,7 @@ import { Source, SourceTrigger, SourceContent } from './source';
 import { ToolImage } from './tool-image';
 import { ToolSearchResults } from './tool-search';
 import { ToolAudioPlayer } from './tool-audio';
-import { ToolLoading, SearchLoading, ToolError } from './tool-status';
+import { ToolError } from './tool-status';
 import { ToolFileDownload } from './tool-file';
 import { ToolCard } from './tool-card';
 import { ImageIcon, MusicIcon, FileTextIcon, GlobeIcon, SearchIcon } from 'lucide-react';

@@ -7,7 +7,7 @@
 'use client';
 
 // Import React hooks for lifecycle management and optimization.
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 // Import Next.js hooks for accessing URL parameters and search queries.
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useChat } from '@/hooks/use-chat';
@@ -48,7 +48,7 @@ export default function ChatPage() {
   const [isVoiceMode, setIsVoiceMode] = useState(searchParams.get('voiceMode') === 'true');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const toastRef = useRef<any>(null);
+  const toastRef = useRef<string | number | null>(null);
   const ttsAbortControllerRef = useRef<AbortController | null>(null);
 
   /**
@@ -77,11 +77,11 @@ export default function ChatPage() {
       return data.audioUrl;
     })();
 
-    const tId = toast.promise(ttsPromise, {
+    const tId = (toast.promise(ttsPromise, {
       loading: 'Processing audio...',
       success: 'Audio ready',
       error: 'Speech generation failed',
-    });
+    }) as unknown) as string | number;
     toastRef.current = tId;
 
     try {
@@ -201,7 +201,11 @@ export default function ChatPage() {
   // Stop everything if exiting Voice Mode
   useEffect(() => {
     if (!isVoiceMode) {
-      handleStop();
+      // Small timeout to avoid React "cascading renders" error when calling setState from effect.
+      const timer = setTimeout(() => {
+        handleStop();
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isVoiceMode, handleStop]);
 

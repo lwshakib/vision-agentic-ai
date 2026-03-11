@@ -13,6 +13,7 @@ import type { ChatMessage } from '@/hooks/use-chat';
 interface MessagePartItem {
   type: string;
   id?: string;
+  publicId?: string;
   url?: string;
   name?: string;
   filename?: string;
@@ -45,10 +46,10 @@ export function ChatMessageItem({
     ) || [];
 
   // De-duplicate files between message.files and message.parts
-  const uniqueFilesMap = new Map<string, any>();
+  const uniqueFilesMap = new Map<string, MessagePartItem>();
 
   // Helper to add a file to the map if it's unique
-  const addFile = (file: any) => {
+  const addFile = (file: MessagePartItem) => {
     const key = file.id || file.publicId || file.url;
     if (key && !uniqueFilesMap.has(key)) {
       uniqueFilesMap.set(key, {

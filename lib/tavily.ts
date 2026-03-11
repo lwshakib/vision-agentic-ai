@@ -89,7 +89,7 @@ export async function extractWebUrl({ urls }: { urls: string[] }) {
         (sum, r) => sum + (r.extractedLength || 0),
         0,
       ),
-      response_time: (response as any).responseTime,
+      response_time: (response as Record<string, unknown>)?.responseTime as number || 0,
     };
   } catch (error) {
     // Graceful error handling in case of API outages or network issues.

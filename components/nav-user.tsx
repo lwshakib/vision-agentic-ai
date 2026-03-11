@@ -76,12 +76,12 @@ export function NavUser({
           setMessageCredits(data.messageCredits);
         } else if (session?.user) {
           // Fallback to session data if API fails
-          setMessageCredits((session.user as any).messageCredits ?? 0);
+          setMessageCredits((session.user as Record<string, unknown>).messageCredits as number ?? 0);
         }
       } catch (err) {
         console.error('Failed to sync credits:', err);
         if (session?.user) {
-          setMessageCredits((session.user as any).messageCredits ?? 0);
+          setMessageCredits((session.user as Record<string, unknown>).messageCredits as number ?? 0);
         }
       }
     }

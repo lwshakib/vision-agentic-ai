@@ -6,8 +6,8 @@
 
 export interface Tool {
   description: string;
-  inputSchema: any;
-  execute: (args: any) => Promise<any>;
+  inputSchema: z.ZodTypeAny;
+  execute: (args: Record<string, any>) => Promise<any>;
 }
 
 import { z } from 'zod';

@@ -21,7 +21,6 @@ interface MessageActionsListProps {
 export function MessageActionsList({
   message,
   onCopy,
-  onRetry,
 }: MessageActionsListProps) {
   if (message.isStreaming) return null;
 

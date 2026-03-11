@@ -11,6 +11,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/hooks/use-chat';
 
+import type { BundledLanguage } from 'shiki';
+
 export type FileUIPart = {
   url: string;
   filename?: string;
@@ -318,7 +320,17 @@ export const MessageBranchPage = ({
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
 export const MarkdownComponents: ComponentProps<typeof Streamdown>['components'] = {
-  code({ node, inline, className, children, ...props }: any) {
+  code({
+    inline,
+    className,
+    children,
+    ...props
+  }: {
+    inline?: boolean;
+    className?: string;
+    children?: React.ReactNode;
+    [key: string]: any;
+  }) {
     const match = /language-(\w+)/.exec(className || '');
     const isCodeBlock = !inline && match;
 
@@ -327,7 +339,7 @@ export const MarkdownComponents: ComponentProps<typeof Streamdown>['components']
         <CodeBlock
           className="not-prose my-4"
           code={String(children).replace(/\n$/, '')}
-          language={match[1] as any}
+          language={match[1] as BundledLanguage}
           {...props}
         >
           <CodeBlockCopyButton />

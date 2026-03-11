@@ -120,7 +120,10 @@ export async function POST(req: NextRequest, { params }: Params) {
   });
 
   // Return the created message object.
-  const responseData: any = { ...created };
+  const responseData: Record<string, unknown> = (created as unknown) as Record<
+    string,
+    unknown
+  >;
 
   // Automatically generate a descriptive title if this is the assistant's very first message in the chat.
   if (
@@ -138,9 +141,12 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
 
     if (userMessage) {
-      const userParts = userMessage.parts as any[];
+      const userParts = userMessage.parts as Array<{
+        type: string;
+        text?: string;
+      }>;
       const firstTextPart = userParts.find(
-        (p: Record<string, unknown>) => p.type === 'text',
+        (p) => p.type === 'text',
       );
       if (firstTextPart?.text) {
         const generatedTitle = await generateChatTitle(firstTextPart.text);

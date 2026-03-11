@@ -10,7 +10,7 @@ interface ToolFileDownloadProps {
   type: string;
 }
 
-export function ToolFileDownload({ url, fileName, type }: ToolFileDownloadProps) {
+export function ToolFileDownload({ url, fileName }: ToolFileDownloadProps) {
   const handleDownload = async () => {
     try {
       const response = await fetch(url);

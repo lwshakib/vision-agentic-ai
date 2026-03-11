@@ -5,9 +5,9 @@ import { CLOUDFLARE_API_KEY, GLM_WORKER_URL } from '@/lib/env';
  */
 export interface GLMMessage {
   role: 'system' | 'user' | 'assistant' | 'tool' | 'developer';
-  content: string | any[];
+  content: string | unknown[];
   name?: string;
-  tool_calls?: any[];
+  tool_calls?: unknown[];
   tool_call_id?: string;
 }
 
@@ -20,14 +20,14 @@ export interface GenerateTextOptions {
   top_p?: number;
   max_tokens?: number;
   stream?: boolean;
-  tools?: any[];
+  tools?: unknown[];
   tool_choice?: 'none' | 'auto' | 'required';
   response_format?: {
     type: 'json_schema';
     json_schema: {
       name: string;
       strict: boolean;
-      schema: any;
+      schema: unknown;
     };
   };
 }
@@ -45,7 +45,7 @@ export interface GenerateTextResult {
     message: {
       role: 'assistant';
       content: string;
-      tool_calls?: any[];
+      tool_calls?: unknown[];
     };
     finish_reason: string;
   }[];

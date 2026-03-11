@@ -4,14 +4,33 @@ import { useState, useCallback, useRef } from 'react';
 import { nanoid } from 'nanoid';
 import { useChatStore } from '@/hooks/use-chat-store';
 
+export interface MessagePart {
+  type: string;
+  text?: string;
+  id?: string;
+  publicId?: string;
+  name?: string;
+  filename?: string;
+  url?: string;
+  mediaType?: string;
+  input?: unknown;
+  output?: unknown;
+  state?: 'input-streaming' | 'input-available' | 'output-available';
+  reasoning?: string;
+  isStreaming?: boolean;
+  duration?: number;
+  sources?: Array<{ url?: string; title?: string; [key: string]: unknown }>;
+  [key: string]: unknown;
+}
+
 export type ChatMessage = {
   id: string;
   role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
-  parts?: any[];
+  parts?: MessagePart[];
   reasoning?: string;
   version?: number | string;
-  files?: any[];
+  files?: MessagePart[];
   isStreaming?: boolean;
 };
 
@@ -19,7 +38,7 @@ export type ChatStatus = 'idle' | 'submitted' | 'streaming' | 'error';
 
 interface SendMessageOptions {
   text: string;
-  files?: any[];
+  files?: MessagePart[];
   isVoiceMode?: boolean;
 }
 
@@ -146,7 +165,13 @@ export function useChat({
                     },
                   }));
 
-                const msgs: any[] = [];
+                const msgs: Array<{
+                  role: string;
+                  content: string | unknown[];
+                  tool_calls?: unknown[];
+                  tool_call_id?: string;
+                  name?: string;
+                }> = [];
                 msgs.push({
                   role: 'assistant',
                   content: commonContent,
@@ -158,7 +183,7 @@ export function useChat({
                   if (p.type?.startsWith('tool-') && p.state === 'output-available') {
                     msgs.push({
                       role: 'tool',
-                      tool_call_id: p.id || msgs[0].tool_calls?.find((tc: any) => tc.function.name === p.type.replace('tool-', ''))?.id,
+                      tool_call_id: p.id || (msgs[0].tool_calls as any[] | undefined)?.find((tc: any) => tc.function.name === p.type.replace('tool-', ''))?.id,
                       name: p.type.replace('tool-', ''),
                       content: JSON.stringify(p.output),
                     });
@@ -314,7 +339,7 @@ export function useChat({
                     : m,
                 ),
               );
-            } catch (e) {
+            } catch (_e) {
               // Ignore
             }
           }
@@ -349,8 +374,8 @@ export function useChat({
           ),
         );
         onFinish?.(assistantMessage);
-      } catch (err: any) {
-        if (err.name === 'AbortError') {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') {
           // If aborted, we handle finishing the message up to the point it stopped.
           setStatus('idle');
           if (assistantMessage.isStreaming) {
@@ -402,7 +427,7 @@ export function useChat({
         abortControllerRef.current = null;
       }
     },
-    [api, headers, messages, onFinish, onError]
+    [api, headers, messages, onFinish, onError, setChatTitle]
   );
 
   return {

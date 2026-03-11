@@ -6,16 +6,17 @@ import { TOKEN_LIMIT_THRESHOLD } from '@/lib/constants';
 
 export interface Message {
   role: 'user' | 'assistant' | 'system' | 'tool';
-  content: any;
+  content: string | unknown;
   name?: string;
   tool_call_id?: string;
-  tool_calls?: any[];
+  tool_calls?: unknown[];
+  reasoning?: string;
 }
 
 /**
  * Executes the tool calling loop and streams results.
  */
-export async function streamText(messages: any[], options?: { isVoiceMode?: boolean }) {
+export async function streamText(messages: Message[], options?: { isVoiceMode?: boolean }) {
   if (!GLM_WORKER_URL || !CLOUDFLARE_API_KEY) {
     throw new Error('Missing GLM configuration');
   }
@@ -24,22 +25,22 @@ export async function streamText(messages: any[], options?: { isVoiceMode?: bool
   
   return new ReadableStream({
     async start(controller) {
-      const sendChunk = (data: any) => {
+      const sendChunk = (data: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       };
 
       // Manage context window by removing oldest messages if limit is exceeded
       const { estimateMessageTokens } = await import('./token-utils');
       
-      const manageContext = (msgs: any[]) => {
+      const manageContext = (msgs: Message[]) => {
         const systemMsg = msgs.find(m => m.role === 'system');
-        let otherMsgs = msgs.filter(m => m.role !== 'system');
+        const otherMsgs = msgs.filter(m => m.role !== 'system');
         
         while (estimateMessageTokens([systemMsg, ...otherMsgs]) > TOKEN_LIMIT_THRESHOLD && otherMsgs.length > 0) {
           otherMsgs.shift(); // Remove oldest message
         }
         
-        return [systemMsg, ...otherMsgs].filter(Boolean);
+        return [systemMsg, ...otherMsgs].filter((m): m is Message => !!m);
       };
 
       let systemPrompt = SYSTEM_PROMPT;
@@ -111,7 +112,11 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
           if (!reader) throw new Error('Failed to get stream reader');
 
           let assistantContent = '';
-          let toolCalls: any[] = [];
+          const toolCalls: Array<{
+            id?: string;
+            type: string;
+            function: { name: string; arguments: string };
+          }> = [];
           let reasoningContent = '';
 
           const decoder = new TextDecoder();
@@ -163,7 +168,7 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
                       if (tc.function?.arguments) toolCalls[tc.index].function.arguments += tc.function.arguments;
                     }
                   }
-                } catch (e) {
+                } catch (_e) {
                   // Ignore parse errors from malformed chunks
                 }
               }
@@ -178,10 +183,11 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
           }
 
           // Add assistant message with tool calls to history
-          const assistantMsg = {
+          const assistantMsg: Message = {
             role: 'assistant',
             content: assistantContent,
-            tool_calls: cleanToolCalls
+            tool_calls: cleanToolCalls,
+            reasoning: reasoningContent
           };
           currentMessages.push(assistantMsg);
 

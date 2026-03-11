@@ -6,7 +6,7 @@
 'use client';
 
 // Import essential React and UI hooks.
-import { useMemo, useState, Suspense, useCallback, useRef, useEffect } from 'react';
+import { useState, Suspense, useCallback, useRef, useEffect } from 'react';
 // Import custom ChatInput component for user message entry.
 import ChatInput from '@/components/chat-input';
 // Import Next.js navigation hooks.
@@ -41,7 +41,7 @@ function PromptInputContent() {
 
   // Voice Mode State
   const [isVoiceMode, setIsVoiceMode] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const isSpeaking = false; // Never starts speaking in initialization state
   const { messageCredits } = useChatStore();
 
   // Determine if the current view should be a temporary (non-persisted) chat.
@@ -145,7 +145,7 @@ function TemporaryChat() {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const toastRef = useRef<any>(null);
+  const toastRef = useRef<string | number | null>(null);
   const ttsAbortControllerRef = useRef<AbortController | null>(null);
 
   /**
@@ -174,11 +174,11 @@ function TemporaryChat() {
       return data.audioUrl;
     })();
 
-    const tId = toast.promise(ttsPromise, {
+    const tId = (toast.promise(ttsPromise, {
       loading: 'Processing audio...',
       success: 'Audio ready',
       error: 'Speech generation failed',
-    });
+    }) as unknown) as string | number;
     toastRef.current = tId;
 
     try {
@@ -257,7 +257,11 @@ function TemporaryChat() {
   // Stop everything if exiting Voice Mode
   useEffect(() => {
     if (!isVoiceMode) {
-      handleStop();
+      // Small timeout to avoid React "cascading renders" error when calling setState from effect.
+      const timer = setTimeout(() => {
+        handleStop();
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isVoiceMode, handleStop]);
 

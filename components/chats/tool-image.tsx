@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { DownloadIcon, ImageIcon, SparklesIcon } from 'lucide-react';
+import { DownloadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -15,9 +15,9 @@ interface ToolImageProps {
   };
 }
 
-import { ToolCard } from './tool-card';
 
-export function ToolImage({ imageSrc, prompt, options }: ToolImageProps) {
+
+export function ToolImage({ imageSrc, prompt }: ToolImageProps) {
   const handleDownload = async () => {
     try {
       const response = await fetch(imageSrc);

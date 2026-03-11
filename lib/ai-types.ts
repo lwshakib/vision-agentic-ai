@@ -2,8 +2,8 @@ export interface ToolUIPart {
   type: 'tool-ui';
   toolCallId: string;
   toolName: string;
-  args: any;
-  result?: any;
+  args: unknown;
+  result?: unknown;
   state:
     | 'input-streaming'
     | 'input-available'
@@ -12,8 +12,8 @@ export interface ToolUIPart {
     | 'output-available'
     | 'output-error'
     | 'output-denied';
-  input?: any;
-  output?: any;
+  input?: unknown;
+  output?: unknown;
   errorText?: string;
 }
 

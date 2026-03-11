@@ -1,5 +1,6 @@
 import { saveFileToCloudinary } from '@/lib/cloudinary';
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 /**
  * Types of files that can be generated.
@@ -100,7 +101,6 @@ export async function generateFile(
                   .map((cell) => cell.trim())
               );
 
-              const { autoTable } = require('jspdf-autotable');
               autoTable(doc, {
                 head: [headers],
                 body: rows,
@@ -111,7 +111,8 @@ export async function generateFile(
                 headStyles: { fillColor: [41, 128, 185] },
               });
 
-              cursorY = (doc as any).lastAutoTable.finalY + 10;
+              const lastAutoTable = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable;
+              cursorY = lastAutoTable.finalY + 10;
               continue;
             }
           }

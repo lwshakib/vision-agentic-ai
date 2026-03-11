@@ -7,7 +7,7 @@
  * This is a heuristic; most models use ~4 characters per token for English.
  * We'll use a safer 2 characters per token to avoid underestimation and provide a buffer.
  */
-export function estimateTokens(text: string | any[]): number {
+export function estimateTokens(text: string | unknown[]): number {
   if (typeof text !== 'string') {
     return Math.ceil(JSON.stringify(text).length / 2);
   }
@@ -17,10 +17,10 @@ export function estimateTokens(text: string | any[]): number {
 /**
  * Estimates tokens for a list of messages.
  */
-export function estimateMessageTokens(messages: any[]): number {
+export function estimateMessageTokens(messages: Array<{ content?: string | unknown; tool_calls?: unknown[] }>): number {
   return messages.reduce((acc, msg) => {
-    let count = estimateTokens(msg.content || '');
-    if (msg.tool_calls) count += estimateTokens(msg.tool_calls);
+    let count = estimateTokens((msg.content as string) || '');
+    if (msg.tool_calls) count += estimateTokens(msg.tool_calls as unknown[]);
     return acc + count;
   }, 0);
 }
