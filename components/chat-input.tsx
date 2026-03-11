@@ -431,20 +431,30 @@ export default function ChatInput({
     isActive: isFluxActive, 
     partialTranscript,
     isMuted,
-    setIsMuted 
+    setIsMuted,
+    volume 
   } = useFlux({
     onFinalTranscript: stableOnFinalTranscript,
     onError: stableOnError
   });
 
-  // Toggle Flux state when isVoiceMode changes
+  const [voiceStatus, setVoiceStatus] = useState<'idle' | 'connecting' | 'active' | 'ending'>('idle');
+
   useEffect(() => {
     if (isVoiceMode) {
+      setVoiceStatus('connecting');
       void startFlux();
     } else {
+      setVoiceStatus('idle');
       stopFlux();
     }
   }, [isVoiceMode, startFlux, stopFlux]);
+
+  useEffect(() => {
+    if (isFluxActive && voiceStatus === 'connecting') {
+      setVoiceStatus('active');
+    }
+  }, [isFluxActive, voiceStatus]);
 
   /**
    * Orchestrates the primary sending logic, combining text and uploaded files.
@@ -754,14 +764,7 @@ export default function ChatInput({
         </div>
       )}
 
-      {/* Live Transcript Display - Show when ASR is active */}
-      {(isVoiceMode || partialTranscript) && (
-        <div className="mb-4 px-2 min-h-[1.5rem]">
-          <p className="text-lg text-neutral-200 font-medium animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {partialTranscript || (isFluxActive ? "Listening..." : "Initializing Voice Mode...")}
-          </p>
-        </div>
-      )}
+      {/* Hidden file selector system hook. */}
 
       {/* Hidden file selector system hook. */}
       <input
@@ -779,34 +782,7 @@ export default function ChatInput({
           className ?? ''
         }`}
       >
-        {isVoiceMode ? (
-          /* -------- VOICE MODE UI (No bar visualization) -------- */
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
-                isMuted ? 'bg-red-500/20 text-red-500' : 'bg-neutral-700 text-white'
-              }`}
-            >
-              {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
-            </button>
-
-            {/* Input area remains interactive but serves as a display for the mic state */}
-            <div className="flex-1 flex items-center h-9 px-1">
-              <span className={`text-sm ${isMuted ? 'text-neutral-500 italic' : 'text-neutral-300'}`}>
-                {isMuted ? 'Voice Input Paused' : (isFluxActive ? 'Listening...' : 'Connecting...')}
-              </span>
-            </div>
-
-            {/* Exit Voice Mode. */}
-            <button
-              onClick={() => setIsVoiceMode(false)}
-              className="h-9 w-9 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        ) : isRecording ? (
+        {isRecording ? (
           /* -------- ACTIVE MANUAL RECORDING UI -------- */
           <div className="flex items-center gap-3">
             <button
@@ -880,38 +856,89 @@ export default function ChatInput({
                   </button>
 
                   <div className="flex items-center gap-3">
-                    {/* Voice input trigger. */}
-                    <button
-                      onClick={startRecording}
-                      disabled={isTranscribing}
-                      className="h-9 w-9 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Mic size={18} />
-                    </button>
+                    {/* Voice input controls. */}
+                    {isVoiceMode ? (
+                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
+                        {/* Mute Toggle */}
+                        <button
+                          onClick={() => setIsMuted(!isMuted)}
+                          className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+                            isMuted ? 'bg-red-500/20 text-red-500' : 'bg-neutral-700 text-white'
+                          }`}
+                        >
+                          {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                        </button>
 
-                    <button
-                      onClick={() => {
-                        if (isGenerating) {
-                          onStop?.();
-                        } else if (hasText || filePreviews.length > 0) {
-                          handleSendOrStop();
-                        } else {
-                          setIsVoiceMode(!isVoiceMode);
-                        }
-                      }}
-                      disabled={isSubmitting}
-                      className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-                    >
-                      {isGenerating ? (
-                        <Square fill="currentColor" size={14} />
-                      ) : (hasText || filePreviews.length > 0) ? (
-                        <ArrowUp size={18} />
-                      ) : isVoiceMode ? (
-                        <X size={18} />
-                      ) : (
-                        <AudioLines size={18} />
-                      )}
-                    </button>
+                        {/* Status Interaction Button */}
+                        {voiceStatus === 'connecting' ? (
+                          <button
+                            onClick={() => setIsVoiceMode(false)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all"
+                          >
+                            <X size={16} />
+                            <span className="text-xs font-semibold">Cancel</span>
+                          </button>
+                        ) : voiceStatus === 'active' ? (
+                          <button
+                            onClick={() => {
+                              setVoiceStatus('ending');
+                              setTimeout(() => setIsVoiceMode(false), 800);
+                            }}
+                            className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-black hover:bg-neutral-200 transition-all"
+                          >
+                            <div className="flex items-center gap-[1px] h-3">
+                              {[1, 2, 3, 4].map((i) => (
+                                <div
+                                  key={i}
+                                  className="w-[1.5px] bg-black rounded-full"
+                                  style={{ 
+                                    height: isMuted ? '2px' : `${4 + (volume * (8 + Math.random() * 8))}px`,
+                                    opacity: isMuted ? 0.3 : 1
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs font-bold uppercase">End</span>
+                          </button>
+                        ) : (
+                          <div className="px-3 py-1.5 rounded-full bg-neutral-800 border border-neutral-700">
+                            <span className="text-xs font-medium text-neutral-400">Ending...</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={startRecording}
+                          disabled={isTranscribing}
+                          className="h-9 w-9 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Mic size={18} />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (isGenerating) {
+                              onStop?.();
+                            } else if (hasText || filePreviews.length > 0) {
+                              handleSendOrStop();
+                            } else {
+                              setIsVoiceMode(true);
+                            }
+                          }}
+                          disabled={isSubmitting}
+                          className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                        >
+                          {isGenerating ? (
+                            <Square fill="currentColor" size={14} />
+                          ) : (hasText || filePreviews.length > 0) ? (
+                            <ArrowUp size={18} />
+                          ) : (
+                            <AudioLines size={18} />
+                          )}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </>
@@ -941,37 +968,90 @@ export default function ChatInput({
                   disabled={isSubmitting}
                 />
 
-                <button
-                  onClick={startRecording}
-                  disabled={isTranscribing}
-                  className="h-9 w-9 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Mic size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {isVoiceMode ? (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
+                      {/* Mute Toggle */}
+                      <button
+                        onClick={() => setIsMuted(!isMuted)}
+                        className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+                          isMuted ? 'bg-red-500/20 text-red-500' : 'bg-neutral-700 text-white'
+                        }`}
+                      >
+                        {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                      </button>
 
-                <button
-                  onClick={() => {
-                    if (isGenerating) {
-                      onStop?.();
-                    } else if (hasText || filePreviews.length > 0) {
-                      handleSendOrStop();
-                    } else {
-                      setIsVoiceMode(!isVoiceMode);
-                    }
-                  }}
-                  disabled={isSubmitting}
-                  className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-                >
-                  {isGenerating ? (
-                    <Square fill="currentColor" size={14} />
-                  ) : (hasText || filePreviews.length > 0) ? (
-                    <ArrowUp size={18} />
-                  ) : isVoiceMode ? (
-                    <X size={18} />
+                      {/* Status Interaction Button */}
+                      {voiceStatus === 'connecting' ? (
+                        <button
+                          onClick={() => setIsVoiceMode(false)}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all font-semibold"
+                        >
+                          <X size={16} />
+                          <span className="text-xs">Cancel</span>
+                        </button>
+                      ) : voiceStatus === 'active' ? (
+                        <button
+                          onClick={() => {
+                            setVoiceStatus('ending');
+                            setTimeout(() => setIsVoiceMode(false), 800);
+                          }}
+                          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-black hover:bg-neutral-200 transition-all"
+                        >
+                          <div className="flex items-center gap-[1px] h-3">
+                            {[1, 2, 3, 4].map((i) => (
+                              <div
+                                key={i}
+                                className="w-[1.5px] bg-black rounded-full"
+                                style={{ 
+                                  height: isMuted ? '2px' : `${4 + (volume * (8 + Math.random() * 8))}px`,
+                                  opacity: isMuted ? 0.3 : 1
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs font-bold uppercase">End</span>
+                        </button>
+                      ) : (
+                        <div className="px-3 py-1.5 rounded-full bg-neutral-800 border border-neutral-700">
+                          <span className="text-xs font-medium text-neutral-400">Ending...</span>
+                        </div>
+                      )}
+                    </div>
                   ) : (
-                    <AudioLines size={18} />
+                    <>
+                      <button
+                        onClick={startRecording}
+                        disabled={isTranscribing}
+                        className="h-9 w-9 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Mic size={18} />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (isGenerating) {
+                            onStop?.();
+                          } else if (hasText || filePreviews.length > 0) {
+                            handleSendOrStop();
+                          } else {
+                            setIsVoiceMode(true);
+                          }
+                        }}
+                        disabled={isSubmitting}
+                        className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                      >
+                        {isGenerating ? (
+                          <Square fill="currentColor" size={14} />
+                        ) : (hasText || filePreviews.length > 0) ? (
+                          <ArrowUp size={18} />
+                        ) : (
+                          <AudioLines size={18} />
+                        )}
+                      </button>
+                    </>
                   )}
-                </button>
+                </div>
               </>
             )}
           </div>

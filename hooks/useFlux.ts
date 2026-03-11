@@ -18,6 +18,7 @@ export function useFlux({
   const [isActive, setIsActive] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [partialTranscript, setPartialTranscript] = useState('');
+  const [volume, setVolume] = useState(0);
   
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -50,6 +51,7 @@ export function useFlux({
     }
     setIsActive(false);
     setIsMuted(false);
+    setVolume(0);
     lastTurnIndexRef.current = -1;
   }, []);
 
@@ -118,10 +120,18 @@ export function useFlux({
       processorRef.current = processor;
 
       processor.onaudioprocess = (e) => {
-        if (ws.readyState !== WebSocket.OPEN || isMutedRef.current) return;
-
         const inputData = e.inputBuffer.getChannelData(0);
         
+        // Calculate volume even if muted for visual feedback
+        let sum = 0;
+        for (let i = 0; i < inputData.length; i++) {
+          sum += inputData[i] * inputData[i];
+        }
+        const rms = Math.sqrt(sum / inputData.length);
+        setVolume(Math.min(1, rms * 5)); // Amplify for better visual response
+
+        if (ws.readyState !== WebSocket.OPEN || isMutedRef.current) return;
+
         const pcmData = new Int16Array(inputData.length);
         for (let i = 0; i < inputData.length; i++) {
           const s = Math.max(-1, Math.min(1, inputData[i]));
@@ -157,5 +167,6 @@ export function useFlux({
     partialTranscript,
     isMuted,
     setIsMuted,
+    volume,
   };
 }
