@@ -873,10 +873,10 @@ export default function ChatInput({
                         {voiceStatus === 'connecting' ? (
                           <button
                             onClick={() => setIsVoiceMode(false)}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all"
+                            className="flex items-center gap-2 px-4 h-9 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all animate-in fade-in zoom-in-95"
                           >
                             <X size={16} />
-                            <span className="text-xs font-semibold">Cancel</span>
+                            <span className="text-sm font-medium">Cancel</span>
                           </button>
                         ) : voiceStatus === 'active' ? (
                           <button
@@ -884,7 +884,7 @@ export default function ChatInput({
                               setVoiceStatus('ending');
                               setTimeout(() => setIsVoiceMode(false), 800);
                             }}
-                            className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-black hover:bg-neutral-200 transition-all"
+                            className="group flex items-center gap-3 px-4 h-9 rounded-full bg-white text-black hover:bg-neutral-200 transition-all animate-in fade-in zoom-in-95"
                           >
                             <div className="flex items-center gap-[1px] h-3">
                               {[1, 2, 3, 4].map((i) => (
@@ -898,13 +898,13 @@ export default function ChatInput({
                                 />
                               ))}
                             </div>
-                            <span className="text-xs font-bold uppercase">End</span>
+                            <span className="text-sm font-bold uppercase tracking-wider">End</span>
                           </button>
-                        ) : (
-                          <div className="px-3 py-1.5 rounded-full bg-neutral-800 border border-neutral-700">
-                            <span className="text-xs font-medium text-neutral-400">Ending...</span>
+                        ) : voiceStatus === 'ending' ? (
+                          <div className="flex items-center gap-2 px-4 h-9 rounded-full bg-neutral-800 border border-neutral-700 animate-pulse">
+                            <span className="text-sm font-medium text-neutral-400">Ending...</span>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     ) : (
                       <>
@@ -985,7 +985,7 @@ export default function ChatInput({
                       {voiceStatus === 'connecting' ? (
                         <button
                           onClick={() => setIsVoiceMode(false)}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all font-semibold"
+                          className="flex items-center gap-2 px-3 h-9 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all font-semibold"
                         >
                           <X size={16} />
                           <span className="text-xs">Cancel</span>
@@ -996,7 +996,7 @@ export default function ChatInput({
                             setVoiceStatus('ending');
                             setTimeout(() => setIsVoiceMode(false), 800);
                           }}
-                          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-black hover:bg-neutral-200 transition-all"
+                          className="group flex items-center gap-2 px-3 h-9 rounded-full bg-white text-black hover:bg-neutral-200 transition-all"
                         >
                           <div className="flex items-center gap-[1px] h-3">
                             {[1, 2, 3, 4].map((i) => (
@@ -1013,7 +1013,7 @@ export default function ChatInput({
                           <span className="text-xs font-bold uppercase">End</span>
                         </button>
                       ) : (
-                        <div className="px-3 py-1.5 rounded-full bg-neutral-800 border border-neutral-700">
+                        <div className="px-3 h-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center">
                           <span className="text-xs font-medium text-neutral-400">Ending...</span>
                         </div>
                       )}
