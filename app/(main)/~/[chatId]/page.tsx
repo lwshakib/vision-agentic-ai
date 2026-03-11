@@ -40,7 +40,7 @@ export default function ChatPage() {
   // Extract chatId from the URL dynamic segment.
   const { chatId } = useParams<{ chatId: string }>();
   // Access state action to set the current chat title in the UI.
-  const { setChatTitle } = useChatStore();
+  const { setChatTitle, messageCredits, setMessageCredits } = useChatStore();
   const router = useRouter();
 
   // Voice Mode State
@@ -54,8 +54,7 @@ export default function ChatPage() {
   const speak = useCallback(async (text: string) => {
     if (!text || !isVoiceMode) return;
 
-    try {
-      setIsSpeaking(true);
+    const ttsPromise = (async () => {
       const res = await fetch('/api/voice-agent/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,7 +62,20 @@ export default function ChatPage() {
       });
 
       if (!res.ok) throw new Error('Speech generation failed');
-      const { audioUrl } = await res.json();
+      const data = await res.json();
+      if (!data.audioUrl) throw new Error('No audio URL returned');
+      return data.audioUrl;
+    })();
+
+    toast.promise(ttsPromise, {
+      loading: 'Processing audio...',
+      success: 'Audio ready',
+      error: 'Speech generation failed',
+    });
+
+    try {
+      setIsSpeaking(true);
+      const audioUrl = await ttsPromise;
 
       if (audioUrl) {
         if (audioRef.current) {
@@ -262,7 +274,21 @@ export default function ChatPage() {
     }
 
     void loadHistory();
-  }, [chatId, setMessages, setChatTitle]);
+
+    // Fetch and sync credits on mount
+    const syncCredits = async () => {
+      try {
+        const res = await fetch('/api/credits/sync');
+        if (res.ok) {
+          const data = await res.json();
+          setMessageCredits(data.messageCredits);
+        }
+      } catch (err) {
+        console.error('Failed to sync credits:', err);
+      }
+    };
+    void syncCredits();
+  }, [chatId, setMessages, setChatTitle, setMessageCredits]);
 
   // Handle initial message from query params (e.g., when redirected from home).
   useEffect(() => {
@@ -362,6 +388,16 @@ export default function ChatPage() {
     }
   }, [sendMessage]);
 
+  // Wrap the stop function to also handle audio playback
+  const handleStop = useCallback(() => {
+    stop();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsSpeaking(false);
+  }, [stop]);
+
   // Return null if chatId is missing.
   if (!chatId) return null;
 
@@ -384,11 +420,19 @@ export default function ChatPage() {
         <div className="w-full max-w-3xl">
           <ChatInput 
             onSend={handleSend} 
-            onStop={stop}
+            onStop={handleStop}
             placeholder="Send a message" 
             isGenerating={status === 'submitted' || status === 'streaming'} 
             isVoiceMode={isVoiceMode}
-            onVoiceModeChange={setIsVoiceMode}
+            onVoiceModeChange={(value) => {
+              if (value && messageCredits !== null && messageCredits <= 0) {
+                toast.error('Limit Reached', {
+                  description: 'You have reached your daily limit of 10 messages. Please upgrade to Pro to continue.',
+                });
+                return;
+              }
+              setIsVoiceMode(value);
+            }}
             isSpeaking={isSpeaking}
           />
         </div>

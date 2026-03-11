@@ -443,17 +443,12 @@ export default function ChatInput({
     onError: stableOnError
   });
 
-  // Automatically mute the microphone when the AI is speaking
+  // Interruption Logic: Abort LLM/Speech if user starts talking
   useEffect(() => {
-    if (isVoiceMode && isSpeaking) {
-      setIsMuted(true);
-    } else if (isVoiceMode) {
-      // Do not automatically unmute if it was manually muted
-      // But for a robust voice experience, we usually want it to listen 
-      // as soon as the bot finishes speaking.
-      setIsMuted(false);
+    if (isVoiceMode && partialTranscript.trim().length > 2 && (isGenerating || isSpeaking)) {
+      onStop?.();
     }
-  }, [isSpeaking, isVoiceMode, setIsMuted]);
+  }, [partialTranscript, isGenerating, isSpeaking, isVoiceMode, onStop]);
 
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'connecting' | 'active' | 'ending'>('idle');
 
