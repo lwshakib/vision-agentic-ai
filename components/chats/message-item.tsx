@@ -12,6 +12,7 @@ import type { ChatMessage } from '@/hooks/use-chat';
 
 interface MessagePartItem {
   type: string;
+  [key: string]: unknown;
   id?: string;
   publicId?: string;
   url?: string;

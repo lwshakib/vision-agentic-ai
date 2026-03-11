@@ -36,7 +36,7 @@ export async function streamText(messages: Message[], options?: { isVoiceMode?: 
         const systemMsg = msgs.find(m => m.role === 'system');
         const otherMsgs = msgs.filter(m => m.role !== 'system');
         
-        while (estimateMessageTokens([systemMsg, ...otherMsgs]) > TOKEN_LIMIT_THRESHOLD && otherMsgs.length > 0) {
+        while (estimateMessageTokens([systemMsg, ...otherMsgs].filter((m): m is Message => !!m)) > TOKEN_LIMIT_THRESHOLD && otherMsgs.length > 0) {
           otherMsgs.shift(); // Remove oldest message
         }
         
@@ -75,7 +75,8 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
         function: {
           name,
           description: tool.description,
-          parameters: zodToJsonSchema(tool.inputSchema)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          parameters: zodToJsonSchema(tool.inputSchema as any)
         }
       }));
 
@@ -168,7 +169,7 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
                       if (tc.function?.arguments) toolCalls[tc.index].function.arguments += tc.function.arguments;
                     }
                   }
-                } catch (_e) {
+                } catch {
                   // Ignore parse errors from malformed chunks
                 }
               }

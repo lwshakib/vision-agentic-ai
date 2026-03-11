@@ -183,7 +183,7 @@ export function useChat({
                   if (p.type?.startsWith('tool-') && p.state === 'output-available') {
                     msgs.push({
                       role: 'tool',
-                      tool_call_id: p.id || (msgs[0].tool_calls as any[] | undefined)?.find((tc: any) => tc.function.name === p.type.replace('tool-', ''))?.id,
+                      tool_call_id: p.id || (msgs[0].tool_calls as Array<{ id: string; function: { name: string } }> | undefined)?.find((tc) => tc.function.name === p.type.replace('tool-', ''))?.id,
                       name: p.type.replace('tool-', ''),
                       content: JSON.stringify(p.output),
                     });
@@ -339,7 +339,7 @@ export function useChat({
                     : m,
                 ),
               );
-            } catch (_e) {
+            } catch {
               // Ignore
             }
           }

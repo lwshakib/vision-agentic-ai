@@ -325,11 +325,8 @@ export const MarkdownComponents: ComponentProps<typeof Streamdown>['components']
     className,
     children,
     ...props
-  }: {
+  }: ComponentProps<'code'> & {
     inline?: boolean;
-    className?: string;
-    children?: React.ReactNode;
-    [key: string]: any;
   }) {
     const match = /language-(\w+)/.exec(className || '');
     const isCodeBlock = !inline && match;

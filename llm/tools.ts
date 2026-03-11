@@ -6,8 +6,9 @@
 
 export interface Tool {
   description: string;
-  inputSchema: z.ZodTypeAny;
-  execute: (args: Record<string, any>) => Promise<any>;
+  inputSchema: z.ZodSchema;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  execute: (args: any) => Promise<any>;
 }
 
 import { z } from 'zod';
