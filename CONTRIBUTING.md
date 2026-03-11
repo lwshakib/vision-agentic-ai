@@ -1,150 +1,105 @@
 # Contributing to Vision Agentic AI
 
-First off, thank you for considering contributing to Vision Agentic AI! We appreciate your time and effort to make this project better.
+Thank you for your interest in contributing to Vision Agentic AI! We welcome contributions from the community to help make this platform even better.
 
 ## 📋 Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
-- [Getting Started](#-getting-started)
-- [How to Contribute](#-how-to-contribute)
-- [Reporting Bugs](#-reporting-bugs)
-- [Suggesting Enhancements](#-suggesting-enhancements)
-- [Your First Code Contribution](#-your-first-code-contribution)
-- [Pull Request Process](#-pull-request-process)
-- [Development Setup](#-development-setup)
-- [Style Guide](#-style-guide)
-- [License](#license)
+- [How to Contribute](#how-to-contribute)
+- [Development Setup](#development-setup)
+- [Pull Request Process](#pull-request-process)
+- [Style Guide](#style-guide)
 
 ## Code of Conduct
 
 This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
-## 🤝 Getting Started
-
-1. **Fork** the repository on GitHub
-2. **Clone** the project to your own machine
-3. **Commit** changes to your own branch
-4. **Push** your work back up to your fork
-5. Submit a **Pull Request** so we can review your changes
-
-## 💡 How to Contribute
+## 🤝 How to Contribute
 
 ### Reporting Bugs
 
-- **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/lwshakib/vision-agentic-ai/issues)
-- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/lwshakib/vision-agentic-ai/issues/new). Be sure to include:
-  - A clear title and description
-  - As much relevant information as possible
-  - A code sample or an executable test case demonstrating the issue
+- **Search first**: Check existing [Issues](https://github.com/lwshakib/vision-agentic-ai/issues) to see if the bug has already been reported.
+- **Open an issue**: If not, create a new issue with a clear description, steps to reproduce, and any relevant logs or screenshots.
 
 ### Suggesting Enhancements
 
-- Use the GitHub issue tracker to submit feature requests
-- Clearly describe the enhancement and why it would be useful
-- Include any relevant code, screenshots, or documentation
+- **Feature Requests**: We love new ideas! Open an issue clearly describing the feature, its use case, and any implementation ideas.
 
-## 🚀 Your First Code Contribution
+### Code Contributions
 
-1. **Set up the development environment**
-
-   ```bash
-   git clone https://github.com/your-username/vision-agentic-ai.git
-   cd vision-agentic-ai
-   bun install
-   ```
-
-2. **Create a new branch**
-
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-
-3. **Make your changes**
-   - Follow the project's coding standards
-   - Update documentation as needed
-
-4. **Commit your changes**
-
-   ```bash
-   git commit -m "feat: add amazing feature"
-   ```
-
-5. **Push to your fork**
-
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-
-6. **Open a Pull Request**
-   - Go to [Pull Requests](https://github.com/lwshakib/vision-agentic-ai/pulls)
-   - Click "New Pull Request"
-   - Select your branch and submit the PR
-
-## 🔄 Pull Request Process
-
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
-2. Update the README.md with details of changes to the interface, including new environment variables, exposed ports, useful file locations, and container parameters.
-3. The PR will be reviewed by the maintainers and may require changes before being merged.
+1. **Fork** the repository.
+2. **Clone** your fork to your local machine.
+3. **Branch**: Create a new branch for your feature or fix (e.g., `feature/cool-new-tool`).
+4. **Develop**: Make your changes, following the [Style Guide](#style-guide).
+5. **Test**: Ensure your changes pass all tests and linting checks.
+6. **Push**: Push your branch to your fork.
+7. **PR**: Open a Pull Request against the main repository.
 
 ## 🛠 Development Setup
 
 ### Prerequisites
 
-- Node.js 18+
-- Bun
-- Git
+- [Bun](https://bun.sh/) 1.1+ (recommended) or [Node.js](https://nodejs.org/) 18+
+- [Git](https://git-scm.com/)
+- [PostgreSQL](https://www.postgresql.org/)
 
-### Installation & Local Development
+### Local Installation
 
-1. **Fork & Clone**: Fork the repository and clone it to your local machine.
-2. **Dependencies**: Install required packages using Bun:
+1. **Get the code**:
+   ```bash
+   git clone https://github.com/lwshakib/vision-agentic-ai.git
+   cd vision-agentic-ai
+   ```
+
+2. **Install dependencies**:
    ```bash
    bun install
    ```
-3. **Environment**: Copy `.env.example` to `.env` and configure your API keys (Google AI, Tavily, Cloudinary, etc.).
-4. **Database**: Initialize and migrate your local PostgreSQL database:
+
+3. **Environment setup**:
+   - Copy `.env.example` to `.env`.
+   - Fill in the required API keys (Tavily, Cloudinary, etc.).
+
+4. **Database setup**:
    ```bash
    bun run db:migrate
    ```
-5. **Start Dev Server**: Launch the application:
+
+5. **Start development server**:
    ```bash
    bun run dev
-   ```
-6. **Database Management**: You can visualize and edit your database records using Prisma Studio:
-   ```bash
-   bun run db:studio
    ```
 
 ### Quality Assurance
 
-Before submitting a PR, please ensure your changes pass the following checks:
+Before submitting a PR, please run these commands:
 
 - **Linting**: `bun run lint`
-- **Formatting**: `bun run format:check`
-- **Unit Tests**: `bun run test`
-- **E2E Tests**: `bun run test:e2e` (requires local dev server running)
+- **Formatting**: `bun run format` (to fix) or `bun run format:check` (to verify)
+- **Unit Testing**: `bun run test`
+- **E2E Testing**: `bun run test:e2e` (requires local server running)
+
+## 🔄 Pull Request Process
+
+1. **Atomic Commits**: Keep your commits focused and descriptive.
+2. **Update Docs**: If you're adding a feature or changing an interface, update the `README.md`.
+3. **PR Description**: Clearly describe what your PR does and link any related issues.
+4. **Maintenance**: Be prepared to make changes based on maintainer feedback.
 
 ## 📏 Style Guide
 
 ### Git Commit Messages
 
-- Use the present tense ("Add feature" not "Added feature")
-- Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
-- Limit the first line to 72 characters or less
-- Reference issues and pull requests liberally
-- Consider starting the commit message with an applicable emoji:
-  - 🎨 `:art:` when improving the format/structure of the code
-  - 🐛 `:bug:` when fixing a bug
-  - 🔥 `:fire:` when removing code or files
-  - ✨ `:sparkles:` when adding new features
+- Follow [Conventional Commits](https://www.conventionalcommits.org/).
+- Use types like `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`, `chore:`.
+- Example: `feat: add support for real-time speech-to-text`
 
 ### Code Style
 
-- Follow the existing code style in the project
-- Use Prettier for code formatting
-- Use ESLint for code linting
-- Write clear, self-documenting code with appropriate comments
+- Use **Prettier** for formatting and **ESLint** for linting (both integrated into the build process).
+- Write clean, type-safe TypeScript code.
+- Aim for high test coverage for new logic.
 
 ## 📄 License
 
-By contributing, you agree that your contributions will be licensed under its MIT License.
+By contributing, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).
