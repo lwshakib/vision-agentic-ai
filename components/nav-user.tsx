@@ -68,10 +68,28 @@ export function NavUser({
 
   // Sync session credits with store on mount or session change.
   useEffect(() => {
-    if (session?.user && messageCredits === null) {
-      setMessageCredits((session.user as any).messageCredits ?? 0);
+    async function syncCredits() {
+      try {
+        const res = await fetch('/api/credits/sync');
+        if (res.ok) {
+          const data = await res.json();
+          setMessageCredits(data.messageCredits);
+        } else if (session?.user) {
+          // Fallback to session data if API fails
+          setMessageCredits((session.user as any).messageCredits ?? 0);
+        }
+      } catch (err) {
+        console.error('Failed to sync credits:', err);
+        if (session?.user) {
+          setMessageCredits((session.user as any).messageCredits ?? 0);
+        }
+      }
     }
-  }, [session, messageCredits, setMessageCredits]);
+
+    if (session?.user) {
+      syncCredits();
+    }
+  }, [session, setMessageCredits]);
 
   /**
    * Derive the current user object.
