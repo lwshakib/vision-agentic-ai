@@ -1,16 +1,21 @@
 import { NextResponse } from 'next/server';
-import { CLOUDFLARE_API_KEY, FLUX_WORKER_URL } from '@/lib/env';
+import { FLUX_WORKER_URL } from '@/lib/env';
 
-export async function GET() {
-  if (!FLUX_WORKER_URL || !CLOUDFLARE_API_KEY) {
-    return NextResponse.json(
-      { error: 'ASR configuration missing' },
-      { status: 500 },
-    );
-  }
+/**
+ * Flux ASR Configuration
+ * This route now simply provides the Worker URL.
+ * Authentication is handled at the Cloudflare Edge via session cookies,
+ * eliminating the need for tokens or secrets to be exposed to the browser.
+ */
+export async function GET(req: Request) {
+  const host = req.headers.get('host');
+  const protocol = req.url.startsWith('https') ? 'wss' : 'ws';
+
+  // Point to the internal proxy defined in next.config.ts
+  const proxiedUrl = `${protocol}://${host}/api/flux/stream`;
 
   return NextResponse.json({
-    url: FLUX_WORKER_URL,
-    token: CLOUDFLARE_API_KEY,
+    url: proxiedUrl,
+    token: null, // Token is handled by the server-side rewrite
   });
 }

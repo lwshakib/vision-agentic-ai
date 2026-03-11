@@ -10,6 +10,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    const fluxUrl = process.env.FLUX_WORKER_URL;
+    const apiKey = process.env.CLOUDFLARE_API_KEY;
+
+    return [
+      {
+        // Proxy for live ASR (Flux)
+        source: '/api/flux/stream',
+        destination: `${fluxUrl?.replace('wss://', 'https://')}?token=${apiKey}`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

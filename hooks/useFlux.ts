@@ -64,7 +64,9 @@ export function useFlux({
 
       // 2. Connect WebSocket
       const socketUrl = new URL(url);
-      socketUrl.searchParams.set('token', token);
+      if (token) {
+        socketUrl.searchParams.set('token', token);
+      }
 
       const ws = new WebSocket(socketUrl.toString());
       wsRef.current = ws;
