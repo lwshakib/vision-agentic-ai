@@ -43,6 +43,57 @@ export default function ChatPage() {
   const { setChatTitle } = useChatStore();
   const router = useRouter();
 
+  // Voice Mode State
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  /**
+   * TTS Playback Logic
+   */
+  const speak = useCallback(async (text: string) => {
+    if (!text || !isVoiceMode) return;
+
+    try {
+      setIsSpeaking(true);
+      const res = await fetch('/api/voice-agent/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice: 'orpheus' }),
+      });
+
+      if (!res.ok) throw new Error('Speech generation failed');
+      const { audioUrl } = await res.json();
+
+      if (audioUrl) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => setIsSpeaking(false);
+        
+        await audio.play();
+      } else {
+        setIsSpeaking(false);
+      }
+    } catch (error) {
+      console.error('Speech playback failed:', error);
+      setIsSpeaking(false);
+    }
+  }, [isVoiceMode]);
+
+  // Stop speech if exiting Voice Mode
+  useEffect(() => {
+    if (!isVoiceMode && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setIsSpeaking(false);
+    }
+  }, [isVoiceMode]);
+
   /**
    * Initialize custom useChat hook for real-time interaction.
    */
@@ -82,7 +133,9 @@ export default function ChatPage() {
     onFinish: (message) => {
       // Extract parts from the finished message for database persistence.
       const parts = message.parts ?? [];
-      if (!chatId || !parts || parts.length === 0) return;
+      const content = message.content ?? '';
+      
+      if (!chatId || (parts.length === 0 && !content)) return;
 
       // Persist the assistant message to the database.
       void fetch(`/api/chat/${chatId}`, {
@@ -104,6 +157,11 @@ export default function ChatPage() {
         .catch((err) =>
           console.error('Failed to save assistant message:', err),
         );
+
+      // Trigger Voice Mode speech if active
+      if (isVoiceMode && content) {
+        speak(content);
+      }
     },
   });
 
@@ -328,6 +386,9 @@ export default function ChatPage() {
             onStop={stop}
             placeholder="Send a message" 
             isGenerating={status === 'submitted' || status === 'streaming'} 
+            isVoiceMode={isVoiceMode}
+            onVoiceModeChange={setIsVoiceMode}
+            isSpeaking={isSpeaking}
           />
         </div>
       </div>

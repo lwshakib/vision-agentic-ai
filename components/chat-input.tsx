@@ -368,6 +368,9 @@ type ChatInputProps = {
   placeholder?: string;
   className?: string;
   isGenerating?: boolean;
+  isVoiceMode?: boolean;
+  onVoiceModeChange?: (value: boolean) => void;
+  isSpeaking?: boolean;
 };
 
 /**
@@ -379,6 +382,9 @@ export default function ChatInput({
   placeholder = 'Ask anything',
   className,
   isGenerating = false,
+  isVoiceMode = false,
+  onVoiceModeChange,
+  isSpeaking = false,
 }: ChatInputProps) {
   // DOM references for elements and recording states.
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -393,7 +399,6 @@ export default function ChatInput({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filePreviews, setFilePreviews] = useState<FilePreview[]>([]);
-  const [isVoiceMode, setIsVoiceMode] = useState(false);
 
   // UI derive logic: Can the user send the current input?
   const hasText = value.trim().length > 0;
@@ -407,12 +412,12 @@ export default function ChatInput({
    * every time the chat messages/state update (which changes the identity of onSend).
    */
   const onSendRef = useRef(onSend);
-  const setIsVoiceModeRef = useRef(setIsVoiceMode);
+  const onVoiceModeChangeRef = useRef(onVoiceModeChange);
   
   useEffect(() => {
     onSendRef.current = onSend;
-    setIsVoiceModeRef.current = setIsVoiceMode;
-  }, [onSend, setIsVoiceMode]);
+    onVoiceModeChangeRef.current = onVoiceModeChange;
+  }, [onSend, onVoiceModeChange]);
 
   const stableOnFinalTranscript = useCallback((text: string) => {
     if (text.trim()) {
@@ -422,7 +427,7 @@ export default function ChatInput({
 
   const stableOnError = useCallback((err: string) => {
     console.error('Flux ASR Error:', err);
-    setIsVoiceModeRef.current?.(false);
+    onVoiceModeChangeRef.current?.(false);
   }, []);
 
   const { 
@@ -437,6 +442,18 @@ export default function ChatInput({
     onFinalTranscript: stableOnFinalTranscript,
     onError: stableOnError
   });
+
+  // Automatically mute the microphone when the AI is speaking
+  useEffect(() => {
+    if (isVoiceMode && isSpeaking) {
+      setIsMuted(true);
+    } else if (isVoiceMode) {
+      // Do not automatically unmute if it was manually muted
+      // But for a robust voice experience, we usually want it to listen 
+      // as soon as the bot finishes speaking.
+      setIsMuted(false);
+    }
+  }, [isSpeaking, isVoiceMode, setIsMuted]);
 
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'connecting' | 'active' | 'ending'>('idle');
 
@@ -869,10 +886,9 @@ export default function ChatInput({
                           {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
                         </button>
 
-                        {/* Status Interaction Button */}
                         {voiceStatus === 'connecting' ? (
                           <button
-                            onClick={() => setIsVoiceMode(false)}
+                            onClick={() => onVoiceModeChange?.(false)}
                             className="flex items-center gap-2 px-4 h-9 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all animate-in fade-in zoom-in-95"
                           >
                             <X size={16} />
@@ -882,7 +898,7 @@ export default function ChatInput({
                           <button
                             onClick={() => {
                               setVoiceStatus('ending');
-                              setTimeout(() => setIsVoiceMode(false), 800);
+                              setTimeout(() => onVoiceModeChange?.(false), 800);
                             }}
                             className="group flex items-center gap-3 px-4 h-9 rounded-full bg-white text-black hover:bg-neutral-200 transition-all animate-in fade-in zoom-in-95"
                           >
@@ -923,7 +939,7 @@ export default function ChatInput({
                             } else if (hasText || filePreviews.length > 0) {
                               handleSendOrStop();
                             } else {
-                              setIsVoiceMode(true);
+                              onVoiceModeChange?.(true);
                             }
                           }}
                           disabled={isSubmitting}
@@ -984,7 +1000,7 @@ export default function ChatInput({
                       {/* Status Interaction Button */}
                       {voiceStatus === 'connecting' ? (
                         <button
-                          onClick={() => setIsVoiceMode(false)}
+                          onClick={() => onVoiceModeChange?.(false)}
                           className="flex items-center gap-2 px-3 h-9 rounded-full bg-neutral-700 hover:bg-neutral-600 transition-all font-semibold"
                         >
                           <X size={16} />
@@ -994,9 +1010,9 @@ export default function ChatInput({
                         <button
                           onClick={() => {
                             setVoiceStatus('ending');
-                            setTimeout(() => setIsVoiceMode(false), 800);
+                            setTimeout(() => onVoiceModeChange?.(false), 800);
                           }}
-                          className="group flex items-center gap-2 px-3 h-9 rounded-full bg-white text-black hover:bg-neutral-200 transition-all"
+                          className="group flex items-center gap-2 px-3 h-9 rounded-full bg-white text-black hover:bg-muted/50 transition-all"
                         >
                           <div className="flex items-center gap-[1px] h-3">
                             {[1, 2, 3, 4].map((i) => (
@@ -1035,7 +1051,7 @@ export default function ChatInput({
                           } else if (hasText || filePreviews.length > 0) {
                             handleSendOrStop();
                           } else {
-                            setIsVoiceMode(true);
+                            onVoiceModeChange?.(true);
                           }
                         }}
                         disabled={isSubmitting}
