@@ -6,6 +6,7 @@
 
 // Import the AppSidebar, which contains the branding, navigation, and user context.
 import { AppSidebar } from '@/components/app-sidebar';
+import { FloatingSidebarTrigger } from '@/components/floating-sidebar-trigger';
 // Import Sidebar primitives to manage the sliding drawer state and content spacing.
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
@@ -25,9 +26,12 @@ export default async function Layout({
 
       {/* SidebarInset shifts the main page content to accommodate the sidebar on desktop. */}
       <SidebarInset>
+        {/* Floating hamburger menu for mobile users to access the sidebar. */}
+        <FloatingSidebarTrigger />
         {/* Inject the specific page content here. */}
         {children}
       </SidebarInset>
     </SidebarProvider>
   );
 }
+
