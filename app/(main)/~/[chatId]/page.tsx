@@ -113,6 +113,7 @@ export default function ChatPage() {
       try {
         const errorData = JSON.parse(err.message);
         if (errorData.error === 'Credit exhausted') {
+          setIsVoiceMode(false); // Close voice mode on credit exhaustion
           toast.error('Limit Reached', {
             description:
               errorData.message ||
