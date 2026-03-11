@@ -4,7 +4,11 @@ import { saveImageToCloudinary } from '@/lib/cloudinary';
 /**
  * Supported generation modes for the Flux Klein model.
  */
-export type GenerateImageMode = 'text-to-image' | 'image-to-image' | 'blend' | 'inpaint';
+export type GenerateImageMode =
+  | 'text-to-image'
+  | 'image-to-image'
+  | 'blend'
+  | 'inpaint';
 
 /**
  * Options for generating an image.
@@ -61,8 +65,9 @@ const MODEL_NAME = 'FLUX.2 [klein] 9B';
  * @returns Object containing the Cloudinary URL and metadata.
  */
 export const generateImage = async (
-  options: GenerateImageOptions
+  options: GenerateImageOptions,
 ): Promise<GenerateImageResult> => {
+  // Destructure with default values for optimal image generation
   const {
     mode = 'text-to-image',
     prompt,
@@ -75,6 +80,7 @@ export const generateImage = async (
     seed,
   } = options;
 
+  // Validation: Ensure the API key is available
   if (!CLOUDFLARE_API_KEY) {
     console.error('[GENERATE_IMAGE] Missing CLOUDFLARE_API_KEY');
     return {
@@ -88,11 +94,12 @@ export const generateImage = async (
   try {
     let response: Response;
 
-    // Determine if we should use JSON or FormData
-    const isFormDataNeeded = mode !== 'text-to-image' || (images && images.length > 0) || !!mask;
+    // Determine if we should use JSON or FormData (FormData is required for binary attachments like images)
+    const isFormDataNeeded =
+      mode !== 'text-to-image' || (images && images.length > 0) || !!mask;
 
     if (!isFormDataNeeded) {
-      // Simple Text-to-Image (JSON)
+      // Basic workflow: Simple Text-to-Image using application/json
       response = await fetch(FLUX_2_KLEIN_9B_WORKER_URL!, {
         method: 'POST',
         headers: {
@@ -108,7 +115,7 @@ export const generateImage = async (
         }),
       });
     } else {
-      // Advanced Workflows (FormData)
+      // Advanced workflow: Image-to-image, blending, or inpainting using multipart/form-data
       const form = new FormData();
       form.append('prompt', prompt);
       if (width) form.append('width', width.toString());
@@ -116,24 +123,29 @@ export const generateImage = async (
       if (steps) form.append('steps', steps.toString());
       if (seed !== undefined) form.append('seed', seed.toString());
 
+      // Append input images if any
       if (images && images.length > 0) {
+        // Standard single-image modes
         if (mode === 'image-to-image' || mode === 'inpaint') {
           form.append('image', images[0] as Blob);
         }
 
-        // Always provide indexed images for modes like 'blend' or multi-image workflows
+        // Indexed images for multi-image workflows like 'blend'
         images.forEach((img, index) => {
           form.append(`image${index}`, img as Blob);
         });
       }
 
+      // Handle inpainting specific fields
       if (mode === 'image-to-image' || mode === 'inpaint') {
-        if (strength !== undefined) form.append('strength', strength.toString());
+        if (strength !== undefined)
+          form.append('strength', strength.toString());
         if (mode === 'inpaint' && mask) {
           form.append('mask', mask as Blob);
         }
       }
 
+      // Send the multi-part request
       response = await fetch(FLUX_2_KLEIN_9B_WORKER_URL!, {
         method: 'POST',
         headers: {
@@ -145,17 +157,22 @@ export const generateImage = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[GENERATE_IMAGE] API Error: ${response.status} - ${errorText}`);
-      throw new Error(`Image generation failed (${response.status}): ${errorText}`);
+      console.error(
+        `[GENERATE_IMAGE] API Error: ${response.status} - ${errorText}`,
+      );
+      throw new Error(
+        `Image generation failed (${response.status}): ${errorText}`,
+      );
     }
 
-    // The worker returns the raw image binary (image/png)
+    // Success: Process the raw binary response (usually PNG)
     const arrayBuffer = await response.arrayBuffer();
     const imageBuffer = Buffer.from(arrayBuffer);
 
-    // Persist resulting image to Cloudinary for stable hosting
+    // Persist resulting image to Cloudinary for CDN hosting and archival
     const uploadResult = await saveImageToCloudinary(imageBuffer);
 
+    // Return the generated image data
     return {
       success: true,
       image: uploadResult.secure_url,

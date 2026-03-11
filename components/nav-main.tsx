@@ -140,43 +140,43 @@ export function NavMain({
       <SidebarGroup asChild>
         <section aria-labelledby="nav-main-label">
           <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                tooltip={
-                  item.shortcut
-                    ? `${item.title} (${isMac ? '⌘' : 'Ctrl'}+${item.shortcut})`
-                    : item.title
-                }
-              >
-                <Link
-                  href={item.url}
-                  onClick={(e) => {
-                    // Hijack the search link to open the Command Palette instead of navigating.
-                    if (item.title === 'Search Chats') {
-                      e.preventDefault();
-                      setOpen(true);
-                    }
-                  }}
+            {items.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={
+                    item.shortcut
+                      ? `${item.title} (${isMac ? '⌘' : 'Ctrl'}+${item.shortcut})`
+                      : item.title
+                  }
                 >
-                  <item.icon />
-                  <span>{item.title}</span>
-                  {item.shortcut && (
-                    <KbdGroup className="ml-auto group-data-[collapsible=icon]:hidden">
-                      <Kbd className="h-4 min-w-4 px-1 text-[10px]">
-                        {isMac ? '⌘' : 'Ctrl'}
-                      </Kbd>
-                      <Kbd className="h-4 min-w-4 px-1 text-[10px]">
-                        {item.shortcut}
-                      </Kbd>
-                    </KbdGroup>
-                  )}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+                  <Link
+                    href={item.url}
+                    onClick={(e) => {
+                      // Hijack the search link to open the Command Palette instead of navigating.
+                      if (item.title === 'Search Chats') {
+                        e.preventDefault();
+                        setOpen(true);
+                      }
+                    }}
+                  >
+                    <item.icon />
+                    <span>{item.title}</span>
+                    {item.shortcut && (
+                      <KbdGroup className="ml-auto group-data-[collapsible=icon]:hidden">
+                        <Kbd className="h-4 min-w-4 px-1 text-[10px]">
+                          {isMac ? '⌘' : 'Ctrl'}
+                        </Kbd>
+                        <Kbd className="h-4 min-w-4 px-1 text-[10px]">
+                          {item.shortcut}
+                        </Kbd>
+                      </KbdGroup>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
         </section>
       </SidebarGroup>
 
@@ -196,34 +196,31 @@ export function NavMain({
           </CommandEmpty>
 
           {/* Results Group. */}
-          <CommandGroup
-            asChild
-            heading={results.length > 0 ? 'Chats' : ''}
-          >
+          <CommandGroup asChild heading={results.length > 0 ? 'Chats' : ''}>
             <section>
-            {/* Spinner for active API calls. */}
-            {isLoading && (
-              <CommandItem disabled>
-                <MessageCircle className="mr-2 size-4" />
-                <span>Searching...</span>
-              </CommandItem>
-            )}
-            {/* Iteratively render matching chat links. */}
-            {results.map((chat) => (
-              <CommandItem
-                key={chat.id}
-                onSelect={() => {
-                  setOpen(false); // Close modal on selection.
-                  router.push(chat.url);
-                }}
-                asChild
-              >
-                <Link href={chat.url}>
+              {/* Spinner for active API calls. */}
+              {isLoading && (
+                <CommandItem disabled>
                   <MessageCircle className="mr-2 size-4" />
-                  <span>{chat.title}</span>
-                </Link>
-              </CommandItem>
-            ))}
+                  <span>Searching...</span>
+                </CommandItem>
+              )}
+              {/* Iteratively render matching chat links. */}
+              {results.map((chat) => (
+                <CommandItem
+                  key={chat.id}
+                  onSelect={() => {
+                    setOpen(false); // Close modal on selection.
+                    router.push(chat.url);
+                  }}
+                  asChild
+                >
+                  <Link href={chat.url}>
+                    <MessageCircle className="mr-2 size-4" />
+                    <span>{chat.title}</span>
+                  </Link>
+                </CommandItem>
+              ))}
             </section>
           </CommandGroup>
 
@@ -232,18 +229,18 @@ export function NavMain({
           {/* Context Actions. */}
           <CommandGroup asChild heading="Actions">
             <section>
-            <CommandItem
-              onSelect={() => {
-                setOpen(false);
-                router.push('/');
-              }}
-              asChild
-            >
-              <Link href="/">
-                <SquarePen className="mr-2 size-4" />
-                <span>New chat</span>
-              </Link>
-            </CommandItem>
+              <CommandItem
+                onSelect={() => {
+                  setOpen(false);
+                  router.push('/');
+                }}
+                asChild
+              >
+                <Link href="/">
+                  <SquarePen className="mr-2 size-4" />
+                  <span>New chat</span>
+                </Link>
+              </CommandItem>
             </section>
           </CommandGroup>
         </CommandList>

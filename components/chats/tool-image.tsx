@@ -15,8 +15,6 @@ interface ToolImageProps {
   };
 }
 
-
-
 export function ToolImage({ imageSrc, prompt }: ToolImageProps) {
   const handleDownload = async () => {
     try {
@@ -46,7 +44,7 @@ export function ToolImage({ imageSrc, prompt }: ToolImageProps) {
         className="h-auto w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
         loading="lazy"
       />
-      
+
       {/* Floating Action Overlay */}
       <div className="absolute top-4 right-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <Button

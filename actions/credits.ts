@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma';
  * Returns the current credit count and whether the user can proceed.
  */
 export async function checkAndManageCredits(userId: string) {
+  // Fetch the user's current credit state from the database
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -19,13 +20,14 @@ export async function checkAndManageCredits(userId: string) {
   const now = new Date();
   const lastReset = new Date(user.lastCreditReset);
 
-  // Check if it's a new day (reset at midnight)
+  // Determine if credits should be replenished (daily reset logic)
   const isNewDay =
     now.getFullYear() > lastReset.getFullYear() ||
     now.getMonth() > lastReset.getMonth() ||
     now.getDate() > lastReset.getDate();
 
   if (isNewDay) {
+    // Replenish credits to the daily allowance (10) and update the reset timestamp
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -36,6 +38,7 @@ export async function checkAndManageCredits(userId: string) {
     return { canProceed: true, messageCredits: updatedUser.messageCredits };
   }
 
+  // User can proceed if they have at least 1 credit remaining
   return {
     canProceed: user.messageCredits > 0,
     messageCredits: user.messageCredits,

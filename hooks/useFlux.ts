@@ -19,13 +19,13 @@ export function useFlux({
   const [isMuted, setIsMuted] = useState(false);
   const [partialTranscript, setPartialTranscript] = useState('');
   const [volume, setVolume] = useState(0);
-  
+
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const lastTurnIndexRef = useRef(-1);
-  
+
   // Use a ref to track mute state inside the audio callback without closure staleness
   const isMutedRef = useRef(false);
   useEffect(() => {
@@ -46,7 +46,7 @@ export function useFlux({
       audioCtxRef.current = null;
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
     setIsActive(false);
@@ -65,7 +65,7 @@ export function useFlux({
       // 2. Connect WebSocket
       const socketUrl = new URL(url);
       socketUrl.searchParams.set('token', token);
-      
+
       const ws = new WebSocket(socketUrl.toString());
       wsRef.current = ws;
 
@@ -105,46 +105,58 @@ export function useFlux({
         cleanup();
       };
 
-      // 3. Audio Capture & PCM Conversion
+      // 3. Audio Capture & Raw Data Processing
+      // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      // Initialize AudioContext with 16kHz sample rate (Required by Flux model)
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
       const audioCtx = new AudioContextClass({
-        sampleRate: 16000, 
+        sampleRate: 16000,
       });
       audioCtxRef.current = audioCtx;
 
+      // Create raw audio source from the microphone stream
       const source = audioCtx.createMediaStreamSource(stream);
-      
+
+      // Use ScriptProcessor for real-time buffer processing (4096 sample chunk size)
       const processor = audioCtx.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
       processor.onaudioprocess = (e) => {
+        // Get the float32 pulse-code modulation (PCM) data
         const inputData = e.inputBuffer.getChannelData(0);
-        
-        // Calculate volume even if muted for visual feedback
+
+        // 1. Calculate real-time volume (RMS) for the amplitude visualizer
         let sum = 0;
         for (let i = 0; i < inputData.length; i++) {
           sum += inputData[i] * inputData[i];
         }
         const rms = Math.sqrt(sum / inputData.length);
-        setVolume(Math.min(1, rms * 5)); // Amplify for better visual response
+        setVolume(Math.min(1, rms * 5)); // Amplify for UI clarity
 
+        // Skip transmission if muted or socket is closed
         if (ws.readyState !== WebSocket.OPEN || isMutedRef.current) return;
 
+        // 2. Convert Float32 data to Int16 (Signed 16-bit PCM) as expected by the ASR model
         const pcmData = new Int16Array(inputData.length);
         for (let i = 0; i < inputData.length; i++) {
           const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          // Map range [-1, 1] to [-32768, 32767]
+          pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
         }
 
+        // 3. Send raw binary PCM data over WebSocket
         ws.send(pcmData.buffer);
       };
 
+      // Connect the graph: Source -> Processor -> (Optional) Destination
       source.connect(processor);
       processor.connect(audioCtx.destination);
-
     } catch (err) {
       console.error('Error starting Flux:', err);
       onError?.(err instanceof Error ? err.message : 'Failed to start ASR');

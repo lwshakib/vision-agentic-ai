@@ -32,7 +32,12 @@ export async function POST(req: NextRequest) {
     // Catch-all for unexpected processing or network errors.
     console.error('Transcription route error:', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unexpected error while processing audio.' },
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : 'Unexpected error while processing audio.',
+      },
       { status: 500 },
     );
   }

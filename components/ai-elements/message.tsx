@@ -319,7 +319,9 @@ export const MessageBranchPage = ({
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-export const MarkdownComponents: ComponentProps<typeof Streamdown>['components'] = {
+export const MarkdownComponents: ComponentProps<
+  typeof Streamdown
+>['components'] = {
   code({
     inline,
     className,

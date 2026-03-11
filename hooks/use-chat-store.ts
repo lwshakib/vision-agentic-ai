@@ -134,7 +134,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     })),
 
   /**
-   * Updates project metadata.
+   * Updates project metadata (e.g., changing title).
    */
   updateProject: (projectId, updates) =>
     set((state) => ({
@@ -144,7 +144,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     })),
 
   /**
-   * Removes a project from the list.
+   * Removes a project from the local list.
    */
   removeProject: (projectId) =>
     set((state) => ({

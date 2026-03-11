@@ -12,7 +12,11 @@ interface ToolTextToSpeechProps {
   voice?: string;
 }
 
-export function ToolAudioPlayer({ audioUrl, text, voice }: ToolTextToSpeechProps) {
+export function ToolAudioPlayer({
+  audioUrl,
+  text,
+  voice,
+}: ToolTextToSpeechProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -76,13 +80,15 @@ export function ToolAudioPlayer({ audioUrl, text, voice }: ToolTextToSpeechProps
       <div className="flex items-center gap-4 overflow-hidden">
         {/* Modern Icon Container */}
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner">
-          <MusicIcon className={cn("size-5", isPlaying && "animate-pulse")} />
+          <MusicIcon className={cn('size-5', isPlaying && 'animate-pulse')} />
         </div>
 
         {/* Info Section */}
         <div className="flex flex-col overflow-hidden">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold tracking-tight">Synthesized Audio</span>
+            <span className="text-sm font-bold tracking-tight">
+              Synthesized Audio
+            </span>
             {voice && (
               <span className="rounded-full bg-muted/50 px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground border border-muted">
                 {voice}
@@ -90,7 +96,9 @@ export function ToolAudioPlayer({ audioUrl, text, voice }: ToolTextToSpeechProps
             )}
           </div>
           <span className="text-[10px] tracking-wide text-muted-foreground/80 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-            {isPlaying ? 'Now playing · ' + (text?.substring(0, 20) || '') + '...' : 'Ready to play'}
+            {isPlaying
+              ? 'Now playing · ' + (text?.substring(0, 20) || '') + '...'
+              : 'Ready to play'}
           </span>
         </div>
       </div>
@@ -98,7 +106,7 @@ export function ToolAudioPlayer({ audioUrl, text, voice }: ToolTextToSpeechProps
       {/* Action Section */}
       <div className="flex items-center gap-1.5 shrink-0">
         <audio ref={audioRef} src={audioUrl} className="hidden" />
-        
+
         <Button
           size="icon"
           variant="ghost"
@@ -113,10 +121,10 @@ export function ToolAudioPlayer({ audioUrl, text, voice }: ToolTextToSpeechProps
           size="icon"
           variant="outline"
           className={cn(
-            "size-9 rounded-full transition-all active:scale-95",
-            isPlaying 
-              ? 'border-foreground bg-foreground text-background shadow-sm' 
-              : 'border-muted bg-background hover:bg-muted/50'
+            'size-9 rounded-full transition-all active:scale-95',
+            isPlaying
+              ? 'border-foreground bg-foreground text-background shadow-sm'
+              : 'border-muted bg-background hover:bg-muted/50',
           )}
           onClick={handleTogglePlay}
         >
@@ -130,4 +138,3 @@ export function ToolAudioPlayer({ audioUrl, text, voice }: ToolTextToSpeechProps
     </div>
   );
 }
-

@@ -16,35 +16,46 @@ export interface Message {
 /**
  * Executes the tool calling loop and streams results.
  */
-export async function streamText(messages: Message[], options?: { isVoiceMode?: boolean }) {
+export async function streamText(
+  messages: Message[],
+  options?: { isVoiceMode?: boolean },
+) {
   if (!GLM_WORKER_URL || !CLOUDFLARE_API_KEY) {
     throw new Error('Missing GLM configuration');
   }
 
   const encoder = new TextEncoder();
-  
+
   return new ReadableStream({
     async start(controller) {
+      // Helper to send JSON chunks through the stream in SSE format
       const sendChunk = (data: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       };
 
-      // Manage context window by removing oldest messages if limit is exceeded
+      // Manage context window by removing oldest messages if token limit is exceeded
       const { estimateMessageTokens } = await import('./token-utils');
-      
+
       const manageContext = (msgs: Message[]) => {
-        const systemMsg = msgs.find(m => m.role === 'system');
-        const otherMsgs = msgs.filter(m => m.role !== 'system');
-        
-        while (estimateMessageTokens([systemMsg, ...otherMsgs].filter((m): m is Message => !!m)) > TOKEN_LIMIT_THRESHOLD && otherMsgs.length > 0) {
-          otherMsgs.shift(); // Remove oldest message
+        const systemMsg = msgs.find((m) => m.role === 'system');
+        const otherMsgs = msgs.filter((m) => m.role !== 'system');
+
+        // Loop to remove the oldest non-system messages until within threshold
+        while (
+          estimateMessageTokens(
+            [systemMsg, ...otherMsgs].filter((m): m is Message => !!m),
+          ) > TOKEN_LIMIT_THRESHOLD &&
+          otherMsgs.length > 0
+        ) {
+          otherMsgs.shift(); // Remove the oldest message (FIFO)
         }
-        
+
         return [systemMsg, ...otherMsgs].filter((m): m is Message => !!m);
       };
 
       let systemPrompt = SYSTEM_PROMPT;
-      
+
+      // Inject voice mode instructions if requested (strips markdown for TTS compatibility)
       if (options?.isVoiceMode) {
         systemPrompt = `${SYSTEM_PROMPT}
 
@@ -61,23 +72,24 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
 
       let currentMessages = manageContext([
         { role: 'system', content: systemPrompt },
-        ...messages.map(m => ({
+        ...messages.map((m) => ({
           role: m.role,
           content: m.content,
           tool_calls: m.tool_calls,
           tool_call_id: m.tool_call_id,
-          name: m.name
-        }))
+          name: m.name,
+        })),
       ]);
 
+      // Maps internal tool definitions to the format expected by the GLM API (OpenAI-compatible)
       const formattedTools = Object.entries(tools).map(([name, tool]) => ({
         type: 'function',
         function: {
           name,
           description: tool.description,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          parameters: zodToJsonSchema(tool.inputSchema as any)
-        }
+          parameters: zodToJsonSchema(tool.inputSchema as any),
+        },
       }));
 
       const MAX_STEPS = 10;
@@ -86,22 +98,23 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
       try {
         while (stepCount < MAX_STEPS) {
           stepCount++;
-          
-          // Real-time context pruning before each LLM call
+
+          // Real-time context pruning before each LLM call to prevent context overflow errors
           currentMessages = manageContext(currentMessages);
 
+          // Call the LLM with streaming enabled
           const response = await fetch(GLM_WORKER_URL!, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${CLOUDFLARE_API_KEY}`
+              Authorization: `Bearer ${CLOUDFLARE_API_KEY}`,
             },
             body: JSON.stringify({
               messages: currentMessages,
               tools: formattedTools,
               stream: true,
-              temperature: 0.7
-            })
+              temperature: 0.7,
+            }),
           });
 
           if (!response.ok) {
@@ -128,49 +141,58 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
+            // Split chunks by newline (SSE standard)
             const lines = buffer.split('\n');
+            // Keep the last partial line in the buffer
             buffer = lines.pop() || '';
 
             for (const line of lines) {
               const trimmedLine = line.trim();
-              if (trimmedLine === '' || trimmedLine === 'data: [DONE]') continue;
+              if (trimmedLine === '' || trimmedLine === 'data: [DONE]')
+                continue;
               if (trimmedLine.startsWith('data: ')) {
                 try {
                   const data = JSON.parse(trimmedLine.slice(6));
                   const delta = data.choices[0].delta;
 
-                  // Handle Content
+                  // 1. Handle Assistant Content
                   if (delta.content) {
                     assistantContent += delta.content;
                     sendChunk({ type: 'content', delta: delta.content });
                   }
 
-                  // Handle Reasoning (assuming GLM returns it in reasoning_content or similar)
+                  // 2. Handle Reasoning/Thoughts (for models like GLM and DeepSeek)
                   if (delta.reasoning_content) {
                     reasoningContent += delta.reasoning_content;
-                    sendChunk({ type: 'reasoning', delta: delta.reasoning_content });
+                    sendChunk({
+                      type: 'reasoning',
+                      delta: delta.reasoning_content,
+                    });
                   } else if (delta.thought) {
                     reasoningContent += delta.thought;
                     sendChunk({ type: 'reasoning', delta: delta.thought });
                   }
 
-                  // Handle Tool Calls
+                  // 3. Handle Tool Calls Aggregation (multiple calls can be streamed in parallel)
                   if (delta.tool_calls) {
                     for (const tc of delta.tool_calls) {
                       if (!toolCalls[tc.index]) {
                         toolCalls[tc.index] = {
                           id: tc.id,
                           type: 'function',
-                          function: { name: '', arguments: '' }
+                          function: { name: '', arguments: '' },
                         };
                       }
                       if (tc.id) toolCalls[tc.index].id = tc.id;
-                      if (tc.function?.name) toolCalls[tc.index].function.name += tc.function.name;
-                      if (tc.function?.arguments) toolCalls[tc.index].function.arguments += tc.function.arguments;
+                      if (tc.function?.name)
+                        toolCalls[tc.index].function.name += tc.function.name;
+                      if (tc.function?.arguments)
+                        toolCalls[tc.index].function.arguments +=
+                          tc.function.arguments;
                     }
                   }
                 } catch {
-                  // Ignore parse errors from malformed chunks
+                  // Ignore parse errors from heartbeat or malformed chunks
                 }
               }
             }
@@ -188,14 +210,15 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
             role: 'assistant',
             content: assistantContent,
             tool_calls: cleanToolCalls,
-            reasoning: reasoningContent
+            reasoning: reasoningContent,
           };
           currentMessages.push(assistantMsg);
 
-          // Execute tools and send results
+          // Execute tools and send results back to the client and history
           for (const tc of cleanToolCalls) {
             const tool = tools[tc.function.name];
             if (tool) {
+              // Notify the client that a tool call is starting
               sendChunk({
                 type: 'tool_call',
                 id: tc.id,
@@ -203,8 +226,11 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
                 args: tc.function.arguments,
               });
               try {
+                // Parse arguments and execute the tool function
                 const args = JSON.parse(tc.function.arguments);
                 const result = await tool.execute(args);
+
+                // Success: Send result to client and add to message history
                 sendChunk({
                   type: 'tool_result',
                   id: tc.id,
@@ -218,7 +244,9 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
                   content: JSON.stringify(result),
                 });
               } catch (e) {
-                const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+                // Error: Notify client and add error message to history so LLM can see what failed
+                const errorMsg =
+                  e instanceof Error ? e.message : 'Unknown error';
                 sendChunk({
                   type: 'tool_result',
                   id: tc.id,
@@ -240,6 +268,6 @@ YOU ARE CURRENTLY IN A SPOKEN CONVERSATION. ALL PRIOR INSTRUCTIONS REGARDING MAR
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }

@@ -18,7 +18,8 @@ export async function getUser() {
   if (!userData) return null;
 
   try {
-    // Parse the JSON data into a usable object.
+    // Parse the JSON data into a usable TypeScript object.
+    // The expected structure includes user id, email, and credits.
     return JSON.parse(userData);
   } catch (error) {
     // Handle parsing errors (e.g., malformed header data).

@@ -12,8 +12,9 @@ import { createAuthClient } from 'better-auth/react';
  */
 export const authClient = createAuthClient({
   /**
-   * The base URL of the authentication server.
-   * Defaults to localhost:3000 in development, uses NEXT_PUBLIC_BASE_URL in production.
+   * The base URL where the authentication server is hosted.
+   * This is used by the client to send requests for login, logout, and session checks.
+   * Ensure NEXT_PUBLIC_BASE_URL is set in your .env for production.
    */
   baseURL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
 });

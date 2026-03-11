@@ -47,17 +47,21 @@ export async function POST(req: Request) {
     }
 
     // Trigger the core LLM streaming process with optional voice mode formatting.
-    const stream = await streamText(messages, { isVoiceMode: Boolean(isVoiceMode) });
+    // streamText returns a ReadableStream of JSON strings (SSE format)
+    const stream = await streamText(messages, {
+      isVoiceMode: Boolean(isVoiceMode),
+    });
 
-    // If generation starts successfully, consume one credit.
+    // Decrement the user's daily credit balance upon successful start of generation
     const updatedUser = await consumeCredit(user.id);
 
-    // Return the stream as text/event-stream.
+    // Return the stream with appropriate headers for Server-Sent Events (SSE)
     return new Response(stream, {
       headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        'Content-Type': 'text/event-stream', // Required for standard streaming
+        'Cache-Control': 'no-cache', // Prevents proxy caching
+        Connection: 'keep-alive', // Keeps the HTTP connection open during long streaming
+        // Custom header to inform the frontend of remaining credits
         'X-Message-Credits': updatedUser.messageCredits.toString(),
       },
     });

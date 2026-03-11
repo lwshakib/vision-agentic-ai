@@ -17,7 +17,13 @@ import { ToolAudioPlayer } from './tool-audio';
 import { ToolError } from './tool-status';
 import { ToolFileDownload } from './tool-file';
 import { ToolCard } from './tool-card';
-import { ImageIcon, MusicIcon, FileTextIcon, GlobeIcon, SearchIcon } from 'lucide-react';
+import {
+  ImageIcon,
+  MusicIcon,
+  FileTextIcon,
+  GlobeIcon,
+  SearchIcon,
+} from 'lucide-react';
 
 interface MessagePart {
   type: string;
@@ -84,11 +90,17 @@ export function ChatMessageParts({
           if (part.type === 'reasoning') {
             const reasoningText = part.reasoning ?? part.text ?? '';
             const isStreaming = Boolean(part.isStreaming);
-            const duration = typeof part.duration === 'number' ? part.duration : undefined;
+            const duration =
+              typeof part.duration === 'number' ? part.duration : undefined;
             if (!reasoningText) return null;
 
             return (
-              <Reasoning key={key} className="w-full" isStreaming={isStreaming} duration={duration}>
+              <Reasoning
+                key={key}
+                className="w-full"
+                isStreaming={isStreaming}
+                duration={duration}
+              >
                 <ReasoningTrigger />
                 <ReasoningContent>{reasoningText}</ReasoningContent>
               </Reasoning>
@@ -143,7 +155,9 @@ export function ChatMessageParts({
                   <ToolCard
                     key={key}
                     icon={SearchIcon}
-                    title={text.endsWith('..') ? text.slice(0, -2) + '...' : text}
+                    title={
+                      text.endsWith('..') ? text.slice(0, -2) + '...' : text
+                    }
                     isLoading={true}
                     isSimpleLoading={true}
                   >
@@ -153,9 +167,7 @@ export function ChatMessageParts({
               }
 
               if (hasOutput && output?.results?.length > 0) {
-                return (
-                  <ToolSearchResults key={key} results={output.results} />
-                );
+                return <ToolSearchResults key={key} results={output.results} />;
               }
               return null;
             }
@@ -179,7 +191,9 @@ export function ChatMessageParts({
                   <ToolCard
                     key={key}
                     icon={GlobeIcon}
-                    title={text.endsWith('..') ? text.slice(0, -2) + '...' : text}
+                    title={
+                      text.endsWith('..') ? text.slice(0, -2) + '...' : text
+                    }
                     isLoading={true}
                     isSimpleLoading={true}
                   >
@@ -189,9 +203,7 @@ export function ChatMessageParts({
               }
 
               if (hasOutput && output?.results?.length > 0) {
-                return (
-                  <ToolSearchResults key={key} results={output.results} />
-                );
+                return <ToolSearchResults key={key} results={output.results} />;
               }
               return null;
             }

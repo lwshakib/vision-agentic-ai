@@ -19,16 +19,18 @@ cloudinary.config({
  */
 export async function saveAudioToCloudinary(buffer: Buffer) {
   return new Promise<{ url: string; publicId: string }>((resolve, reject) => {
+    // Uses upload_stream for efficient memory usage with Buffers
     cloudinary.uploader
       .upload_stream(
         {
           folder: 'vision-agentic-ai/audio',
-          resource_type: 'video', // Cloudinary handles audio as type 'video'.
+          resource_type: 'video', // Audio files are categorized as 'video' in Cloudinary's system
         },
         (error, result) => {
           if (error) {
             reject(error);
           } else if (result) {
+            // Return high-level metadata once successful
             resolve({
               url: result.secure_url,
               publicId: result.public_id,
@@ -36,9 +38,9 @@ export async function saveAudioToCloudinary(buffer: Buffer) {
           } else {
             reject(new Error('Audio upload returned no result'));
           }
-        }
+        },
       )
-      .end(buffer);
+      .end(buffer); // Write the buffer into the stream
   });
 }
 
@@ -54,25 +56,28 @@ export async function saveImageToCloudinary(file: string | Buffer) {
   };
 
   if (Buffer.isBuffer(file)) {
-    return new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(options, (error, result) => {
-          if (error) {
-            reject(error);
-          } else if (result) {
-            resolve({
-              secure_url: result.secure_url,
-              public_id: result.public_id,
-            });
-          } else {
-            reject(new Error('Image buffer upload returned no result'));
-          }
-        })
-        .end(file);
-    });
+    // Stream-based upload for raw image data
+    return new Promise<{ secure_url: string; public_id: string }>(
+      (resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(options, (error, result) => {
+            if (error) {
+              reject(error);
+            } else if (result) {
+              resolve({
+                secure_url: result.secure_url,
+                public_id: result.public_id,
+              });
+            } else {
+              reject(new Error('Image buffer upload returned no result'));
+            }
+          })
+          .end(file);
+      },
+    );
   }
 
-  // Handle URL or file path uploads.
+  // File path or direct URL upload
   const result = await cloudinary.uploader.upload(file, options);
   return {
     secure_url: result.secure_url,
@@ -90,16 +95,16 @@ export async function saveImageToCloudinary(file: string | Buffer) {
 export async function saveFileToCloudinary(
   buffer: Buffer,
   fileName?: string,
-  format?: string
+  format?: string,
 ) {
   return new Promise<{ url: string; publicId: string }>((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
         {
           folder: 'vision-agentic-ai/files',
-          resource_type: 'raw',
-          public_id: fileName?.split('.')[0], // Use filename as public ID if provided
-          format: format,
+          resource_type: 'raw', // Non-media files (PDF, CSV, etc.) use the 'raw' resource type
+          public_id: fileName?.split('.')[0], // Strips extension for clear public IDs
+          format: format, // Ensures correct file extension in the resulting URL
         },
         (error, result) => {
           if (error) {
@@ -112,7 +117,7 @@ export async function saveFileToCloudinary(
           } else {
             reject(new Error('File upload returned no result'));
           }
-        }
+        },
       )
       .end(buffer);
   });

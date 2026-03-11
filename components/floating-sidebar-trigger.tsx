@@ -22,6 +22,5 @@ export function FloatingSidebarTrigger() {
       <Menu className="size-5" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
-
   );
 }

@@ -10,13 +10,18 @@ export interface SpeakerCharacter {
   description: string;
 }
 
+/**
+ * Complete list of available AI speaker characters.
+ * Each character has a unique vocal personality described by their 'description'.
+ */
 export const auraSpeakers: SpeakerCharacter[] = [
   // AUTHORITATIVE & POWERFUL
   {
     name: 'Robert',
     model: 'zeus',
     gender: 'male',
-    description: 'Deep, powerful, and commanding. Perfect for serious or epic topics.',
+    description:
+      'Deep, powerful, and commanding. Perfect for serious or epic topics.',
   },
   {
     name: 'Sophie',
@@ -48,13 +53,15 @@ export const auraSpeakers: SpeakerCharacter[] = [
     name: 'Sarah',
     model: 'luna',
     gender: 'female',
-    description: 'Soft, friendly, and inviting. Great for storytelling or casual chats.',
+    description:
+      'Soft, friendly, and inviting. Great for storytelling or casual chats.',
   },
   {
     name: 'David',
     model: 'apollo',
     gender: 'male',
-    description: 'Bright, enthusiastic, and approachable. A classic host persona.',
+    description:
+      'Bright, enthusiastic, and approachable. A classic host persona.',
   },
   {
     name: 'Lily',

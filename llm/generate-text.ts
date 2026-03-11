@@ -60,16 +60,23 @@ export interface GenerateTextResult {
  * Core function to generate text using the GLM-4.7-Flash model.
  * Does not use any external SDKs, matching the provided worker documentation.
  */
-export async function generateText(options: GenerateTextOptions): Promise<{ text: string }> {
+export async function generateText(
+  options: GenerateTextOptions,
+): Promise<{ text: string }> {
+  // Validate that the worker URL is configured
   if (!GLM_WORKER_URL) {
     throw new Error('GLM_WORKER_URL is missing in environment variables');
   }
 
+  // Validate that the API key is available for authorization
   if (!CLOUDFLARE_API_KEY) {
-    throw new Error('CLOUDFLARE_API_KEY (API_KEY) is missing in environment variables');
+    throw new Error(
+      'CLOUDFLARE_API_KEY (API_KEY) is missing in environment variables',
+    );
   }
 
   try {
+    // Perform the POST request to the GLM worker
     const response = await fetch(GLM_WORKER_URL, {
       method: 'POST',
       headers: {
@@ -78,21 +85,29 @@ export async function generateText(options: GenerateTextOptions): Promise<{ text
       },
       body: JSON.stringify({
         ...options,
-        stream: false, // Ensure we get a direct JSON response for this simplified helper.
+        stream: false, // Force stream: false as this function expects a complete JSON response
       }),
     });
 
+    // Check if the response was successful
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[GLM_GENERATE_TEXT] API Error: ${response.status} - ${errorText}`);
-      throw new Error(`Text generation failed (${response.status}): ${errorText}`);
+      console.error(
+        `[GLM_GENERATE_TEXT] API Error: ${response.status} - ${errorText}`,
+      );
+      throw new Error(
+        `Text generation failed (${response.status}): ${errorText}`,
+      );
     }
 
+    // Parse the JSON response
     const data = (await response.json()) as GenerateTextResult;
+    // Extract the completion text from the first choice
     const text = data.choices[0]?.message?.content || '';
 
     return { text };
   } catch (error) {
+    // Log and re-throw any exceptions during the generation process
     console.error('[GENERATE_TEXT_EXCEPTION]', error);
     throw error;
   }

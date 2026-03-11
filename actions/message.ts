@@ -39,13 +39,14 @@ export async function saveMessage({
     throw new Error('Chat not found');
   }
 
-  // Step 3: Create the message record in the database.
+  // Step 3: Create the message record in the database
   const message = await prisma.message.create({
     data: {
       chatId,
-      // Map simple strings to Prisma-generated enums.
+      // Map simple strings to Prisma-generated enums for type safety
       role: role === 'user' ? MessageRole.user : MessageRole.assistant,
-      parts, // JSON structure containing text and potential tool calls/results.
+      // Parts is stored as a JSON object to allow for flexible multimodal data (text, images, tool results)
+      parts,
     },
   });
 

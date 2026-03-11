@@ -98,11 +98,12 @@ export async function uploadToCloudinary(
       reject(new Error('Upload aborted'));
     });
 
-    // Step 5: Initialize the request and fire the upload.
+    // Step 5: Initialize and send the request
     xhr.open(
       'POST',
       `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
     );
+    // Fires the request to Cloudinary's servers
     xhr.send(formData);
   });
 }

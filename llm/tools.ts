@@ -81,7 +81,10 @@ export const generateImageTool: Tool = {
       .default('text-to-image')
       .describe('The generation mode to use.'),
     seed: z.number().optional().describe('Seed for deterministic results.'),
-    steps: z.number().default(28).describe('Number of optimization steps (20-35).'),
+    steps: z
+      .number()
+      .default(28)
+      .describe('Number of optimization steps (20-35).'),
   }),
   execute: generateImage,
 };
@@ -121,18 +124,22 @@ export const generateFileTool: Tool = {
       .describe('The type of file to generate.'),
     content: z
       .string()
-      .describe('The full text content to be included in the file. For JSON files, provide a properly stringified JSON string.'),
+      .describe(
+        'The full text content to be included in the file. For JSON files, provide a properly stringified JSON string.',
+      ),
   }),
   execute: generateFile,
 };
 
 /**
  * The consolidated tools collection exported for use in the main model streaming function.
+ * This registry maps the tool name (string) to its full definition (Tool object),
+ * allowing the LLM to call them by name.
  */
 export const tools: Record<string, Tool> = {
-  webSearch: webSearchTool,
-  extractWebUrl: extractWebUrlTool,
-  generateImage: generateImageTool,
-  textToSpeech: textToSpeechTool,
-  generateFile: generateFileTool,
+  webSearch: webSearchTool, // Basic search
+  extractWebUrl: extractWebUrlTool, // Deep content extraction
+  generateImage: generateImageTool, // Flux image generation
+  textToSpeech: textToSpeechTool, // Aura-2 voice generation
+  generateFile: generateFileTool, // Document generation (PDF, etc)
 };

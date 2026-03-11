@@ -45,7 +45,9 @@ export default function ChatPage() {
 
   const searchParams = useSearchParams();
   // Voice Mode State
-  const [isVoiceMode, setIsVoiceMode] = useState(searchParams.get('voiceMode') === 'true');
+  const [isVoiceMode, setIsVoiceMode] = useState(
+    searchParams.get('voiceMode') === 'true',
+  );
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const toastRef = useRef<string | number | null>(null);
@@ -54,59 +56,62 @@ export default function ChatPage() {
   /**
    * TTS Playback Logic
    */
-  const speak = useCallback(async (text: string) => {
-    if (!text || !isVoiceMode) return;
+  const speak = useCallback(
+    async (text: string) => {
+      if (!text || !isVoiceMode) return;
 
-    if (ttsAbortControllerRef.current) {
-      ttsAbortControllerRef.current.abort();
-    }
-    const controller = new AbortController();
-    ttsAbortControllerRef.current = controller;
+      if (ttsAbortControllerRef.current) {
+        ttsAbortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      ttsAbortControllerRef.current = controller;
 
-    const ttsPromise = (async () => {
-      const res = await fetch('/api/voice-agent/tts', {
-        method: 'POST',
-        signal: controller.signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice: 'orpheus' }),
-      });
+      const ttsPromise = (async () => {
+        const res = await fetch('/api/voice-agent/tts', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, voice: 'orpheus' }),
+        });
 
-      if (!res.ok) throw new Error('Speech generation failed');
-      const data = await res.json();
-      if (!data.audioUrl) throw new Error('No audio URL returned');
-      return data.audioUrl;
-    })();
+        if (!res.ok) throw new Error('Speech generation failed');
+        const data = await res.json();
+        if (!data.audioUrl) throw new Error('No audio URL returned');
+        return data.audioUrl;
+      })();
 
-    const tId = (toast.promise(ttsPromise, {
-      loading: 'Processing audio...',
-      success: 'Audio ready',
-      error: 'Speech generation failed',
-    }) as unknown) as string | number;
-    toastRef.current = tId;
+      const tId = toast.promise(ttsPromise, {
+        loading: 'Processing audio...',
+        success: 'Audio ready',
+        error: 'Speech generation failed',
+      }) as unknown as string | number;
+      toastRef.current = tId;
 
-    try {
-      setIsSpeaking(true);
-      const audioUrl = await ttsPromise;
+      try {
+        setIsSpeaking(true);
+        const audioUrl = await ttsPromise;
 
-      if (audioUrl) {
-        if (audioRef.current) {
-          audioRef.current.pause();
+        if (audioUrl) {
+          if (audioRef.current) {
+            audioRef.current.pause();
+          }
+          const audio = new Audio(audioUrl);
+          audioRef.current = audio;
+
+          audio.onended = () => setIsSpeaking(false);
+          audio.onerror = () => setIsSpeaking(false);
+
+          await audio.play();
+        } else {
+          setIsSpeaking(false);
         }
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        
-        audio.onended = () => setIsSpeaking(false);
-        audio.onerror = () => setIsSpeaking(false);
-        
-        await audio.play();
-      } else {
+      } catch (error) {
+        console.error('Speech playback failed:', error);
         setIsSpeaking(false);
       }
-    } catch (error) {
-      console.error('Speech playback failed:', error);
-      setIsSpeaking(false);
-    }
-  }, [isVoiceMode]);
+    },
+    [isVoiceMode],
+  );
 
   /**
    * Initialize custom useChat hook for real-time interaction.
@@ -149,7 +154,7 @@ export default function ChatPage() {
       // Extract parts from the finished message for database persistence.
       const parts = message.parts ?? [];
       const content = message.content ?? '';
-      
+
       if (!chatId || (parts.length === 0 && !content)) return;
 
       // Persist the assistant message to the database.
@@ -208,7 +213,6 @@ export default function ChatPage() {
       return () => clearTimeout(timer);
     }
   }, [isVoiceMode, handleStop]);
-
 
   // Local state to track if historical messages are still being fetched.
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -391,37 +395,39 @@ export default function ChatPage() {
   /**
    * Handler for sending a new message.
    */
-  const handleSend = useCallback(async (
-    text: string,
-    files?: Array<{
-      url: string;
-      name: string;
-      type: string;
-      publicId: string;
-    }>,
-  ) => {
-    // If files are attached, format the payload accordingly.
-    if (files && files.length > 0) {
-      sendMessage({
-        text: text || 'See attached files',
-        isVoiceMode,
-        files: files.map((file) => ({
-          id: file.publicId,
-          name: file.name,
-          url: file.url,
-          type: 'file',
-          mediaType: file.type || 'application/octet-stream',
-        })),
-      });
-    } else {
-      // Standard text message.
-      sendMessage({
-        text,
-        isVoiceMode,
-      });
-    }
-  }, [sendMessage, isVoiceMode]);
-
+  const handleSend = useCallback(
+    async (
+      text: string,
+      files?: Array<{
+        url: string;
+        name: string;
+        type: string;
+        publicId: string;
+      }>,
+    ) => {
+      // If files are attached, format the payload accordingly.
+      if (files && files.length > 0) {
+        sendMessage({
+          text: text || 'See attached files',
+          isVoiceMode,
+          files: files.map((file) => ({
+            id: file.publicId,
+            name: file.name,
+            url: file.url,
+            type: 'file',
+            mediaType: file.type || 'application/octet-stream',
+          })),
+        });
+      } else {
+        // Standard text message.
+        sendMessage({
+          text,
+          isVoiceMode,
+        });
+      }
+    },
+    [sendMessage, isVoiceMode],
+  );
 
   // Return null if chatId is missing.
   if (!chatId) return null;
@@ -443,16 +449,17 @@ export default function ChatPage() {
       {/* Sticky footer containing the message input. */}
       <div className="sticky bottom-0 flex w-full items-center justify-center bg-background/80 px-4 pb-6 pt-4 backdrop-blur">
         <div className="w-full max-w-3xl">
-          <ChatInput 
-            onSend={handleSend} 
+          <ChatInput
+            onSend={handleSend}
             onStop={handleStop}
-            placeholder="Send a message" 
-            isGenerating={status === 'submitted' || status === 'streaming'} 
+            placeholder="Send a message"
+            isGenerating={status === 'submitted' || status === 'streaming'}
             isVoiceMode={isVoiceMode}
             onVoiceModeChange={(value) => {
               if (value && messageCredits !== null && messageCredits <= 0) {
                 toast.error('Limit Reached', {
-                  description: 'You have reached your daily limit of 10 messages. Please upgrade to Pro to continue.',
+                  description:
+                    'You have reached your daily limit of 10 messages. Please upgrade to Pro to continue.',
                 });
                 return;
               }

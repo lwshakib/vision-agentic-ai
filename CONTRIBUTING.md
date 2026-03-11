@@ -46,12 +46,14 @@ This project and everyone participating in it is governed by our [Code of Conduc
 ### Local Installation
 
 1. **Get the code**:
+
    ```bash
    git clone https://github.com/lwshakib/vision-agentic-ai.git
    cd vision-agentic-ai
    ```
 
 2. **Install dependencies**:
+
    ```bash
    bun install
    ```
@@ -61,6 +63,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
    - Fill in the required API keys (Tavily, Cloudinary, etc.).
 
 4. **Database setup**:
+
    ```bash
    bun run db:migrate
    ```

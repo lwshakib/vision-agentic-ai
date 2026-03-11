@@ -74,7 +74,8 @@ export async function GET() {
 
         // 1. Process User-uploaded images (type: 'file' or 'attachment').
         const isFileLike = type === 'file' || type === 'attachment';
-        const isImage = typeof mediaType === 'string' && mediaType.startsWith('image/');
+        const isImage =
+          typeof mediaType === 'string' && mediaType.startsWith('image/');
 
         if (isFileLike && isImage && url) {
           allImages.push({
@@ -89,7 +90,7 @@ export async function GET() {
         // The output contains 'image' (URL) and 'prompt' (which we'll use for alt text).
         const isGeneratedImage = type === 'tool-generateImage';
         const output = part.output;
-        
+
         if (isGeneratedImage && output?.success && output?.image) {
           allImages.push({
             id: part.id || `${output.image}-${message.createdAt.toISOString()}`,
@@ -116,6 +117,9 @@ export async function GET() {
     return NextResponse.json(uniqueImages);
   } catch (error) {
     console.error('Error fetching image library:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 },
+    );
   }
 }

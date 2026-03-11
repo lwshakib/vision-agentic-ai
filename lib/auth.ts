@@ -105,14 +105,17 @@ export const auth = betterAuth({
   },
 
   /**
-   * Additional user fields for the session.
+   * Additional user schema fields managed by the auth system.
+   * These are synchronized between the database and the session object.
    */
   user: {
     additionalFields: {
+      // Tracks available message credits for the AI (Reset periodically)
       messageCredits: {
         type: 'number',
         defaultValue: 10,
       },
+      // Keeps track of the last time credits were replenished
       lastCreditReset: {
         type: 'date',
         defaultValue: new Date(),

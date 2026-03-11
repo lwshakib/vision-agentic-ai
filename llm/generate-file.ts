@@ -36,32 +36,39 @@ export interface GenerateFileResult {
 
 /**
  * Generates a file based on provided content and type, then uploads it to Cloudinary.
+ * Supported types: PDF, CSV, JSON, Markdown.
  */
 export async function generateFile(
-  options: GenerateFileOptions
+  options: GenerateFileOptions,
 ): Promise<GenerateFileResult> {
+  // Destructure options for easier access
   const { fileName, type, content } = options;
-  
+
   // Ensure content is a string. If the LLM passes an object (common for JSON requests), stringify it.
-  const normalizedContent = typeof content === 'string' 
-    ? content 
-    : JSON.stringify(content, null, 2);
-  
+  const normalizedContent =
+    typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+
   // Defensive checks to prevent "Cannot read properties of undefined"
   if (!fileName) {
     console.warn('[GENERATE_FILE] Missing fileName, using default.');
   }
-  
+
+  // Provide defaults if values are missing
   const safeFileName = fileName || 'generated-file';
   const safeType = type || 'pdf';
-  const fullFileName = safeFileName.endsWith(`.${safeType}`) ? safeFileName : `${safeFileName}.${safeType}`;
+  // Append extension if not already present
+  const fullFileName = safeFileName.endsWith(`.${safeType}`)
+    ? safeFileName
+    : `${safeFileName}.${safeType}`;
 
   try {
     let buffer: Buffer;
 
     switch (safeType) {
       case 'pdf': {
+        // Initialize jsPDF for PDF generation
         const doc = new jsPDF();
+        // Set basic layout constants
         const bodyFontSize = 10;
         const headerFontSize = 14;
         const margin = 15;
@@ -70,6 +77,7 @@ export async function generateFile(
         const pageHeight = doc.internal.pageSize.getHeight();
         const maxLineWidth = pageWidth - margin * 2;
 
+        // Current vertical position on the page
         let cursorY = margin + 5;
 
         // Split content into blocks (paragraphs or tables)
@@ -80,7 +88,11 @@ export async function generateFile(
           const line = lines[i].trim();
 
           // 1. Handle Tables
-          if (line.startsWith('|') && i + 1 < lines.length && lines[i + 1].includes('---')) {
+          if (
+            line.startsWith('|') &&
+            i + 1 < lines.length &&
+            lines[i + 1].includes('---')
+          ) {
             const tableLines: string[] = [];
             while (i < lines.length && lines[i].trim().startsWith('|')) {
               tableLines.push(lines[i].trim());
@@ -92,13 +104,13 @@ export async function generateFile(
                 .split('|')
                 .filter((cell) => cell.trim() !== '')
                 .map((cell) => cell.trim());
-              
+
               // Skip the separator line (| --- | --- |)
               const rows = tableLines.slice(2).map((rowLine) =>
                 rowLine
                   .split('|')
                   .filter((cell) => cell.trim() !== '')
-                  .map((cell) => cell.trim())
+                  .map((cell) => cell.trim()),
               );
 
               autoTable(doc, {
@@ -111,7 +123,9 @@ export async function generateFile(
                 headStyles: { fillColor: [41, 128, 185] },
               });
 
-              const lastAutoTable = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable;
+              const lastAutoTable = (
+                doc as unknown as { lastAutoTable: { finalY: number } }
+              ).lastAutoTable;
               cursorY = lastAutoTable.finalY + 10;
               continue;
             }
@@ -123,7 +137,7 @@ export async function generateFile(
             const text = line.replace(/^#+\s*/, '');
             doc.setFontSize(headerFontSize - (level - 1) * 2);
             doc.setFont('helvetica', 'bold');
-            
+
             const wrappedHeader = doc.splitTextToSize(text, maxLineWidth);
             for (const hLine of wrappedHeader) {
               if (cursorY + 10 > pageHeight - margin) {
@@ -149,14 +163,14 @@ export async function generateFile(
             const listLineWidth = pageWidth - textMargin - margin;
 
             const wrappedLines = doc.splitTextToSize(text, listLineWidth);
-            
+
             if (cursorY + lineHeight > pageHeight - margin) {
               doc.addPage();
               cursorY = margin + 5;
             }
 
             doc.text(bullet, bulletMargin, cursorY);
-            
+
             for (let j = 0; j < wrappedLines.length; j++) {
               if (cursorY + lineHeight > pageHeight - margin) {
                 doc.addPage();
@@ -201,6 +215,7 @@ export async function generateFile(
           i++;
         }
 
+        // Generate the PDF as an array buffer and then convert to Buffer
         const arrayBuffer = doc.output('arraybuffer');
         buffer = Buffer.from(arrayBuffer);
         break;
@@ -208,15 +223,23 @@ export async function generateFile(
       case 'csv':
       case 'json':
       case 'markdown': {
+        // Plain text files are converted directly to Buffer
         buffer = Buffer.from(normalizedContent, 'utf-8');
         break;
       }
       default:
+        // Handle unexpected file types
         throw new Error(`Unsupported file type: ${safeType}`);
     }
 
-    const uploadResult = await saveFileToCloudinary(buffer, fullFileName, safeType);
+    // Upload the generated buffer to Cloudinary
+    const uploadResult = await saveFileToCloudinary(
+      buffer,
+      fullFileName,
+      safeType,
+    );
 
+    // Return the successful result with file metadata
     return {
       success: true,
       url: uploadResult.url,
@@ -227,7 +250,10 @@ export async function generateFile(
     console.error('[GENERATE_FILE_EXCEPTION]', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during file generation',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Unknown error during file generation',
       fileName: fullFileName,
     };
   }

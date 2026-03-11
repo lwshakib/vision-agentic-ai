@@ -55,12 +55,12 @@ export async function POST(req: Request) {
   const chat = await prisma.chat.create({
     data: {
       userId: user.id,
-      title: 'New chat', // Default title, typically updated after the first message.
+      title: 'New chat', // Default title, typically updated after the first message is processed
       projectId,
-      isOnProject: !!projectId,
+      isOnProject: !!projectId, // Flag to distinguish project chats from general chats
     },
     select: {
-      id: true, // Only returning the ID is sufficient for the client to redirect.
+      id: true, // Returning only the ID is sufficient for the client to perform a redirect
     },
   });
 

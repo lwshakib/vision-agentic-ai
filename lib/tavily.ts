@@ -18,17 +18,17 @@ const tvlyClient = tavily({ apiKey: TAVILY_API_KEY || '' });
  * @returns A structured object containing search results and short answers.
  */
 export async function webSearch({ query }: { query: string }) {
-  // Validate API key before attempting the request.
+  // Validate API key exists before attempting the request.
   if (!TAVILY_API_KEY) {
     throw new Error('Missing TAVILY_API_KEY');
   }
 
   // Execute the search with specific features enabled (answers, favicons).
   const result = await tvlyClient.search(query, {
-    includeAnswer: true, // Generate a brief AI answer based on results.
-    includeFavicon: true, // Include source icons for UI rendering.
-    includeImages: false, // Save bandwidth by excluding image results here.
-    maxResults: 5, // Limit to 5 high-relevance sources.
+    includeAnswer: true, // Requests a short AI-generated answer extracted from search results
+    includeFavicon: true, // Grabs the favicon URL for each source for the UI
+    includeImages: false, // Disables image results to optimize for text research
+    maxResults: 5, // Fetches top 5 high-relevance sources
   });
 
   return result;
@@ -78,18 +78,19 @@ export async function extractWebUrl({ urls }: { urls: string[] }) {
       }),
     );
 
-    // Return a structured summary of the extraction process.
+    // Return a structured summary of the extraction process to be fed back to the LLM.
     return {
       success: true,
       urls: urls,
       results: results,
       totalSources: results.length,
-      // Aggregated length for logging and context window monitoring.
+      // Aggregated length for token estimation and context management.
       totalContentLength: (results as { extractedLength: number }[]).reduce(
         (sum, r) => sum + (r.extractedLength || 0),
         0,
       ),
-      response_time: (response as Record<string, unknown>)?.responseTime as number || 0,
+      response_time:
+        ((response as Record<string, unknown>)?.responseTime as number) || 0,
     };
   } catch (error) {
     // Graceful error handling in case of API outages or network issues.

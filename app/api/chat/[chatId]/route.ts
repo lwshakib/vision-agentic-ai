@@ -90,7 +90,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const body = await req.json();
   const inputRole = body?.role as string;
   let role: MessageRole = MessageRole.user;
-  
+
   if (inputRole === 'assistant') role = MessageRole.assistant;
   else if (inputRole === 'system') role = MessageRole.system;
   else if (inputRole === 'tool') role = MessageRole.tool;
@@ -120,12 +120,13 @@ export async function POST(req: NextRequest, { params }: Params) {
   });
 
   // Return the created message object.
-  const responseData: Record<string, unknown> = (created as unknown) as Record<
+  const responseData: Record<string, unknown> = created as unknown as Record<
     string,
     unknown
   >;
 
   // Automatically generate a descriptive title if this is the assistant's very first message in the chat.
+  // This ensures the sidebar doesn't just show 'New chat' forever.
   if (
     role === 'assistant' &&
     existingChat._count.messages === 1 &&
@@ -145,12 +146,11 @@ export async function POST(req: NextRequest, { params }: Params) {
         type: string;
         text?: string;
       }>;
-      const firstTextPart = userParts.find(
-        (p) => p.type === 'text',
-      );
+      const firstTextPart = userParts.find((p) => p.type === 'text');
       if (firstTextPart?.text) {
+        // Use the model to summarize the opening prompt into a title
         const generatedTitle = await generateChatTitle(firstTextPart.text);
-        // Persist the new title.
+        // Persist the new title in the database
         await prisma.chat.update({
           where: { id: chatId },
           data: { title: generatedTitle },
@@ -274,7 +274,6 @@ async function generateChatTitle(firstMessage: string): Promise<string> {
         },
       ],
     });
-
 
     /**
      * Post-processing:

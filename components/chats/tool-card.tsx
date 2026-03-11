@@ -32,7 +32,12 @@ export function ToolCard({
 }: ToolCardProps) {
   if (isSimpleLoading) {
     return (
-      <div className={cn("flex items-center gap-2 px-1 py-2 my-2 animate-in fade-in duration-500", className)}>
+      <div
+        className={cn(
+          'flex items-center gap-2 px-1 py-2 my-2 animate-in fade-in duration-500',
+          className,
+        )}
+      >
         <LoaderIcon className="size-3.5 animate-spin text-muted-foreground/80" />
         <Shimmer className="text-[12px] font-medium tracking-tight text-muted-foreground/90">
           {title}
@@ -47,11 +52,15 @@ export function ToolCard({
       {/* Header - Consolidated Premium Style */}
       <div className="flex items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-2 overflow-hidden">
-          <div className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-lg shadow-sm transition-colors",
-            isLoading ? "bg-muted animate-pulse" : "bg-primary/10 text-primary"
-          )}>
-            <Icon className={cn("size-4", isLoading && "animate-spin-slow")} />
+          <div
+            className={cn(
+              'flex size-8 shrink-0 items-center justify-center rounded-lg shadow-sm transition-colors',
+              isLoading
+                ? 'bg-muted animate-pulse'
+                : 'bg-primary/10 text-primary',
+            )}
+          >
+            <Icon className={cn('size-4', isLoading && 'animate-spin-slow')} />
           </div>
           <div className="flex flex-col overflow-hidden">
             <span className="text-xs font-bold tracking-tight uppercase text-muted-foreground/80">
@@ -86,10 +95,14 @@ export function ToolCard({
       </div>
 
       {/* Body Container */}
-      <div className={cn(
-        "relative overflow-hidden rounded-2xl border bg-card shadow-lg transition-all duration-300",
-        isLoading ? "border-muted/50 shadow-none" : "border-muted/20 group-hover:border-primary/20 group-hover:shadow-xl"
-      )}>
+      <div
+        className={cn(
+          'relative overflow-hidden rounded-2xl border bg-card shadow-lg transition-all duration-300',
+          isLoading
+            ? 'border-muted/50 shadow-none'
+            : 'border-muted/20 group-hover:border-primary/20 group-hover:shadow-xl',
+        )}
+      >
         {children}
       </div>
     </div>

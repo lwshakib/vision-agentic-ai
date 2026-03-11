@@ -53,11 +53,18 @@ export function useChat({
   onFinish?: (message: ChatMessage) => void;
   onError?: (error: Error) => void;
 } = {}) {
+  // Local state for all messages in the current conversation
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Tracks the current lifecycle state of the chat (idle, submitting, streaming, error)
   const [status, setStatus] = useState<ChatStatus>('idle');
+  // Access global store action to update chat titles dynamically
   const setChatTitle = useChatStore((state) => state.setChatTitle);
+  // Ref to hold the abort controller for canceling active streams
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  /**
+   * Stops the current streaming operation and cleans up the controller.
+   */
   const stop = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -65,24 +72,29 @@ export function useChat({
     }
   }, []);
 
+  /**
+   * Main function to send a user message and handle the AI's streaming response.
+   */
   const sendMessage = useCallback(
     async ({ text, files, isVoiceMode }: SendMessageOptions) => {
       setStatus('submitted');
 
+      // Create a local representation of the user message
       const userMessage: ChatMessage = {
         id: nanoid(),
         role: 'user',
         content: text,
         parts: [
           { type: 'text', text },
-          ...(files?.map(f => ({ ...f, type: 'file' })) || [])
+          ...(files?.map((f) => ({ ...f, type: 'file' })) || []),
         ],
-        files: files || []
+        files: files || [],
       };
 
-      setMessages(prev => [...prev, userMessage]);
+      //Optimistically add user message to the UI
+      setMessages((prev) => [...prev, userMessage]);
 
-      // Save user message to DB if we have a chatId (passed via headers usually)
+      // Persistence: Save the user message to the database
       const chatId = headers['X-Chat-Id'];
       if (chatId) {
         try {
@@ -91,12 +103,13 @@ export function useChat({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               role: 'user',
-              parts: userMessage.parts
-            })
+              parts: userMessage.parts,
+            }),
           });
 
           if (res.ok) {
             const data = await res.json();
+            // If the backend generated a new title, update the global store
             if (data.title) {
               setChatTitle(chatId as string, data.title);
             }
@@ -106,6 +119,7 @@ export function useChat({
         }
       }
 
+      // Initialize the assistant's placeholder message for streaming
       const assistantMessageId = nanoid();
       let assistantMessage: ChatMessage = {
         id: assistantMessageId,
@@ -118,9 +132,11 @@ export function useChat({
       let reasoningStartTime: number | null = null;
 
       try {
+        // Initialize AbortController for this specific request
         const abortController = new AbortController();
         abortControllerRef.current = abortController;
 
+        // Perform the API request to the local generate endpoint
         const response = await fetch(api, {
           method: 'POST',
           signal: abortController.signal,
@@ -130,29 +146,31 @@ export function useChat({
           },
           body: JSON.stringify({
             isVoiceMode: Boolean(isVoiceMode),
+            // Format internal message history into the schema expected by the AI provider
             messages: [...messages, userMessage].flatMap((m) => {
               const textContent =
                 m.content ||
                 m.parts?.find((p) => p.type === 'text')?.text ||
                 '';
 
+              // Extract image files for multimodal input
               const imageParts =
                 m.parts
                   ?.filter(
                     (p) =>
-                      p.type === 'file' &&
-                      p.mediaType?.startsWith('image/'),
+                      p.type === 'file' && p.mediaType?.startsWith('image/'),
                   )
                   .map((p) => ({
                     type: 'image_url',
                     image_url: { url: p.url, detail: 'high' },
                   })) || [];
 
-              const commonContent = imageParts.length > 0
-                ? [{ type: 'text', text: textContent }, ...imageParts]
-                : textContent;
+              const commonContent =
+                imageParts.length > 0
+                  ? [{ type: 'text', text: textContent }, ...imageParts]
+                  : textContent;
 
-              // If assistant message has tool results in its parts, we must emit both the assistant message and tool messages
+              // Complex Message Handling: Assistant messages with tool calls
               if (m.role === 'assistant') {
                 const toolCalls = m.parts
                   ?.filter((p) => p.type?.startsWith('tool-') && p.input)
@@ -172,18 +190,31 @@ export function useChat({
                   tool_call_id?: string;
                   name?: string;
                 }> = [];
+                // 1. The assistant's text and tool call definitions
                 msgs.push({
                   role: 'assistant',
                   content: commonContent,
                   tool_calls: toolCalls?.length ? toolCalls : undefined,
                 });
 
-                // Add corresponding tool messages for any completed calls
+                // 2. Corresponding tool result messages for each call
                 m.parts?.forEach((p) => {
-                  if (p.type?.startsWith('tool-') && p.state === 'output-available') {
+                  if (
+                    p.type?.startsWith('tool-') &&
+                    p.state === 'output-available'
+                  ) {
                     msgs.push({
                       role: 'tool',
-                      tool_call_id: p.id || (msgs[0].tool_calls as Array<{ id: string; function: { name: string } }> | undefined)?.find((tc) => tc.function.name === p.type.replace('tool-', ''))?.id,
+                      tool_call_id:
+                        p.id ||
+                        (
+                          msgs[0].tool_calls as
+                            | Array<{ id: string; function: { name: string } }>
+                            | undefined
+                        )?.find(
+                          (tc) =>
+                            tc.function.name === p.type.replace('tool-', ''),
+                        )?.id,
                       name: p.type.replace('tool-', ''),
                       content: JSON.stringify(p.output),
                     });
@@ -193,6 +224,7 @@ export function useChat({
                 return msgs;
               }
 
+              // simple return for user and system roles
               return {
                 role: m.role,
                 content: commonContent,
@@ -206,36 +238,44 @@ export function useChat({
           throw new Error(errorData);
         }
 
+        // Handle credit updates via custom response header
         const remainingCredits = response.headers.get('X-Message-Credits');
         if (remainingCredits !== null) {
-          useChatStore.getState().setMessageCredits(parseInt(remainingCredits, 10));
+          useChatStore
+            .getState()
+            .setMessageCredits(parseInt(remainingCredits, 10));
         }
 
         setStatus('streaming');
+        // Get stream reader for Server-Sent Events (SSE)
         const reader = response.body?.getReader();
-        if (!reader) throw new Error('No body');
+        if (!reader) throw new Error('No response body found');
 
         const decoder = new TextDecoder();
         let buffer = '';
 
+        // Add the empty assistant message to the screen before content arrives
         setMessages((prev) => [...prev, assistantMessage]);
 
+        // Main streaming loop: Process individual chunks as they arrive
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
+          // Partially received line goes back into buffer
           buffer = lines.pop() || '';
 
           for (const line of lines) {
             const trimmedLine = line.trim();
+            // Each data chunk is prefixed with 'data: ' according to SSE spec
             if (!trimmedLine.startsWith('data: ')) continue;
 
             try {
               const data = JSON.parse(trimmedLine.slice(6));
 
-              // If we get content or tool but were reasoning, mark it as finished
+              // Transition: If we get content/tools but were reasoning, mark reasoning block as finished
               if (data.type !== 'reasoning') {
                 const parts = [...(assistantMessage.parts || [])];
                 const lastReasoningIndex = parts.findLastIndex(
@@ -255,9 +295,10 @@ export function useChat({
                 }
               }
 
+              // Route the incoming chunk based on its type
               if (data.type === 'content') {
+                // Main assistant text response
                 assistantMessage.content += data.delta;
-
                 const parts = [...(assistantMessage.parts || [])];
                 const lastPart = parts[parts.length - 1];
 
@@ -271,6 +312,7 @@ export function useChat({
                 }
                 assistantMessage.parts = parts;
               } else if (data.type === 'reasoning') {
+                // "Thinking" process streamed by the model
                 if (!reasoningStartTime) reasoningStartTime = Date.now();
                 assistantMessage.reasoning =
                   (assistantMessage.reasoning || '') + data.delta;
@@ -293,6 +335,7 @@ export function useChat({
                 }
                 assistantMessage.parts = parts;
               } else if (data.type === 'tool_call') {
+                // Notification that the AI is calling a tool
                 const parts = [...(assistantMessage.parts || [])];
                 parts.push({
                   id: data.id,
@@ -302,12 +345,13 @@ export function useChat({
                 });
                 assistantMessage.parts = parts;
               } else if (data.type === 'tool_result') {
+                // Notification that a tool execution has finished
                 const parts = [...(assistantMessage.parts || [])];
                 const toolIndex = parts.findLastIndex(
                   (p) =>
-                    p.id === data.id || (
-                    p.type === `tool-${data.name}` &&
-                    p.state !== 'output-available')
+                    p.id === data.id ||
+                    (p.type === `tool-${data.name}` &&
+                      p.state !== 'output-available'),
                 );
 
                 if (toolIndex !== -1) {
@@ -328,7 +372,7 @@ export function useChat({
                 assistantMessage.parts = parts;
               }
 
-              // Update the UI
+              // Reactively update the local state to trigger a re-render
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMessageId
@@ -340,7 +384,7 @@ export function useChat({
                 ),
               );
             } catch {
-              // Ignore
+              // Ignore malformed JSON chunks from heartbeat signals
             }
           }
         }
@@ -382,9 +426,9 @@ export function useChat({
             assistantMessage.isStreaming = false;
             // append aborted to reasoning/content to indicate
             if (assistantMessage.reasoning && !assistantMessage.content) {
-               assistantMessage.reasoning += '\\n\\n[Aborted]';
+              assistantMessage.reasoning += '\\n\\n[Aborted]';
             } else {
-               assistantMessage.content += '\\n\\n[Aborted]';
+              assistantMessage.content += '\\n\\n[Aborted]';
             }
             const finalParts = [...(assistantMessage.parts || [])];
             const lastReasoningIndex = finalParts.findLastIndex(
@@ -415,7 +459,7 @@ export function useChat({
           }
           return;
         }
-        
+
         setStatus('error');
         setMessages((prev) =>
           prev.map((m) =>
@@ -427,7 +471,7 @@ export function useChat({
         abortControllerRef.current = null;
       }
     },
-    [api, headers, messages, onFinish, onError, setChatTitle]
+    [api, headers, messages, onFinish, onError, setChatTitle],
   );
 
   return {

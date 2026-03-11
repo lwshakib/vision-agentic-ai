@@ -408,12 +408,12 @@ export default function ChatInput({
 
   /**
    * FLUX ASR STABILITY FIX:
-   * We use refs for the callbacks to prevent useFlux from restarting 
+   * We use refs for the callbacks to prevent useFlux from restarting
    * every time the chat messages/state update (which changes the identity of onSend).
    */
   const onSendRef = useRef(onSend);
   const onVoiceModeChangeRef = useRef(onVoiceModeChange);
-  
+
   useEffect(() => {
     onSendRef.current = onSend;
     onVoiceModeChangeRef.current = onVoiceModeChange;
@@ -430,27 +430,33 @@ export default function ChatInput({
     onVoiceModeChangeRef.current?.(false);
   }, []);
 
-  const { 
+  const {
     start: startFlux,
-    stop: stopFlux, 
-    isActive: isFluxActive, 
+    stop: stopFlux,
+    isActive: isFluxActive,
     partialTranscript,
     isMuted,
     setIsMuted,
-    volume 
+    volume,
   } = useFlux({
     onFinalTranscript: stableOnFinalTranscript,
-    onError: stableOnError
+    onError: stableOnError,
   });
 
   // Interruption Logic: Abort LLM/Speech if user starts talking
   useEffect(() => {
-    if (isVoiceMode && partialTranscript.trim().length > 2 && (isGenerating || isSpeaking)) {
+    if (
+      isVoiceMode &&
+      partialTranscript.trim().length > 2 &&
+      (isGenerating || isSpeaking)
+    ) {
       onStop?.();
     }
   }, [partialTranscript, isGenerating, isSpeaking, isVoiceMode, onStop]);
 
-  const [voiceStatus, setVoiceStatus] = useState<'idle' | 'connecting' | 'active' | 'ending'>('idle');
+  const [voiceStatus, setVoiceStatus] = useState<
+    'idle' | 'connecting' | 'active' | 'ending'
+  >('idle');
 
   useEffect(() => {
     if (isVoiceMode) {
@@ -476,7 +482,7 @@ export default function ChatInput({
       onStop();
       return;
     }
-    
+
     if ((!hasText && !hasFiles) || isSubmitting) return;
     const text = value.trim();
 
@@ -875,7 +881,9 @@ export default function ChatInput({
                         <button
                           onClick={() => setIsMuted(!isMuted)}
                           className={`h-10 w-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
-                            isMuted ? 'bg-red-500/20 text-red-500' : 'bg-neutral-700 text-white'
+                            isMuted
+                              ? 'bg-red-500/20 text-red-500'
+                              : 'bg-neutral-700 text-white'
                           }`}
                         >
                           {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
@@ -902,18 +910,24 @@ export default function ChatInput({
                                 <div
                                   key={i}
                                   className="w-[1.5px] bg-black rounded-full"
-                                  style={{ 
-                                    height: isMuted ? '2px' : `${4 + (volume * (8 + Math.random() * 8))}px`,
-                                    opacity: isMuted ? 0.3 : 1
+                                  style={{
+                                    height: isMuted
+                                      ? '2px'
+                                      : `${4 + volume * (8 + Math.random() * 8)}px`,
+                                    opacity: isMuted ? 0.3 : 1,
                                   }}
                                 />
                               ))}
                             </div>
-                            <span className="text-sm font-bold uppercase tracking-wider">End</span>
+                            <span className="text-sm font-bold uppercase tracking-wider">
+                              End
+                            </span>
                           </button>
                         ) : voiceStatus === 'ending' ? (
                           <div className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-800 border border-neutral-700 animate-pulse">
-                            <span className="text-sm font-medium text-neutral-400">Ending...</span>
+                            <span className="text-sm font-medium text-neutral-400">
+                              Ending...
+                            </span>
                           </div>
                         ) : null}
                       </div>
@@ -942,7 +956,7 @@ export default function ChatInput({
                         >
                           {isGenerating ? (
                             <Square fill="currentColor" size={14} />
-                          ) : (hasText || filePreviews.length > 0) ? (
+                          ) : hasText || filePreviews.length > 0 ? (
                             <ArrowUp size={18} />
                           ) : (
                             <AudioLines size={18} />
@@ -986,7 +1000,9 @@ export default function ChatInput({
                       <button
                         onClick={() => setIsMuted(!isMuted)}
                         className={`h-10 w-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
-                          isMuted ? 'bg-red-500/20 text-red-500' : 'bg-neutral-700 text-white'
+                          isMuted
+                            ? 'bg-red-500/20 text-red-500'
+                            : 'bg-neutral-700 text-white'
                         }`}
                       >
                         {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
@@ -1014,18 +1030,24 @@ export default function ChatInput({
                               <div
                                 key={i}
                                 className="w-[1.5px] bg-black rounded-full"
-                                style={{ 
-                                  height: isMuted ? '2px' : `${4 + (volume * (8 + Math.random() * 8))}px`,
-                                  opacity: isMuted ? 0.3 : 1
+                                style={{
+                                  height: isMuted
+                                    ? '2px'
+                                    : `${4 + volume * (8 + Math.random() * 8)}px`,
+                                  opacity: isMuted ? 0.3 : 1,
                                 }}
                               />
                             ))}
                           </div>
-                          <span className="text-xs font-bold uppercase">End</span>
+                          <span className="text-xs font-bold uppercase">
+                            End
+                          </span>
                         </button>
                       ) : (
                         <div className="px-3 h-10 rounded-full bg-neutral-800 border border-neutral-700 flex items-center">
-                          <span className="text-xs font-medium text-neutral-400">Ending...</span>
+                          <span className="text-xs font-medium text-neutral-400">
+                            Ending...
+                          </span>
                         </div>
                       )}
                     </div>
@@ -1054,7 +1076,7 @@ export default function ChatInput({
                       >
                         {isGenerating ? (
                           <Square fill="currentColor" size={14} />
-                        ) : (hasText || filePreviews.length > 0) ? (
+                        ) : hasText || filePreviews.length > 0 ? (
                           <ArrowUp size={18} />
                         ) : (
                           <AudioLines size={18} />

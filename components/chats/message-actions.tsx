@@ -35,7 +35,9 @@ export function MessageActionsList({
   if (!fullText) return null;
 
   return (
-    <MessageActions className={`mt-1 ${message.role === 'user' ? 'justify-end' : ''}`}>
+    <MessageActions
+      className={`mt-1 ${message.role === 'user' ? 'justify-end' : ''}`}
+    >
       <MessageAction
         label="Copy"
         onClick={() => onCopy(fullText)}

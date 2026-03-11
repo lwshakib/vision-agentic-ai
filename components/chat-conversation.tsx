@@ -87,10 +87,10 @@ export function ChatConversationView({
       {/* Floating glassmorphism footer containing the chat input. */}
       <div className="sticky bottom-0 flex w-full items-center justify-center bg-background/80 px-4 pb-6 pt-4 backdrop-blur">
         <div className="w-full max-w-3xl">
-          <ChatInput 
-            onSend={onSend} 
+          <ChatInput
+            onSend={onSend}
             onStop={onStop}
-            placeholder="Send a message" 
+            placeholder="Send a message"
             isGenerating={status === 'submitted' || status === 'streaming'}
             isVoiceMode={isVoiceMode}
             onVoiceModeChange={onVoiceModeChange}

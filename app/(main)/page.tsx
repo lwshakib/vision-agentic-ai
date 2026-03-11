@@ -14,9 +14,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 // Import AI SDK hooks for handling real-time chat interactions.
 import { useChat, type ChatMessage } from '@/hooks/use-chat';
 import { toast } from 'sonner';
-import {
-  ChatConversationView,
-} from '@/components/chat-conversation';
+import { ChatConversationView } from '@/components/chat-conversation';
 // Import global store for managing chat history/sidebar state.
 import { useChatStore } from '@/hooks/use-chat-store';
 
@@ -110,13 +108,14 @@ function PromptInputContent() {
 
         {/* Input area. */}
         <div className="w-full max-w-(--breakpoint-md) mx-auto">
-          <ChatInput 
-            onSend={handleSend} 
+          <ChatInput
+            onSend={handleSend}
             isVoiceMode={isVoiceMode}
             onVoiceModeChange={(value) => {
               if (value && messageCredits !== null && messageCredits <= 0) {
                 toast.error('Limit Reached', {
-                  description: 'You have reached your daily limit of 10 messages. Please upgrade to Pro to continue.',
+                  description:
+                    'You have reached your daily limit of 10 messages. Please upgrade to Pro to continue.',
                 });
                 return;
               }
@@ -151,59 +150,62 @@ function TemporaryChat() {
   /**
    * TTS Playback Logic
    */
-  const speak = useCallback(async (text: string) => {
-    if (!text || !isVoiceMode) return;
+  const speak = useCallback(
+    async (text: string) => {
+      if (!text || !isVoiceMode) return;
 
-    if (ttsAbortControllerRef.current) {
-      ttsAbortControllerRef.current.abort();
-    }
-    const controller = new AbortController();
-    ttsAbortControllerRef.current = controller;
+      if (ttsAbortControllerRef.current) {
+        ttsAbortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      ttsAbortControllerRef.current = controller;
 
-    const ttsPromise = (async () => {
-      const res = await fetch('/api/voice-agent/tts', {
-        method: 'POST',
-        signal: controller.signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice: 'orpheus' }),
-      });
+      const ttsPromise = (async () => {
+        const res = await fetch('/api/voice-agent/tts', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, voice: 'orpheus' }),
+        });
 
-      if (!res.ok) throw new Error('Speech generation failed');
-      const data = await res.json();
-      if (!data.audioUrl) throw new Error('No audio URL returned');
-      return data.audioUrl;
-    })();
+        if (!res.ok) throw new Error('Speech generation failed');
+        const data = await res.json();
+        if (!data.audioUrl) throw new Error('No audio URL returned');
+        return data.audioUrl;
+      })();
 
-    const tId = (toast.promise(ttsPromise, {
-      loading: 'Processing audio...',
-      success: 'Audio ready',
-      error: 'Speech generation failed',
-    }) as unknown) as string | number;
-    toastRef.current = tId;
+      const tId = toast.promise(ttsPromise, {
+        loading: 'Processing audio...',
+        success: 'Audio ready',
+        error: 'Speech generation failed',
+      }) as unknown as string | number;
+      toastRef.current = tId;
 
-    try {
-      setIsSpeaking(true);
-      const audioUrl = await ttsPromise;
+      try {
+        setIsSpeaking(true);
+        const audioUrl = await ttsPromise;
 
-      if (audioUrl) {
-        if (audioRef.current) {
-          audioRef.current.pause();
+        if (audioUrl) {
+          if (audioRef.current) {
+            audioRef.current.pause();
+          }
+          const audio = new Audio(audioUrl);
+          audioRef.current = audio;
+
+          audio.onended = () => setIsSpeaking(false);
+          audio.onerror = () => setIsSpeaking(false);
+
+          await audio.play();
+        } else {
+          setIsSpeaking(false);
         }
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        
-        audio.onended = () => setIsSpeaking(false);
-        audio.onerror = () => setIsSpeaking(false);
-        
-        await audio.play();
-      } else {
+      } catch (error) {
+        console.error('Speech playback failed:', error);
         setIsSpeaking(false);
       }
-    } catch (error) {
-      console.error('Speech playback failed:', error);
-      setIsSpeaking(false);
-    }
-  }, [isVoiceMode]);
+    },
+    [isVoiceMode],
+  );
 
   // Use the custom chat hook for state and messaging management.
   const { sendMessage, messages, status, stop } = useChat({
@@ -325,7 +327,8 @@ function TemporaryChat() {
       onVoiceModeChange={(value) => {
         if (value && messageCredits !== null && messageCredits <= 0) {
           toast.error('Limit Reached', {
-            description: 'You have reached your daily limit of 10 messages. Please upgrade to Pro to continue.',
+            description:
+              'You have reached your daily limit of 10 messages. Please upgrade to Pro to continue.',
           });
           return;
         }

@@ -18,9 +18,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 });
     }
 
-    const result = await textToSpeech({ 
-      text, 
-      voice: voice || 'orpheus' 
+    const result = await textToSpeech({
+      text,
+      voice: voice || 'orpheus',
     });
 
     if (!result.success) {
@@ -29,10 +29,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       audioUrl: result.audioUrl,
-      text: result.text
+      text: result.text,
     });
   } catch (error) {
     console.error('[TTS_API_ERROR]', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 },
+    );
   }
 }

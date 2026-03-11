@@ -70,7 +70,8 @@ export function ChatConversationList({
 
       const scroll = () => {
         listEndRef.current?.scrollIntoView({
-          behavior: isInitialScroll || status === 'streaming' ? 'auto' : 'smooth',
+          behavior:
+            isInitialScroll || status === 'streaming' ? 'auto' : 'smooth',
           block: 'end',
         });
 
@@ -83,7 +84,7 @@ export function ChatConversationList({
       // Ensure the DOM has finished painting before attempting to scroll.
       const raf = requestAnimationFrame(() => {
         setTimeout(scroll, isInitialScroll ? 0 : 30);
-        
+
         // Double-check scroll on initial load to account for images or late renders.
         if (isInitialScroll) {
           setTimeout(scroll, 150);
