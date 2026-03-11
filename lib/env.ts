@@ -25,3 +25,6 @@ export const GLM_WORKER_URL = process.env.GLM_WORKER_URL;
 
 // Worker URL for the Aura-2 TTS model.
 export const AURA_2_EN_WORKER_URL = process.env.AURA_2_EN_WORKER_URL;
+
+// Worker URL for Flux ASR
+export const FLUX_WORKER_URL = process.env.FLUX_WORKER_URL;

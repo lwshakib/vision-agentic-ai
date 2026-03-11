@@ -7,7 +7,7 @@
 'use client';
 
 // Import React hooks for lifecycle management and optimization.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 // Import Next.js hooks for accessing URL parameters and search queries.
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useChat } from '@/hooks/use-chat';
@@ -274,7 +274,7 @@ export default function ChatPage() {
   /**
    * Handler for sending a new message.
    */
-  const handleSend = async (
+  const handleSend = useCallback(async (
     text: string,
     files?: Array<{
       url: string;
@@ -301,7 +301,7 @@ export default function ChatPage() {
         text,
       });
     }
-  };
+  }, [sendMessage]);
 
   // Return null if chatId is missing.
   if (!chatId) return null;

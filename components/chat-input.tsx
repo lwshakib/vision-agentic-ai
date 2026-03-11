@@ -28,6 +28,7 @@ import {
   VideoIcon,
   FileIcon,
   Square,
+  MicOff,
 } from 'lucide-react';
 // Import Cloudinary upload utilities and progress types.
 import {
@@ -35,6 +36,7 @@ import {
   type UploadProgress,
 } from '@/lib/cloudinary-upload';
 import NextImage from 'next/image';
+import { useFlux } from '@/hooks/useFlux';
 
 /* ------------------ LIVE RAIL WAVEFORM ------------------ */
 
@@ -400,6 +402,51 @@ export default function ChatInput({
     filePreviews.every((f) => f.cloudUrl && !f.isUploading);
 
   /**
+   * FLUX ASR STABILITY FIX:
+   * We use refs for the callbacks to prevent useFlux from restarting 
+   * every time the chat messages/state update (which changes the identity of onSend).
+   */
+  const onSendRef = useRef(onSend);
+  const setIsVoiceModeRef = useRef(setIsVoiceMode);
+  
+  useEffect(() => {
+    onSendRef.current = onSend;
+    setIsVoiceModeRef.current = setIsVoiceMode;
+  }, [onSend, setIsVoiceMode]);
+
+  const stableOnFinalTranscript = useCallback((text: string) => {
+    if (text.trim()) {
+      void onSendRef.current?.(text);
+    }
+  }, []);
+
+  const stableOnError = useCallback((err: string) => {
+    console.error('Flux ASR Error:', err);
+    setIsVoiceModeRef.current?.(false);
+  }, []);
+
+  const { 
+    start: startFlux,
+    stop: stopFlux, 
+    isActive: isFluxActive, 
+    partialTranscript,
+    isMuted,
+    setIsMuted 
+  } = useFlux({
+    onFinalTranscript: stableOnFinalTranscript,
+    onError: stableOnError
+  });
+
+  // Toggle Flux state when isVoiceMode changes
+  useEffect(() => {
+    if (isVoiceMode) {
+      void startFlux();
+    } else {
+      stopFlux();
+    }
+  }, [isVoiceMode, startFlux, stopFlux]);
+
+  /**
    * Orchestrates the primary sending logic, combining text and uploaded files.
    */
   const handleSendOrStop = async () => {
@@ -707,6 +754,15 @@ export default function ChatInput({
         </div>
       )}
 
+      {/* Live Transcript Display - Show when ASR is active */}
+      {(isVoiceMode || partialTranscript) && (
+        <div className="mb-4 px-2 min-h-[1.5rem]">
+          <p className="text-lg text-neutral-200 font-medium animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {partialTranscript || (isFluxActive ? "Listening..." : "Initializing Voice Mode...")}
+          </p>
+        </div>
+      )}
+
       {/* Hidden file selector system hook. */}
       <input
         ref={fileInputRef}
@@ -723,8 +779,35 @@ export default function ChatInput({
           className ?? ''
         }`}
       >
-        {isRecording ? (
-          /* -------- ACTIVE RECORDING UI -------- */
+        {isVoiceMode ? (
+          /* -------- VOICE MODE UI (No bar visualization) -------- */
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+                isMuted ? 'bg-red-500/20 text-red-500' : 'bg-neutral-700 text-white'
+              }`}
+            >
+              {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
+            </button>
+
+            {/* Input area remains interactive but serves as a display for the mic state */}
+            <div className="flex-1 flex items-center h-9 px-1">
+              <span className={`text-sm ${isMuted ? 'text-neutral-500 italic' : 'text-neutral-300'}`}>
+                {isMuted ? 'Voice Input Paused' : (isFluxActive ? 'Listening...' : 'Connecting...')}
+              </span>
+            </div>
+
+            {/* Exit Voice Mode. */}
+            <button
+              onClick={() => setIsVoiceMode(false)}
+              className="h-9 w-9 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        ) : isRecording ? (
+          /* -------- ACTIVE MANUAL RECORDING UI -------- */
           <div className="flex items-center gap-3">
             <button
               disabled
