@@ -391,6 +391,7 @@ export default function ChatInput({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filePreviews, setFilePreviews] = useState<FilePreview[]>([]);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
 
   // UI derive logic: Can the user send the current input?
   const hasText = value.trim().length > 0;
@@ -806,14 +807,24 @@ export default function ChatInput({
                     </button>
 
                     <button
-                      onClick={handleSendOrStop}
-                      disabled={(!isGenerating && !hasText && !hasFiles) || isSubmitting}
+                      onClick={() => {
+                        if (isGenerating) {
+                          onStop?.();
+                        } else if (hasText || filePreviews.length > 0) {
+                          handleSendOrStop();
+                        } else {
+                          setIsVoiceMode(!isVoiceMode);
+                        }
+                      }}
+                      disabled={isSubmitting}
                       className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                     >
                       {isGenerating ? (
                         <Square fill="currentColor" size={14} />
-                      ) : hasText || hasFiles ? (
+                      ) : (hasText || filePreviews.length > 0) ? (
                         <ArrowUp size={18} />
+                      ) : isVoiceMode ? (
+                        <X size={18} />
                       ) : (
                         <AudioLines size={18} />
                       )}
@@ -856,14 +867,24 @@ export default function ChatInput({
                 </button>
 
                 <button
-                  onClick={handleSendOrStop}
-                  disabled={(!isGenerating && !hasText && !hasFiles) || isSubmitting}
+                  onClick={() => {
+                    if (isGenerating) {
+                      onStop?.();
+                    } else if (hasText || filePreviews.length > 0) {
+                      handleSendOrStop();
+                    } else {
+                      setIsVoiceMode(!isVoiceMode);
+                    }
+                  }}
+                  disabled={isSubmitting}
                   className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                 >
                   {isGenerating ? (
                     <Square fill="currentColor" size={14} />
-                  ) : hasText || hasFiles ? (
+                  ) : (hasText || filePreviews.length > 0) ? (
                     <ArrowUp size={18} />
+                  ) : isVoiceMode ? (
+                    <X size={18} />
                   ) : (
                     <AudioLines size={18} />
                   )}
