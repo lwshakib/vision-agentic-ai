@@ -112,65 +112,63 @@ export default function ForgotPasswordPage() {
    * Render the initial state with the forgot password form.
    */
   return (
-    <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
-      <form
-        onSubmit={handleSubmit}
-        // Styling for the form card.
-        className="bg-card m-auto h-fit w-full max-w-[400px] rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
-      >
-        <div className="p-8 pb-6">
-          {/* Application logo at the top of the form. */}
-          <Link href="/" aria-label="go home">
-            <LogoIcon />
-          </Link>
-          <h1 className="mb-1 mt-4 text-xl font-semibold">Forgot Password</h1>
-          <p className="text-sm">
-            Enter your email to receive a password reset link
-          </p>
+    <form
+      onSubmit={handleSubmit}
+      // Styling for the form card.
+      className="bg-card h-fit w-full max-w-[400px] rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
+    >
+      <div className="p-8 pb-6">
+        {/* Application logo at the top of the form. */}
+        <Link href="/" aria-label="go home">
+          <LogoIcon />
+        </Link>
+        <h1 className="mb-1 mt-4 text-xl font-semibold">Forgot Password</h1>
+        <p className="text-sm">
+          Enter your email to receive a password reset link
+        </p>
 
-          <div className="mt-6 space-y-4">
-            {/* Form field for email address. */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="block text-sm">
-                Email
-              </Label>
-              <Input
-                type="email"
-                required
-                name="email"
-                id="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading} // Disable input while loading.
-              />
-            </div>
-
-            {/* Submit button to trigger the reset link request. */}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                // Show loading spinner and text while processing.
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending Link...
-                </>
-              ) : (
-                'Send Reset Link'
-              )}
-            </Button>
+        <div className="mt-6 space-y-4">
+          {/* Form field for email address. */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="block text-sm">
+              Email
+            </Label>
+            <Input
+              type="email"
+              required
+              name="email"
+              id="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading} // Disable input while loading.
+            />
           </div>
-        </div>
 
-        {/* Footer section with link to go back to sign-in. */}
-        <div className="bg-muted rounded-(--radius) border p-3">
-          <p className="text-accent-foreground text-center text-sm">
-            Remembered your password?
-            <Button asChild variant="link" className="px-2">
-              <Link href="/sign-in">Sign In</Link>
-            </Button>
-          </p>
+          {/* Submit button to trigger the reset link request. */}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              // Show loading spinner and text while processing.
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending Link...
+              </>
+            ) : (
+              'Send Reset Link'
+            )}
+          </Button>
         </div>
-      </form>
-    </section>
+      </div>
+
+      {/* Footer section with link to go back to sign-in. */}
+      <div className="bg-muted rounded-(--radius) border p-3">
+        <p className="text-accent-foreground text-center text-sm">
+          Remembered your password?
+          <Button asChild variant="link" className="px-2">
+            <Link href="/sign-in">Sign In</Link>
+          </Button>
+        </p>
+      </div>
+    </form>
   );
 }

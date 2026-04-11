@@ -89,8 +89,7 @@ function ResetPasswordForm() {
   if (isSuccess) {
     return (
       <div
-        className="bg-card h-fit w-full max-w-[400px] md:min-w-[400px] rounded-[calc(var(--radius)+.125rem)] border p-8 shadow-md"
-        style={{ maxWidth: '400px' }}
+        className="bg-card h-fit w-full max-w-[400px] rounded-[calc(var(--radius)+.125rem)] border p-8 shadow-md"
       >
         {/* Logo at the top of the card. */}
         <Link href="/" aria-label="go home">
@@ -117,8 +116,7 @@ function ResetPasswordForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-card h-fit w-full max-w-[400px] md:min-w-[400px] rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
-      style={{ maxWidth: '400px' }}
+      className="bg-card h-fit w-full max-w-[400px] rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
     >
       <div className="p-8 pb-6">
         {/* Branding. */}

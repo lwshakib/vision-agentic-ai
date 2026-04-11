@@ -12,7 +12,7 @@ export default function AuthLayout({
 }>) {
   return (
     // Outer container ensures full screen height and width.
-    <div className="min-h-screen w-full flex justify-center items-center">
+    <div className="min-h-screen w-full flex justify-center items-center bg-zinc-50 px-4 dark:bg-transparent">
       {/* Renders the specific auth page content (e.g., Sign In form). */}
       {children}
     </div>
