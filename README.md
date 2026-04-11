@@ -61,21 +61,6 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Testing
-
-Run unit and snapshot tests with Jest:
-
-```bash
-bun run test
-```
-
-Run E2E tests with Playwright:
-
-```bash
-# Ensure your dev server is running
-bun run test:e2e
-```
-
 ## 🛠️ Tech Stack
 
 - **Runtime & Tooling**: [Bun](https://bun.sh/), [TypeScript](https://www.typescriptlang.org/)

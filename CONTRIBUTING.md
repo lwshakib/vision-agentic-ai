@@ -31,7 +31,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 2. **Clone** your fork to your local machine.
 3. **Branch**: Create a new branch for your feature or fix (e.g., `feature/cool-new-tool`).
 4. **Develop**: Make your changes, following the [Style Guide](#style-guide).
-5. **Test**: Ensure your changes pass all tests and linting checks.
+5. **Lint and Format**: Ensure your changes follow the style guide.
 6. **Push**: Push your branch to your fork.
 7. **PR**: Open a Pull Request against the main repository.
 
@@ -79,8 +79,6 @@ Before submitting a PR, please run these commands:
 
 - **Linting**: `bun run lint`
 - **Formatting**: `bun run format` (to fix) or `bun run format:check` (to verify)
-- **Unit Testing**: `bun run test`
-- **E2E Testing**: `bun run test:e2e` (requires local server running)
 
 ## 🔄 Pull Request Process
 
@@ -101,7 +99,6 @@ Before submitting a PR, please run these commands:
 
 - Use **Prettier** for formatting and **ESLint** for linting (both integrated into the build process).
 - Write clean, type-safe TypeScript code.
-- Aim for high test coverage for new logic.
 
 ## 📄 License
 
