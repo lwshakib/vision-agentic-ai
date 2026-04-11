@@ -13,7 +13,9 @@
     "db:studio": "bun x prisma studio",
     "db:reset": "bun x prisma migrate reset",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "bucket:setup": "bun run scripts/bucket-setup.ts",
+    "bucket:teardown": "bun run scripts/bucket-teardown.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1029.0",

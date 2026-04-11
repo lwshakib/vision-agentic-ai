@@ -48,14 +48,13 @@ class TavilyService {
    */
   public async extractWebUrl(urls: string[]) {
     try {
-      // Use advanced extraction with cast for deeper content retrieval
-      const response = (await (this.client as any).extract(urls, {
+      const response = (await this.client.extract(urls, {
         includeFavicon: true,
         includeImages: false,
         topic: 'general',
         format: 'markdown',
         extractDepth: 'advanced',
-      })) as ExtractionResponse;
+      })) as unknown as ExtractionResponse;
 
       const results = (response?.results || []).map((r) => ({
         url: r.url,

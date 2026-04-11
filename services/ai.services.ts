@@ -2,7 +2,7 @@ import {
   CLOUDFLARE_AI_GATEWAY_API_KEY,
   CLOUDFLARE_AI_GATEWAY_ENDPOINT,
 } from '@/lib/env';
-import { toolDefinitions } from '@/lib/tools';
+import { toolDefinitions } from '@/services/tool.services';
 import { SYSTEM_PROMPT } from '@/lib/prompts';
 import {
   TOKEN_LIMIT_THRESHOLD,

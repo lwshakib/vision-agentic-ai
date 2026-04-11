@@ -50,7 +50,7 @@ export default function SignUp() {
         email,
         password,
         name: `${firstName} ${lastName}`.trim(), // Combine names for the global Name field.
-        callbackURL: '/verify-email?success=true', // Path to redirect after verification.
+        callbackURL: '/sign-in', // Clean redirect to the login page after verification.
       });
 
       // Handle server-side registration errors (e.g., account already exists).
