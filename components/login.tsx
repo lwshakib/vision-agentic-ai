@@ -90,7 +90,7 @@ export default function LoginPage() {
       {/* Login Card Form Structure. */}
       <form
         onSubmit={handleEmailSignIn}
-        className="bg-card m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
+        className="bg-card m-auto h-fit w-full max-w-[400px] rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
       >
         <div className="p-8 pb-6">
           {/* Header Section: Logo and Titles. */}

@@ -88,7 +88,10 @@ function ResetPasswordForm() {
    */
   if (isSuccess) {
     return (
-      <div className="bg-card m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border p-8 shadow-md">
+      <div
+        className="bg-card h-fit w-full max-w-[400px] md:min-w-[400px] rounded-[calc(var(--radius)+.125rem)] border p-8 shadow-md"
+        style={{ maxWidth: '400px' }}
+      >
         {/* Logo at the top of the card. */}
         <Link href="/" aria-label="go home">
           <LogoIcon />
@@ -114,7 +117,8 @@ function ResetPasswordForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-card m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
+      className="bg-card h-fit w-full max-w-[400px] md:min-w-[400px] rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
+      style={{ maxWidth: '400px' }}
     >
       <div className="p-8 pb-6">
         {/* Branding. */}
@@ -177,18 +181,16 @@ function ResetPasswordForm() {
  */
 export default function ResetPasswordPage() {
   return (
-    <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
-      {/* Suspense is required when using components that rely on useSearchParams in Next.js static rendering. */}
-      <Suspense
-        fallback={
-          // Spinner centered in the screen while loading the form logic.
-          <div className="m-auto">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        }
-      >
-        <ResetPasswordForm />
-      </Suspense>
-    </section>
+    // Suspense is required when using components that rely on useSearchParams in Next.js static rendering.
+    <Suspense
+      fallback={
+        // Spinner centered in the screen while loading the form logic.
+        <div className="m-auto">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
