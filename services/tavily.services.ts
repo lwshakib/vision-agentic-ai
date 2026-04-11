@@ -29,6 +29,7 @@ class TavilyService {
 
   /**
    * Performs a web search query via Tavily.
+   * @param query - The string to search for.
    */
   public async webSearch(query: string) {
     if (!TAVILY_API_KEY) throw new Error('Missing TAVILY_API_KEY');
@@ -36,18 +37,21 @@ class TavilyService {
     return await this.client.search(query, {
       includeAnswer: true,
       includeFavicon: true,
+      includeImages: false,
       maxResults: 5,
     });
   }
 
   /**
    * Extracts detailed content from specific URLs.
+   * @param urls - Array of strings containing the target web addresses.
    */
   public async extractWebUrl(urls: string[]) {
     try {
       // Use advanced extraction with cast for deeper content retrieval
       const response = (await (this.client as any).extract(urls, {
         includeFavicon: true,
+        includeImages: false,
         topic: 'general',
         format: 'markdown',
         extractDepth: 'advanced',
@@ -70,6 +74,7 @@ class TavilyService {
           (sum, r) => sum + r.extractedLength,
           0,
         ),
+        response_time: response?.responseTime || 0,
       };
     } catch (error) {
       return {

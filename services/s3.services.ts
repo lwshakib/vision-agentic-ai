@@ -56,6 +56,28 @@ class S3Service {
 
     return await getSignedUrl(this.client, command, { expiresIn: 3600 });
   }
+
+  /**
+   * Direct server-side upload of a buffer to S3/R2.
+   * Useful for persisting AI-generated assets like TTS audio or processed images.
+   * @param buffer - The binary data to upload.
+   * @param key - The destination path in the bucket.
+   * @param contentType - The mime type of the data.
+   * @returns The signed URL for reading the newly uploaded file.
+   */
+  public async uploadFile(buffer: Buffer, key: string, contentType: string) {
+    const command = new PutObjectCommand({
+      Bucket: AWS_S3_BUCKET_NAME,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    });
+
+    await this.client.send(command);
+
+    // Return the signed read URL for immediate use.
+    return this.getSignedUrl(key);
+  }
 }
 
 export const s3Service = new S3Service();

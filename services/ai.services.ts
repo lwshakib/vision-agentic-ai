@@ -12,8 +12,8 @@ import {
   ASR_MODEL_ID,
   STT_MODEL_ID,
 } from '@/lib/constants';
-import { estimateMessageTokens } from '@/lib/token-utils';
-import { saveAudioToCloudinary } from '@/lib/cloudinary';
+// Integrated s3Service for centralized media storage
+import { s3Service } from '@/services/s3.services';
 
 export interface AiMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -41,6 +41,29 @@ class AiService {
         '[AiService] Warning: Cloudflare AI Gateway configuration is missing.',
       );
     }
+  }
+
+  /**
+   * Roughly estimates the number of tokens in a string or object.
+   * This internal heuristic ensures we stay within context limits without external dependencies.
+   */
+  private estimateTokens(text: string | unknown[]): number {
+    if (typeof text !== 'string') {
+      return Math.ceil(JSON.stringify(text).length / 2);
+    }
+    // Safe, conservative estimate (2 chars per token)
+    return Math.ceil(text.length / 2);
+  }
+
+  /**
+   * Estimates the total token count for a list of conversation messages.
+   */
+  private estimateMessageTokens(messages: AiMessage[]): number {
+    return messages.reduce((acc, msg) => {
+      let count = this.estimateTokens((msg.content as string) || '');
+      if (msg.tool_calls) count += this.estimateTokens(msg.tool_calls);
+      return acc + count;
+    }, 0);
   }
 
   /**
@@ -79,7 +102,7 @@ class AiService {
     const otherMsgs = messages.filter((m) => m.role !== 'system');
 
     while (
-      estimateMessageTokens(
+      this.estimateMessageTokens(
         [systemMsg, ...otherMsgs].filter((m): m is AiMessage => !!m),
       ) > TOKEN_LIMIT_THRESHOLD &&
       otherMsgs.length > 0
@@ -232,7 +255,7 @@ class AiService {
   }
 
   /**
-   * Converts text to speech using Aura-2 and persists to Cloudinary.
+   * Converts text to speech using Aura-2 and persists to S3/R2 storage.
    */
   public async textToSpeech(text: string, speaker = 'luna') {
     const response = await fetch(this.gatewayEndpoint, {
@@ -251,11 +274,15 @@ class AiService {
     if (!response.ok) throw new Error('TTS failed');
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const { url } = await saveAudioToCloudinary(buffer);
+
+    // Persist and get a secure URL from our primary storage (S3/R2)
+    const timestamp = Date.now();
+    const key = `audio/speech-${timestamp}.mp3`;
+    const audioUrl = await s3Service.uploadFile(buffer, key, 'audio/mpeg');
 
     return {
       success: true,
-      audioUrl: url,
+      audioUrl,
       text,
     };
   }
