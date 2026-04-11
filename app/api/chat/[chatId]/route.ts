@@ -11,8 +11,8 @@ import prisma from '@/lib/prisma';
 import { MessageRole } from '@/generated/prisma/client';
 // Import the current user's retrieval action.
 import { getUser } from '@/actions/user';
-// Import the dynamic text generation utility.
-import { generateText } from '@/llm/generate-text';
+// Import the centralized AI service.
+import { aiService } from '@/services/ai.services';
 
 /**
  * Type definition for the route parameters, accommodating Nextjs 15+ promise-based params.
@@ -265,15 +265,12 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
  */
 async function generateChatTitle(firstMessage: string): Promise<string> {
   try {
-    // Call the model with specific instructions for title creation using GLM-4.7-Flash.
-    const { text } = await generateText({
-      messages: [
-        {
-          role: 'user',
-          content: `Extract a very short, concise, and descriptive title (3-5 words maximum) for a chat started with this message. Do not use quotes or special characters: "${firstMessage}"`,
-        },
-      ],
-    });
+    const text = await aiService.generateText([
+      {
+        role: 'user',
+        content: `Extract a very short, concise, and descriptive title (3-5 words maximum) for a chat started with this message. Do not use quotes or special characters: "${firstMessage}"`,
+      },
+    ]);
 
     /**
      * Post-processing:

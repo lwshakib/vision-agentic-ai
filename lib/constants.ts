@@ -3,9 +3,9 @@
  */
 
 /**
- * The full context window limit for the GLM model (128k tokens).
+ * The full context window limit for Kimi K2.5 (256k tokens).
  */
-export const GLM_CONTEXT_WINDOW_LIMIT = 131072;
+export const CHAT_CONTEXT_WINDOW_LIMIT = 256000;
 
 /**
  * The maximum character limit for a single speech synthesis request.
@@ -19,7 +19,15 @@ export const TOKEN_SAFETY_MARGIN = 10000;
 
 /**
  * The safe threshold for the context window before pruning begins.
- * Calculation: Total window (128k) minus safety headroom (10k) = ~118k tokens.
  */
 export const TOKEN_LIMIT_THRESHOLD =
-  GLM_CONTEXT_WINDOW_LIMIT - TOKEN_SAFETY_MARGIN;
+  CHAT_CONTEXT_WINDOW_LIMIT - TOKEN_SAFETY_MARGIN;
+
+/**
+ * Model Shorthand IDs (Passed in request bodies to AI Gateway)
+ */
+export const CHAT_MODEL_ID = 'kimi-k2.5';
+export const IMAGE_MODEL_ID = 'flux-1-schnell';
+export const TTS_MODEL_ID = 'aura-2-en';
+export const ASR_MODEL_ID = 'whisper-large-v3-turbo';
+export const STT_MODEL_ID = 'flux';

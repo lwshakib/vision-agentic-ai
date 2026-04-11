@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { transcribeAudio } from '@/llm/transcribe-audio';
+// Import the centralized AI service.
+import { aiService } from '@/services/ai.services';
 
 /**
  * POST Handler - Processes an audio file and returns the transcribed text.
@@ -23,8 +24,8 @@ export async function POST(req: NextRequest) {
     // Convert the base64 string back into a binary Buffer for transmission.
     const buffer = Buffer.from(audioData, 'base64');
 
-    // Use the core transcription utility.
-    const transcript = await transcribeAudio(buffer);
+    // Use the centralized transcription service.
+    const transcript = await aiService.transcribeAudio(buffer);
 
     // Return the final text string to the client.
     return NextResponse.json({ transcript });

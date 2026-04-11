@@ -4,8 +4,8 @@
  * It leverages the project's internal LLM orchestration to provide real-time responses.
  */
 
-// Import the internal utility for handling LLM streaming logic.
-import { streamText } from '@/llm/streamText';
+// Import the centralized AI service.
+import { aiService } from '@/services/ai.services';
 import { NextResponse } from 'next/server';
 // Import utility for retrieving the current user's session.
 import { getUser } from '@/actions/user';
@@ -47,8 +47,7 @@ export async function POST(req: Request) {
     }
 
     // Trigger the core LLM streaming process with optional voice mode formatting.
-    // streamText returns a ReadableStream of JSON strings (SSE format)
-    const stream = await streamText(messages, {
+    const stream = await aiService.streamText(messages, {
       isVoiceMode: Boolean(isVoiceMode),
     });
 
