@@ -520,17 +520,27 @@ export default function ChatInput({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Filter only images for counting
-    const newImageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    // Filter only images for counting and size validation
+    const filesArray = Array.from(files);
+    const MAX_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
+    
+    // Check for size limit first
+    const oversizedFiles = filesArray.filter(f => f.size > MAX_SIZE_BYTES);
+    if (oversizedFiles.length > 0) {
+      toast.error('File too large', {
+        description: 'Each image must be less than 1MB.'
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const newImageFiles = filesArray.filter(f => f.type.startsWith('image/'));
     const currentImageCount = filePreviews.filter(p => p.file.type.startsWith('image/')).length;
 
     if (currentImageCount + newImageFiles.length > 2) {
       toast.error('Limit Reached', {
         description: 'You can only upload a maximum of 2 images per message.'
       });
-      
-      // If none can be added, return early. Otherwise, slice might be complex here.
-      // Better to just block if any will exceed.
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }

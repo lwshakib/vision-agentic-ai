@@ -49,6 +49,7 @@ export async function POST(req: Request) {
     // Trigger the core LLM streaming process with optional voice mode formatting.
     const stream = await aiService.streamText(messages, {
       isVoiceMode: Boolean(isVoiceMode),
+      sessionId: user.id,
     });
 
     // Decrement the user's daily credit balance upon successful start of generation

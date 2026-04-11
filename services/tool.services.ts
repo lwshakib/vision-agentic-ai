@@ -2,6 +2,16 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { s3Service } from './s3.services';
 
+import {
+  CLOUDFLARE_AI_GATEWAY_API_KEY,
+  CLOUDFLARE_AI_GATEWAY_ENDPOINT,
+  TAVILY_API_KEY,
+} from '@/lib/env';
+import { 
+  IMAGE_MODEL_ID, 
+  TTS_MODEL_ID,
+} from '@/lib/constants';
+
 /**
  * AI Tool Interface Definitions
  * Defines the executable functions available to the models.
@@ -13,6 +23,7 @@ export interface ToolDefinition {
     properties: Record<string, unknown>;
     required?: string[];
   };
+  execute: (args: any) => Promise<any>;
 }
 
 /**
@@ -30,6 +41,21 @@ export const webSearchTool: ToolDefinition = {
     },
     required: ['query'],
   },
+  execute: async ({ query }) => {
+    if (!TAVILY_API_KEY) throw new Error('Tavily API key is missing');
+    const res = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: TAVILY_API_KEY,
+        query,
+        search_depth: 'advanced',
+        max_results: 5,
+      }),
+    });
+    if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+    return res.json();
+  },
 };
 
 /**
@@ -37,7 +63,7 @@ export const webSearchTool: ToolDefinition = {
  */
 export const extractWebUrlTool: ToolDefinition = {
   description:
-    'Extract comprehensive, detailed content from one or more URLs for deep research, fact-checking, and validation. Returns full page content including all text, structure, and context.',
+    'Extract comprehensive, detailed content from one or more URLs for deep research. Returns full page content.',
   parameters: {
     type: 'object',
     properties: {
@@ -49,11 +75,27 @@ export const extractWebUrlTool: ToolDefinition = {
           description: 'Website URL to extract detailed content from',
         },
         minItems: 1,
-        maxItems: 10,
-        description: 'Array of 1-10 URLs to extract.',
+        maxItems: 3,
+        description: 'Array of 1-3 URLs to extract.',
       },
     },
     required: ['urls'],
+  },
+  execute: async ({ urls }) => {
+    // Implementation using a simple reader mode proxy or direct fetch if allowed
+    const results = await Promise.all(
+      (urls as string[]).map(async (url) => {
+        try {
+          const res = await fetch(`https://r.jina.ai/${url}`); // Jina Reader is a great free utility for this
+          if (!res.ok) return { url, content: `Failed to load: ${res.status}` };
+          const text = await res.text();
+          return { url, content: text.slice(0, 10000) }; // Limit per URL
+        } catch (e) {
+          return { url, error: String(e) };
+        }
+      }),
+    );
+    return { results };
   },
 };
 
@@ -62,7 +104,7 @@ export const extractWebUrlTool: ToolDefinition = {
  */
 export const generateImageTool: ToolDefinition = {
   description:
-    'Generate high-quality images using AI. The model used is FLUX.1 [schnell].',
+    'Generate high-quality images using AI FLUX.1 [schnell]. Output is a stable URL.',
   parameters: {
     type: 'object',
     properties: {
@@ -80,22 +122,34 @@ export const generateImageTool: ToolDefinition = {
         default: 1024,
         description: 'Height of the image in pixels.',
       },
-      mode: {
-        type: 'string',
-        enum: ['text-to-image', 'image-to-image', 'blend', 'inpaint'],
-        default: 'text-to-image',
-      },
-      seed: {
-        type: 'number',
-        description: 'Seed for deterministic results.',
-      },
-      steps: {
-        type: 'number',
-        default: 28,
-        description: 'Number of optimization steps (20-35).',
-      },
     },
     required: ['prompt'],
+  },
+  execute: async ({ prompt, width = 1024, height = 1024 }) => {
+    const response = await fetch(CLOUDFLARE_AI_GATEWAY_ENDPOINT!, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${CLOUDFLARE_AI_GATEWAY_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: IMAGE_MODEL_ID,
+        prompt,
+        width,
+        height,
+        num_inference_steps: 4,
+      }),
+    });
+
+    if (!response.ok) throw new Error('Image generation fetch failed');
+    const { image } = await response.json();
+    if (!image) throw new Error('No image returned from model');
+
+    const buffer = Buffer.from(image, 'base64');
+    const key = `generated/image-${Date.now()}.jpg`;
+    const imageUrl = await s3Service.uploadFile(buffer, key, 'image/jpeg');
+
+    return { success: true, image: imageUrl };
   },
 };
 
@@ -117,6 +171,28 @@ export const textToSpeechTool: ToolDefinition = {
       },
     },
     required: ['text'],
+  },
+  execute: async ({ text, voice = 'orpheus' }) => {
+    const response = await fetch(CLOUDFLARE_AI_GATEWAY_ENDPOINT!, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${CLOUDFLARE_AI_GATEWAY_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: TTS_MODEL_ID,
+        text,
+        voice,
+      }),
+    });
+
+    if (!response.ok) throw new Error('Speech synthesis failed');
+    
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const key = `tts/audio-${Date.now()}.mp3`;
+    const audioUrl = await s3Service.uploadFile(buffer, key, 'audio/mpeg');
+
+    return { success: true, audioUrl };
   },
 };
 
@@ -144,6 +220,9 @@ export const generateFileTool: ToolDefinition = {
       },
     },
     required: ['fileName', 'type', 'content'],
+  },
+  execute: async ({ fileName, type, content }) => {
+    return toolService.generateFile({ fileName, type, content });
   },
 };
 

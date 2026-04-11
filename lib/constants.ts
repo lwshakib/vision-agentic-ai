@@ -26,7 +26,7 @@ export const TOKEN_LIMIT_THRESHOLD =
 /**
  * Model Shorthand IDs (Passed in request bodies to AI Gateway)
  */
-export const CHAT_MODEL_ID = '@cf/moonshotai/kimi-k2.5';
+export const CHAT_MODEL_ID = 'kimi-k2.5';
 export const IMAGE_MODEL_ID = 'flux-1-schnell';
 export const TTS_MODEL_ID = 'aura-2-en';
 export const ASR_MODEL_ID = 'whisper-large-v3-turbo';

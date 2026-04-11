@@ -149,7 +149,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       const firstTextPart = userParts.find((p) => p.type === 'text');
       if (firstTextPart?.text) {
         // Use the model to summarize the opening prompt into a title
-        const generatedTitle = await generateChatTitle(firstTextPart.text);
+        const generatedTitle = await generateChatTitle(firstTextPart.text, user.id);
         // Persist the new title in the database
         await prisma.chat.update({
           where: { id: chatId },
@@ -262,15 +262,16 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 /**
  * Generates a short, descriptive title (3-5 words) based on the opening message.
  * @param firstMessage - The starting prompt from the user.
+ * @param sessionId - Optional session ID for prompt caching.
  */
-async function generateChatTitle(firstMessage: string): Promise<string> {
+async function generateChatTitle(firstMessage: string, sessionId?: string): Promise<string> {
   try {
     const text = await aiService.generateText([
       {
         role: 'user',
         content: `Extract a very short, concise, and descriptive title (3-5 words maximum) for a chat started with this message. Do not use quotes or special characters: "${firstMessage}"`,
       },
-    ]);
+    ], sessionId);
 
     /**
      * Post-processing:

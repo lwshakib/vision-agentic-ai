@@ -162,7 +162,7 @@ export function useChat({
                   )
                   .map((p) => ({
                     type: 'image_url',
-                    image_url: { url: p.url, detail: 'high' },
+                    image_url: { url: p.url },
                   })) || [];
 
               const commonContent =
