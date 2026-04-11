@@ -1,493 +1,474 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { ModeToggle } from '@/components/mode-toggle';
+import { UserNav } from '@/components/account/user-nav';
+import { ProfileImageUpload } from '@/components/account/profile-image-upload';
+import { UsageText } from '@/components/account/usage-text';
 import { authClient } from '@/lib/auth-client';
-import { uploadToCloudinary } from '@/lib/cloudinary-upload';
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
 import {
-  Camera,
-  Loader2,
-  Mail,
-  User as UserIcon,
-  Smartphone,
   Laptop,
-  Globe,
+  Smartphone,
+  Loader2,
   CheckCircle2,
+  ChevronLeft,
+  Mail,
+  ShieldCheck,
+  Globe,
+  Trash2,
+  Link as LinkIcon,
+  Unlink,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-/**
- * Type definitions for session and account data.
- */
 interface SessionData {
-  id: string;
-  ipAddress?: string;
-  userAgent?: string;
-  createdAt: string;
+  token: string;
+  userAgent?: string | null;
+  updatedAt: Date;
 }
 
 interface AccountData {
   id: string;
   providerId: string;
-  accountId: string;
 }
 
 /**
  * AccountPage Component
- * Provides a comprehensive interface for users to manage their profile,
- * including updating their avatar, name, email, and viewing active sessions.
+ * Provides a modern, responsive interface for managing user profile,
+ * connected authentication accounts, and active device sessions.
  */
 export default function AccountPage() {
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const {
+    data: session,
+    isPending: isSessionPending,
+    refetch,
+  } = authClient.useSession();
+  const router = useRouter();
 
-  // Local state for profile fields.
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  // Profile Update State
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [userName, setUserName] = useState('');
+
+  // Dynamic Data State
   const [sessions, setSessions] = useState<SessionData[]>([]);
-  const [accounts, setAccounts] = useState<AccountData[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+  const [accounts, setAccounts] = useState<AccountData[]>([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
 
-  // Sync local state when session data is loaded.
+  // Initialize name from session
   useEffect(() => {
-    if (session?.user) {
-      setName(session.user.name || '');
-      setEmail(session.user.email || '');
-      fetchSessions();
-      fetchAccounts();
+    if (session?.user?.name) {
+      setUserName(session.user.name);
+    }
+  }, [session]);
+
+  // Fetch real data from Better Auth
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // 1. Fetch Active Sessions
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sessRes = await (authClient as any).listSessions();
+        if (sessRes.data) {
+          setSessions(sessRes.data);
+        }
+
+        // 2. Fetch Connected Accounts
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const accRes = await (authClient as any).listAccounts();
+        if (accRes.data) {
+          setAccounts(accRes.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch account data:', err);
+      } finally {
+        setIsLoadingSessions(false);
+        setIsLoadingAccounts(false);
+      }
+    };
+
+    if (session) {
+      fetchData();
     }
   }, [session]);
 
   /**
-   * Fetches active sessions from the auth client.
+   * Updates the user's display name
    */
-  const fetchSessions = async () => {
-    setIsLoadingSessions(true);
+  const handleUpdateName = async () => {
+    if (!userName.trim()) return;
+    setIsUpdatingName(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (authClient as any).listSessions();
+      const { error } = await authClient.updateUser({
+        name: userName,
+      });
       if (error) throw error;
-      setSessions(data || []);
-    } catch (error) {
-      console.error('Failed to fetch sessions:', error);
+      toast.success('Profile updated successfully');
+      refetch();
+    } catch {
+      toast.error('Failed to update profile');
     } finally {
-      setIsLoadingSessions(false);
+      setIsUpdatingName(false);
     }
   };
 
   /**
-   * Fetches connected accounts (OAuth providers).
+   * Revokes an active session
    */
-  const fetchAccounts = async () => {
-    setIsLoadingAccounts(true);
+  const handleRevokeSession = async (token: string) => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (authClient as any).listAccounts();
-      if (error) throw error;
-      setAccounts(data || []);
-    } catch (error) {
-      console.error('Failed to fetch accounts:', error);
-    } finally {
-      setIsLoadingAccounts(false);
+      await (authClient as any).revokeSession({ token });
+      setSessions((prev) => prev.filter((s) => s.token !== token));
+      toast.success('Session terminated');
+    } catch {
+      toast.error('Failed to revoke session');
     }
   };
 
   /**
-   * Handles user information updates (name, email).
+   * Links a social provider to the current account
    */
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsUpdating(true);
+  const handleLinkSocial = async (providerId: 'google') => {
     try {
-      const res = await fetch('/api/user/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+      await authClient.linkSocial({
+        provider: providerId,
+        callbackURL: window.location.href,
+      });
+    } catch {
+      toast.error(`Failed to link ${providerId} account`);
+    }
+  };
+
+  /**
+   * Unlinks a social provider from the current account
+   */
+  const handleUnlinkAccount = async (providerId: string) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (authClient as any).unlinkAccount({
+        providerId,
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Update failed');
+      if (error) {
+        toast.error(error.message || `Failed to unlink ${providerId}`);
+        return;
       }
 
-      toast.success('Profile updated successfully');
-      // Refresh the session to show updated data across the app.
-      window.location.reload();
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Update failed');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  /**
-   * Handles avatar image upload to Cloudinary and database update.
-   */
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      // 1. Upload to Cloudinary.
-      const uploadResult = await uploadToCloudinary(file);
-
-      // 2. Update the user record with the new URL.
-      const res = await fetch('/api/user/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: uploadResult.secureUrl }),
-      });
-
-      if (!res.ok) throw new Error('Failed to update profile picture');
-
-      toast.success('Profile picture updated');
-      window.location.reload();
-    } catch (error: unknown) {
-      console.error('Upload error:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to upload image',
+      toast.success(`${providerId} account unlinked`);
+      // Update local state to reflect removal
+      setAccounts((prev) =>
+        prev.filter((acc) => acc.providerId !== providerId),
       );
-    } finally {
-      setIsUploading(false);
+    } catch {
+      toast.error(`Error unlinking ${providerId}`);
     }
   };
 
   if (isSessionPending) {
-    return <AccountSkeleton />;
-  }
-
-  if (!session?.user) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-muted-foreground">
-          Please sign in to view your account.
-        </p>
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
 
+  if (!session) {
+    router.replace('/sign-in');
+    return null;
+  }
+
+  // Derived state for supported providers
+  const isGoogleLinked = accounts.some((acc) => acc.providerId === 'google');
+
   return (
-    <div className="container max-w-4xl mx-auto py-10 px-4 space-y-8">
-      {/* Header Section with Glassmorphism feel */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your personal information and security settings.
-        </p>
-      </div>
-
-      <div className="grid gap-8 md:grid-cols-3">
-        {/* Profile Sidebar: Avatar and basic stats */}
-        <div className="space-y-6">
-          <Card className="overflow-hidden border-none shadow-xl bg-gradient-to-b from-sidebar-accent/50 to-background/50 backdrop-blur-sm">
-            <CardHeader className="flex flex-col items-center pb-6 text-center">
-              <div className="relative group mx-auto">
-                <Avatar className="h-32 w-32 border-4 border-background shadow-lg shadow-black/10 transition-transform">
-                  <AvatarImage src={session.user.image || ''} />
-                  <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
-                    {session.user.name?.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-
-                {/* Hover/Upload Overlay */}
-                <label
-                  htmlFor="avatar-upload"
-                  className={cn(
-                    'absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity cursor-pointer',
-                    isUploading ? 'opacity-100' : 'group-hover:opacity-100',
-                  )}
-                >
-                  {isUploading ? (
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  ) : (
-                    <Camera className="h-8 w-8" />
-                  )}
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={isUploading}
-                  />
-                </label>
-              </div>
-              <div className="mt-4 space-y-1">
-                <CardTitle className="text-xl">{session.user.name}</CardTitle>
-                <CardDescription className="font-medium">
-                  {session.user.email}
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 text-sm p-3 rounded-lg bg-background/40">
-                <CheckCircle2 className="h-4 w-4 text-blue-500" />
-                <span>Email verified</span>
-              </div>
-            </CardContent>
-          </Card>
+    <div className="flex min-h-screen flex-col bg-background selection:bg-primary/10">
+      {/* Header */}
+      <header className="sticky top-0 flex h-16 shrink-0 items-center justify-between px-6 bg-background/95 backdrop-blur-md border-b z-30">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+        >
+          <ChevronLeft className="size-4" />
+          <span>Back to chat</span>
+        </Link>
+        <div className="flex items-center gap-4">
+          <UsageText />
+          <ModeToggle />
+          <UserNav />
         </div>
+      </header>
 
-        {/* Main Content: Forms and Details */}
-        <div className="md:col-span-2 space-y-8">
-          {/* Personal Information Form */}
-          <Card className="border-none shadow-lg shadow-black/5 bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserIcon className="h-5 w-5 text-primary" />
-                Personal Information
-              </CardTitle>
-              <CardDescription>
-                Update your display name. Email address cannot be changed.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Display Name</Label>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+      <main className="flex-1 p-4 md:p-8 lg:p-12">
+        <div className="mx-auto max-w-6xl w-full">
+          {/* Page Heading */}
+          <div className="mb-10">
+            <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-foreground">
+              Settings
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Manage your personal information, connected accounts, and
+              security.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* LEFT COLUMN: Profile Spotlight */}
+            <div className="lg:sticky lg:top-24 space-y-6 lg:col-span-1">
+              <Card className="overflow-hidden border shadow-lg bg-card ring-1 ring-border/50">
+                <CardContent className="pt-10 pb-8 flex flex-col items-center text-center">
+                  <ProfileImageUpload
+                    src={session.user.image}
+                    name={session.user.name}
+                    className="mb-6"
+                    onSuccess={() => refetch()}
+                  />
+                  <div className="space-y-2 w-full px-4 overflow-hidden">
+                    <h2
+                      className="text-2xl font-bold truncate"
+                      title={session.user.name || ''}
+                    >
+                      {session.user.name}
+                    </h2>
+                    <p
+                      className="text-sm text-muted-foreground truncate"
+                      title={session.user.email || ''}
+                    >
+                      {session.user.email}
+                    </p>
+                    <div className="pt-4 flex justify-center">
+                      <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground ring-1 ring-inset ring-border">
+                        <ShieldCheck className="mr-1 size-3" />
+                        Active Account
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30 border-dashed">
+                <CardContent className="p-4 text-xs text-muted-foreground leading-relaxed">
+                  Your profile information is shared across Vision Agentic services
+                  to help us provide a consistent and personalized experience.
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* RIGHT COLUMN: Configuration and Security */}
+            <div className="lg:col-span-2 space-y-8 min-w-0">
+              {/* Basic Information Card */}
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Display Name</CardTitle>
+                  <CardDescription>
+                    This is how you will appear to others in collaborate mode.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full Name</Label>
                     <Input
                       id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="pl-10"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
                       placeholder="Your name"
+                      className="max-w-md"
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      readOnly
-                      className="pl-10 bg-muted/50 cursor-not-allowed"
-                      placeholder="your.email@example.com"
-                    />
+                  <div className="space-y-2 opacity-70">
+                    <Label htmlFor="email">Email Address</Label>
+                    <div className="flex items-center gap-2 text-sm font-medium bg-muted p-2 rounded-md border max-w-md cursor-not-allowed">
+                      <Mail className="size-4 text-muted-foreground" />
+                      {session.user.email}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground italic">
+                      Contact support to change your primary account email.
+                    </p>
                   </div>
-                </div>
-                <div className="pt-2">
+                </CardContent>
+                <CardFooter className="bg-muted/20 border-t py-4">
                   <Button
-                    type="submit"
-                    disabled={isUpdating}
-                    className="w-full sm:w-auto"
+                    onClick={handleUpdateName}
+                    disabled={isUpdatingName || userName === session.user.name}
                   >
-                    {isUpdating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
+                    {isUpdatingName ? (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
                     ) : (
-                      'Save Changes'
+                      <CheckCircle2 className="mr-2 size-4" />
                     )}
+                    Update Name
                   </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                </CardFooter>
+              </Card>
 
-          {/* Connected Accounts List */}
-          <Card className="border-none shadow-lg shadow-black/5 bg-card/50 backdrop-blur-sm overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5 text-primary" />
-                Connected Accounts
-              </CardTitle>
-              <CardDescription>
-                OAuth providers linked to your account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {isLoadingAccounts ? (
-                  <div className="p-4 space-y-4">
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                ) : accounts.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground italic">
-                    No connected accounts.
-                  </div>
-                ) : (
-                  <>
-                    {accounts.map((acc) => (
-                      <div
-                        key={acc.id}
-                        className="p-4 flex items-center justify-between"
-                      >
+              {/* Connected Accounts Card */}
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Connected Accounts</CardTitle>
+                  <CardDescription>
+                    Third-party accounts used to sign in to Vision Agentic.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {isLoadingAccounts ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      {/* Google Connection Row */}
+                      <div className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/30 transition-all group">
                         <div className="flex items-center gap-4">
-                          <div className="p-2 rounded-lg bg-accent">
-                            {acc.providerId === 'google' ? (
-                              <svg className="size-5" viewBox="0 0 24 24">
-                                <path
-                                  fill="currentColor"
-                                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                />
-                                <path
-                                  fill="currentColor"
-                                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                />
-                                <path
-                                  fill="currentColor"
-                                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                                />
-                                <path
-                                  fill="currentColor"
-                                  d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z"
-                                />
-                              </svg>
-                            ) : (
-                              <Globe className="size-5" />
-                            )}
+                          <div className="p-2.5 rounded-lg bg-secondary ring-1 ring-border group-hover:scale-105 transition-transform">
+                            <Globe className="size-5" />
                           </div>
                           <div>
-                            <div className="font-medium capitalize">
-                              {acc.providerId}
-                            </div>
+                            <p className="text-sm font-semibold">Google</p>
+                            <p className="text-xs text-muted-foreground">
+                              Social Authentication
+                            </p>
                           </div>
                         </div>
-                        <Badge
-                          variant="secondary"
-                          className="bg-blue-500/10 text-blue-600 border-none"
-                        >
-                          Linked
-                        </Badge>
-                      </div>
-                    ))}
-                    {/* Placeholder for Microsoft */}
-                    <div className="p-4 flex items-center justify-between opacity-60">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 rounded-lg bg-accent">
-                          <svg className="size-5" viewBox="0 0 23 23">
-                            <path fill="#f3f3f3" d="M0 0h11v11H0z" />
-                            <path fill="#f3f3f3" d="M12 0h11v11H12z" />
-                            <path fill="#f3f3f3" d="M0 12h11v11H0z" />
-                            <path fill="#f3f3f3" d="M12 12h11v11H12z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="font-medium">Microsoft</div>
-                        </div>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className="text-muted-foreground border-dashed"
-                      >
-                        Available soon
-                      </Badge>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Active Sessions List */}
-          <Card className="border-none shadow-lg shadow-black/5 bg-card/50 backdrop-blur-sm overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Smartphone className="h-5 w-5 text-primary" />
-                Active Sessions
-              </CardTitle>
-              <CardDescription>
-                Devices currently logged into your account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {isLoadingSessions ? (
-                  <div className="p-4 space-y-4">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                ) : sessions.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground">
-                    No active sessions found.
-                  </div>
-                ) : (
-                  sessions.map((sess) => (
-                    <div
-                      key={sess.id}
-                      className="p-4 flex items-center justify-between hover:bg-accent/5 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          {sess.userAgent?.toLowerCase().includes('mobile') ? (
-                            <Smartphone className="h-5 w-5 text-primary" />
+                        <div className="flex items-center gap-3">
+                          {isGoogleLinked ? (
+                            <>
+                              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-1 rounded">
+                                <div className="size-1.5 rounded-full bg-muted-foreground" />
+                                Connected
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs gap-1.5 text-destructive hover:bg-destructive/10"
+                                onClick={() => handleUnlinkAccount('google')}
+                              >
+                                <Unlink className="size-3" />
+                                Disconnect
+                              </Button>
+                            </>
                           ) : (
-                            <Laptop className="h-5 w-5 text-primary" />
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="h-8 text-xs gap-1.5"
+                              onClick={() => handleLinkSocial('google')}
+                            >
+                              <LinkIcon className="size-3" />
+                              Connect
+                            </Button>
                           )}
                         </div>
-                        <div>
-                          <div className="font-medium flex items-center gap-2">
-                            {sess.ipAddress || 'Unknown IP'}
-                            {sess.id === session.session.id && (
-                              <Badge
-                                variant="secondary"
-                                className="bg-green-500/10 text-green-600 border-none text-[10px] py-0"
-                              >
-                                Current
-                              </Badge>
-                            )}
+                      </div>
+
+                      {/* Email/Password Info */}
+                      <div className="flex items-center justify-between p-4 border rounded-xl bg-muted/20 opacity-80">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2.5 rounded-lg bg-background ring-1 ring-border">
+                            <Mail className="size-5" />
                           </div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-2">
-                            <Globe className="h-3 w-3" />
-                            {sess.userAgent || 'Web Browser'}
+                          <div>
+                            <p className="text-sm font-semibold">
+                              Email & Password
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Standard Credentials
+                            </p>
                           </div>
                         </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(sess.createdAt).toLocaleDateString()}
+                        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-1 rounded">
+                          <div className="size-1.5 rounded-full bg-muted-foreground" />
+                          Primary
+                        </span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-}
+                  )}
+                </CardContent>
+              </Card>
 
-/**
- * Skeleton Loader for the Account Page
- */
-function AccountSkeleton() {
-  return (
-    <div className="container max-w-4xl mx-auto py-10 px-4 space-y-8 animate-pulse">
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-4 w-72" />
-      </div>
-      <div className="grid gap-8 md:grid-cols-3">
-        <Skeleton className="h-[400px] w-full rounded-xl" />
-        <div className="md:col-span-2 space-y-8">
-          <Skeleton className="h-[300px] w-full rounded-xl" />
-          <Skeleton className="h-[200px] w-full rounded-xl" />
+              {/* Security & Sessions Card */}
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Active Sessions</CardTitle>
+                  <CardDescription>
+                    Devices currently logged in to your account.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-2 sm:px-6">
+                  {isLoadingSessions ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {sessions.map((sess) => (
+                        <div
+                          key={sess.token}
+                          className="flex items-center justify-between gap-4 p-3 rounded-xl border bg-card hover:shadow-sm transition-all min-w-0"
+                        >
+                          <div className="flex items-center gap-3 overflow-hidden min-w-0">
+                            <div className="p-2 bg-muted rounded-lg shrink-0">
+                              {sess.userAgent?.includes('Mobi') ? (
+                                <Smartphone className="size-4 text-muted-foreground" />
+                              ) : (
+                                <Laptop className="size-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="truncate min-w-0">
+                              <p className="text-sm font-semibold truncate flex items-center gap-2">
+                                {sess.userAgent || 'Unknown Browser'}
+                                {sess.token === session.session.token && (
+                                  <span className="shrink-0 text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter border">
+                                    Current
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Last used:{' '}
+                                {new Date(sess.updatedAt).toLocaleDateString()}{' '}
+                                at{' '}
+                                {new Date(sess.updatedAt).toLocaleTimeString(
+                                  [],
+                                  { hour: '2-digit', minute: '2-digit' },
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          {sess.token !== session.session.token && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:bg-destructive/10 shrink-0 size-8"
+                              onClick={() => handleRevokeSession(sess.token)}
+                              title="Revoke session"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

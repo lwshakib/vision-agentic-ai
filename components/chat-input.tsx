@@ -5,7 +5,7 @@
  * 1. Auto-resizing multi-line text input.
  * 2. Voice recording with real-time waveform visualization.
  * 3. Automatic audio transcription via Deepgram.
- * 4. Multi-file uploads (images/videos) to Cloudinary with progress tracking.
+ * 4. Multi-file uploads (images/videos) to S3 with progress tracking.
  */
 
 'use client';
@@ -30,13 +30,14 @@ import {
   Square,
   MicOff,
 } from 'lucide-react';
-// Import Cloudinary upload utilities and progress types.
+// Import S3 upload utilities and progress types.
 import {
-  uploadToCloudinary,
+  uploadToS3,
   type UploadProgress,
-} from '@/lib/cloudinary-upload';
+} from '@/lib/s3-upload';
 import NextImage from 'next/image';
 import { useFlux } from '@/hooks/useFlux';
+import { toast } from 'sonner';
 
 /* ------------------ LIVE RAIL WAVEFORM ------------------ */
 
@@ -276,7 +277,7 @@ type FilePreview = {
   id: string;
   file: File;
   previewUrl: string; // Blob URL for instant local display.
-  cloudUrl: string | null; // Final URL after Cloudinary upload.
+  cloudUrl: string | null; // Final URL after S3 upload.
   publicId: string | null;
   uploadProgress: number;
   isUploading: boolean;
@@ -519,6 +520,21 @@ export default function ChatInput({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    // Filter only images for counting
+    const newImageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    const currentImageCount = filePreviews.filter(p => p.file.type.startsWith('image/')).length;
+
+    if (currentImageCount + newImageFiles.length > 2) {
+      toast.error('Limit Reached', {
+        description: 'You can only upload a maximum of 2 images per message.'
+      });
+      
+      // If none can be added, return early. Otherwise, slice might be complex here.
+      // Better to just block if any will exceed.
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     // Create a preview object for each newly selected file.
     const newPreviews: FilePreview[] = Array.from(files).map((file) => ({
       id: Math.random().toString(36).substring(7),
@@ -536,7 +552,7 @@ export default function ChatInput({
     // Sequential upload processing for each file.
     for (const preview of newPreviews) {
       try {
-        const result = await uploadToCloudinary(
+        const result = await uploadToS3(
           preview.file,
           (progress: UploadProgress) => {
             // Update UI with real-time percentage.
@@ -550,7 +566,7 @@ export default function ChatInput({
           },
         );
 
-        // Upload complete: store Cloudinary response data.
+        // Upload complete: store S3 response data.
         setFilePreviews((prev) =>
           prev.map((p) =>
             p.id === preview.id

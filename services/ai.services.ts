@@ -15,9 +15,16 @@ import {
 // Integrated s3Service for centralized media storage
 import { s3Service } from '@/services/s3.services';
 
+export type AiMessageContent =
+  | string
+  | (
+      | { type: 'text'; text: string }
+      | { type: 'image_url'; image_url: { url: string; detail?: 'auto' | 'low' | 'high' } }
+    )[];
+
 export interface AiMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
-  content: string | unknown;
+  content: AiMessageContent;
   name?: string;
   tool_call_id?: string;
   tool_calls?: unknown[];
@@ -44,15 +51,27 @@ class AiService {
   }
 
   /**
-   * Roughly estimates the number of tokens in a string or object.
-   * This internal heuristic ensures we stay within context limits without external dependencies.
+   * Roughly estimates the number of tokens in a string or multimodal content array.
    */
-  private estimateTokens(text: string | unknown[]): number {
-    if (typeof text !== 'string') {
-      return Math.ceil(JSON.stringify(text).length / 2);
+  private estimateTokens(content: AiMessageContent): number {
+    if (typeof content === 'string') {
+      return Math.ceil(content.length / 4); // 4 chars per token is more standard for LLMs
     }
-    // Safe, conservative estimate (2 chars per token)
-    return Math.ceil(text.length / 2);
+
+    if (Array.isArray(content)) {
+      return content.reduce((acc, part) => {
+        if (part.type === 'text') {
+          return acc + Math.ceil(part.text.length / 4);
+        }
+        if (part.type === 'image_url') {
+          // Images typically cost fixed tokens in vision models (e.g., 1000 for high detail)
+          return acc + 1000;
+        }
+        return acc;
+      }, 0);
+    }
+
+    return 0;
   }
 
   /**
@@ -60,8 +79,8 @@ class AiService {
    */
   private estimateMessageTokens(messages: AiMessage[]): number {
     return messages.reduce((acc, msg) => {
-      let count = this.estimateTokens((msg.content as string) || '');
-      if (msg.tool_calls) count += this.estimateTokens(msg.tool_calls);
+      let count = this.estimateTokens(msg.content);
+      if (msg.tool_calls) count += Math.ceil(JSON.stringify(msg.tool_calls).length / 4);
       return acc + count;
     }, 0);
   }
