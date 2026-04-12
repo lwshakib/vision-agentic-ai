@@ -62,15 +62,22 @@ class AiService {
    * Transforms the Gateway endpoint into a WebSocket URL for Deepgram Flux STT.
    */
   public getFluxWorkerUrl(token: string): string {
-    const wsBaseUrl = this.gatewayEndpoint.replace(/^http/, 'ws');
-    return `${wsBaseUrl}?model=${STT_MODEL_ID}&token=${token}&encoding=linear16&sample_rate=16000`;
+    const gatewayUrl = this.gatewayEndpoint.replace(/\/$/, '');
+    const wsBaseUrl = gatewayUrl.replace(/^http/, 'ws');
+    const u = new URL(wsBaseUrl);
+    u.searchParams.set('model', STT_MODEL_ID);
+    u.searchParams.set('token', token);
+    u.searchParams.set('encoding', 'linear16');
+    u.searchParams.set('sample_rate', '16000');
+    return u.toString();
   }
 
   /**
    * Fetches a short-lived signed token from the AI Gateway.
    */
   public async getShortLivedToken(): Promise<string> {
-    const response = await fetch(`${this.gatewayEndpoint}/short-lived-token`, {
+    const gatewayUrl = this.gatewayEndpoint.replace(/\/$/, '');
+    const response = await fetch(`${gatewayUrl}/short-lived-token`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${this.gatewayKey}`,
@@ -109,7 +116,9 @@ class AiService {
 
               try {
                 if (url.startsWith('http')) {
-                  console.log(`[AiService] Proxying image to Base64 (Robust): ${url.slice(0, 50)}...`);
+                  console.log(
+                    `[AiService] Proxying image to Base64 (Robust): ${url.slice(0, 50)}...`,
+                  );
                   const imageRes = await fetchWithRetry(url);
                   if (!imageRes.ok) throw new Error(`HTTP ${imageRes.status}`);
                   const buffer = Buffer.from(await imageRes.arrayBuffer());
@@ -143,17 +152,21 @@ class AiService {
         let finalContent = processedContent.filter((p): p is any => {
           if (p === null) return false;
           // Use type assertion to satisfy TS that text exists when type is 'text'
-          if (p.type === 'text' && !(p as { text: string }).text.trim()) return false; 
+          if (p.type === 'text' && !(p as { text: string }).text.trim())
+            return false;
           return true;
         });
 
         // Safety: 'not enough values to unpack' often happens if content is empty or malformed.
         // If content is empty or only has images with no text, add a placeholder prompt.
-        const hasText = finalContent.some(p => p.type === 'text');
-        const hasImage = finalContent.some(p => p.type === 'image_url');
-        
+        const hasText = finalContent.some((p) => p.type === 'text');
+        const hasImage = finalContent.some((p) => p.type === 'image_url');
+
         if (!hasText && hasImage) {
-          finalContent.unshift({ type: 'text', text: 'Please analyze this image.' });
+          finalContent.unshift({
+            type: 'text',
+            text: 'Please analyze this image.',
+          });
         } else if (finalContent.length === 0) {
           finalContent.push({ type: 'text', text: '...' });
         }
@@ -190,7 +203,7 @@ class AiService {
 
         let systemPrompt = SYSTEM_PROMPT;
         if (options?.isVoiceMode) {
-          systemPrompt += `\n\n[VOICE MODE] Respond in plain text only. No markdown.`;
+          systemPrompt += `\n\n[VOICE MODE ACTIVE] CRITICAL SYSTEM INSTRUCTION: You are currently speaking through a Text-To-Speech engine. You MUST format your ENTIRE response as plain spoken text natively readable by humans. DO NOT use ANY Markdown formatting whatsoever. ABSOLUTELY NO asterisks (*), NO bold, NO italics, NO bullet points, NO hash symbols (#), and NO code blocks. If you use markdown, the speech engine will physically read out the punctuation. Respond naturally as if you are speaking.`;
         }
 
         // Process messages to handle vision stability (Base64 conversion)
@@ -221,22 +234,24 @@ class AiService {
             // Limited to 5 tool call rounds for safety
             if (abortSignal?.aborted) break;
 
-            const formattedTools = Object.entries(toolDefinitions).map(([name, tool]) => {
-              const cleanParams = JSON.parse(JSON.stringify(tool.parameters));
-              if (cleanParams.properties) {
-                Object.keys(cleanParams.properties).forEach(key => {
-                  delete cleanParams.properties[key].default;
-                });
-              }
-              return {
-                type: 'function',
-                function: {
-                  name,
-                  description: tool.description,
-                  parameters: cleanParams,
-                },
-              };
-            });
+            const formattedTools = Object.entries(toolDefinitions).map(
+              ([name, tool]) => {
+                const cleanParams = JSON.parse(JSON.stringify(tool.parameters));
+                if (cleanParams.properties) {
+                  Object.keys(cleanParams.properties).forEach((key) => {
+                    delete cleanParams.properties[key].default;
+                  });
+                }
+                return {
+                  type: 'function',
+                  function: {
+                    name,
+                    description: tool.description,
+                    parameters: cleanParams,
+                  },
+                };
+              },
+            );
 
             const payload = {
               model: CHAT_MODEL_ID,
@@ -255,7 +270,9 @@ class AiService {
 
             if (!response.ok) {
               const errorBody = await response.text();
-              throw new Error(`Gateway Error: ${response.status} - ${errorBody.slice(0, 100)}`);
+              throw new Error(
+                `Gateway Error: ${response.status} - ${errorBody.slice(0, 100)}`,
+              );
             }
 
             const reader = response.body?.getReader();
@@ -339,18 +356,28 @@ class AiService {
                   args = JSON.parse(tc.function.arguments || '{}');
                 } catch (e) {}
 
-                sendChunk({ type: 'tool_call', id: tc.id, name: toolName, args: tc.function.arguments });
+                sendChunk({
+                  type: 'tool_call',
+                  id: tc.id,
+                  name: toolName,
+                  args: tc.function.arguments,
+                });
 
-                  if (tool) {
-                    try {
-                      const result = await tool.execute(args);
-                      sendChunk({ type: 'tool_result', id: tc.id, name: toolName, result });
-                      finalToolInvocations.push({
-                        toolCallId: tc.id,
-                        toolName,
-                        args,
-                        result,
-                      });
+                if (tool) {
+                  try {
+                    const result = await tool.execute(args);
+                    sendChunk({
+                      type: 'tool_result',
+                      id: tc.id,
+                      name: toolName,
+                      result,
+                    });
+                    finalToolInvocations.push({
+                      toolCallId: tc.id,
+                      toolName,
+                      args,
+                      result,
+                    });
                     contextHistory.push({
                       role: 'tool',
                       tool_call_id: tc.id,
@@ -361,9 +388,18 @@ class AiService {
                           : JSON.stringify(result),
                     });
                   } catch (err) {
-                    const msg = err instanceof Error ? err.message : String(err);
-                    console.error(`[AiService] Tool execution failed (${toolName}):`, err);
-                    sendChunk({ type: 'tool_result', id: tc.id, name: toolName, error: msg });
+                    const msg =
+                      err instanceof Error ? err.message : String(err);
+                    console.error(
+                      `[AiService] Tool execution failed (${toolName}):`,
+                      err,
+                    );
+                    sendChunk({
+                      type: 'tool_result',
+                      id: tc.id,
+                      name: toolName,
+                      error: msg,
+                    });
                     contextHistory.push({
                       role: 'tool',
                       tool_call_id: tc.id,

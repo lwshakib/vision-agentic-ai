@@ -73,7 +73,10 @@ export const MessageContent = ({
 
 import { Actions, Action } from './actions';
 export { Actions as MessageActions, Action as MessageAction };
-export type { ActionsProps as MessageActionsProps, ActionProps as MessageActionProps };
+export type {
+  ActionsProps as MessageActionsProps,
+  ActionProps as MessageActionProps,
+};
 
 type MessageBranchContextType = {
   currentBranch: number;

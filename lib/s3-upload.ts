@@ -1,8 +1,8 @@
 /**
  * S3 Upload Module
- * 
- * This module uploads files to the project's S3-compatible storage (Cloudflare R2) 
- * using presigned URLs. It provides progress tracking via XMLHttpRequest and 
+ *
+ * This module uploads files to the project's S3-compatible storage (Cloudflare R2)
+ * using presigned URLs. It provides progress tracking via XMLHttpRequest and
  * returns the final accessible URL and storage key for each upload.
  */
 
@@ -44,12 +44,12 @@ function generateFileKey(file: File): string {
 /**
  * Uploads a file to S3/R2 storage using a presigned URL.
  * Provides real-time progress tracking through an optional callback.
- * 
+ *
  * Flow:
  * 1. Request a presigned upload URL from the backend API.
  * 2. Upload the file directly to S3/R2 using the presigned URL (with XHR for progress).
  * 3. Request a signed read URL from the backend for serving the file.
- * 
+ *
  * @param file - The File object to upload.
  * @param onProgress - Optional callback invoked with upload progress updates.
  * @returns A promise resolving to the upload result containing the secure URL and public ID.

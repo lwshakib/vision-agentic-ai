@@ -61,7 +61,9 @@ export default function ChatPage() {
       if (!text || !isVoiceMode) return;
 
       if (ttsAbortControllerRef.current) {
-        ttsAbortControllerRef.current.abort(new Error('User interrupted speech'));
+        ttsAbortControllerRef.current.abort(
+          new Error('User interrupted speech'),
+        );
       }
       const controller = new AbortController();
       ttsAbortControllerRef.current = controller;
@@ -107,7 +109,10 @@ export default function ChatPage() {
         }
       } catch (error) {
         // Ignore intentional aborts
-        if (error instanceof Error && error.message === 'User interrupted speech') {
+        if (
+          error instanceof Error &&
+          error.message === 'User interrupted speech'
+        ) {
           setIsSpeaking(false);
           return;
         }
@@ -266,7 +271,7 @@ export default function ChatPage() {
       (p: MessagePart) => p.type === 'file' || p.type === 'attachment',
     ) as MessagePart[];
 
-    // Instead of removing the assistant message, we retain the chat history 
+    // Instead of removing the assistant message, we retain the chat history
     // and just re-send the user message to generate a new alternative response at the bottom.
 
     // Re-send the user message to trigger a fresh AI response.

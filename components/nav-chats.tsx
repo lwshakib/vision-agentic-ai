@@ -96,7 +96,11 @@ export function NavChats({
               >
                 {/* Fixed-size icon container. */}
                 <div className="flex h-4 w-4 shrink-0 items-center justify-center">
-                  {item.icon ? <item.icon className="size-4" /> : <MessageSquare className="size-4" />}
+                  {item.icon ? (
+                    <item.icon className="size-4" />
+                  ) : (
+                    <MessageSquare className="size-4" />
+                  )}
                 </div>
                 {/* Title with robust CSS truncation. */}
                 <span className="min-w-0 truncate text-sm font-medium">

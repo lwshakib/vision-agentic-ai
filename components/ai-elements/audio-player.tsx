@@ -34,7 +34,8 @@ export function ProAudioPlayer({
   className,
   fileName = 'speech.mp3',
 }: ProAudioPlayerProps) {
-  const audioSrc = src || (data ? `data:${data.mediaType};base64,${data.base64}` : '');
+  const audioSrc =
+    src || (data ? `data:${data.mediaType};base64,${data.base64}` : '');
 
   const handleDownload = async () => {
     try {
@@ -81,12 +82,22 @@ export function ProAudioPlayer({
 
       <MediaControlBar className="flex h-14 items-center gap-2">
         {/* Play/Pause */}
-        <Button asChild size="icon" variant="ghost" className="size-10 shrink-0 rounded-full hover:bg-transparent hover:text-foreground">
+        <Button
+          asChild
+          size="icon"
+          variant="ghost"
+          className="size-10 shrink-0 rounded-full hover:bg-transparent hover:text-foreground"
+        >
           <MediaPlayButton />
         </Button>
 
         {/* Seek Backward */}
-        <Button asChild size="icon" variant="ghost" className="size-8 shrink-0 rounded-full opacity-60 hover:bg-transparent hover:text-foreground hover:opacity-100">
+        <Button
+          asChild
+          size="icon"
+          variant="ghost"
+          className="size-8 shrink-0 rounded-full opacity-60 hover:bg-transparent hover:text-foreground hover:opacity-100"
+        >
           <MediaSeekBackwardButton seekOffset={10} />
         </Button>
 
@@ -104,16 +115,26 @@ export function ProAudioPlayer({
         </div>
 
         {/* Seek Forward */}
-        <Button asChild size="icon" variant="ghost" className="size-8 shrink-0 rounded-full opacity-60 hover:bg-transparent hover:text-foreground hover:opacity-100">
+        <Button
+          asChild
+          size="icon"
+          variant="ghost"
+          className="size-8 shrink-0 rounded-full opacity-60 hover:bg-transparent hover:text-foreground hover:opacity-100"
+        >
           <MediaSeekForwardButton seekOffset={10} />
         </Button>
 
         {/* Volume */}
         <div className="group flex items-center gap-1 overflow-hidden transition-all duration-300">
-           <Button asChild size="icon" variant="ghost" className="size-8 shrink-0 rounded-full hover:bg-transparent hover:text-foreground">
-             <MediaMuteButton />
-           </Button>
-           <MediaVolumeRange className="w-0 transition-all duration-300 group-hover:w-16" />
+          <Button
+            asChild
+            size="icon"
+            variant="ghost"
+            className="size-8 shrink-0 rounded-full hover:bg-transparent hover:text-foreground"
+          >
+            <MediaMuteButton />
+          </Button>
+          <MediaVolumeRange className="w-0 transition-all duration-300 group-hover:w-16" />
         </div>
 
         {/* Custom Download Button */}

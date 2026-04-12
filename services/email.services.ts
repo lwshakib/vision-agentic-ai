@@ -41,16 +41,26 @@ class EmailService {
    * Specialized method for sending verification emails during auth.
    */
   public async sendVerificationEmail(to: string, url: string) {
-    console.log(`[EmailService] Preparing verification email for ${to} with URL: ${url}`);
+    console.log(
+      `[EmailService] Preparing verification email for ${to} with URL: ${url}`,
+    );
     // Logic for verification email template...
-    return await this.sendEmail(to, 'Verify your email - Vision AI', null as unknown as ReactNode);
+    return await this.sendEmail(
+      to,
+      'Verify your email - Vision AI',
+      null as unknown as ReactNode,
+    );
   }
 
   /**
    * Specialized method for welcome emails.
    */
   public async sendWelcomeEmail(to: string) {
-    return await this.sendEmail(to, 'Welcome to Vision AI', null as unknown as ReactNode);
+    return await this.sendEmail(
+      to,
+      'Welcome to Vision AI',
+      null as unknown as ReactNode,
+    );
   }
 }
 

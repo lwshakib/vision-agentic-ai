@@ -29,7 +29,12 @@ export async function GET() {
   } catch (error) {
     console.error('[API_LIVE_TOKEN_ERROR]', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate live transcription token' },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to generate live transcription token',
+      },
       { status: 500 },
     );
   }

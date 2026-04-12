@@ -68,7 +68,7 @@ export function ChatMessageParts({
     let hasActive = false;
 
     const validParts = parts.filter(
-      (part) => part.type !== 'file' && part.type !== 'attachment'
+      (part) => part.type !== 'file' && part.type !== 'attachment',
     );
 
     validParts.forEach((part, i) => {
@@ -86,7 +86,7 @@ export function ChatMessageParts({
                   Version {version}
                 </span>
               )}
-            </div>
+            </div>,
           );
         }
         return;
@@ -104,7 +104,7 @@ export function ChatMessageParts({
               label={isStreaming ? 'Thinking...' : 'Thought process'}
               description={reasoningText}
               status={isStreaming ? 'active' : 'complete'}
-            />
+            />,
           );
         }
         return;
@@ -129,7 +129,7 @@ export function ChatMessageParts({
                   </Source>
                 );
               })}
-            </div>
+            </div>,
           );
         }
         return;
@@ -154,7 +154,8 @@ export function ChatMessageParts({
           state === 'input-available' ||
           state === 'running';
         const hasOutput =
-          (state === 'output-available' || state === 'ready' || output) && !!output;
+          (state === 'output-available' || state === 'ready' || output) &&
+          !!output;
 
         if (isLoading) hasActive = true;
 
@@ -184,7 +185,7 @@ export function ChatMessageParts({
                   })}
                 </ChainOfThoughtSearchResults>
               )}
-            </ChainOfThoughtStep>
+            </ChainOfThoughtStep>,
           );
           return;
         }
@@ -217,7 +218,7 @@ export function ChatMessageParts({
                   })}
                 </ChainOfThoughtSearchResults>
               )}
-            </ChainOfThoughtStep>
+            </ChainOfThoughtStep>,
           );
           return;
         }
@@ -234,7 +235,7 @@ export function ChatMessageParts({
                     : 'Generating image...'
                 }
                 status="active"
-              />
+              />,
             );
           } else if (hasOutput) {
             process.push(
@@ -247,7 +248,7 @@ export function ChatMessageParts({
                     : 'Generated image'
                 }
                 status="complete"
-              />
+              />,
             );
             if (output.success && output.image) {
               final.push(
@@ -258,11 +259,13 @@ export function ChatMessageParts({
                   options={{
                     model:
                       input?.model ||
-                      (toolName === 'generateImage' ? 'FLUX.2' : 'ImageToImage'),
+                      (toolName === 'generateImage'
+                        ? 'FLUX.2'
+                        : 'ImageToImage'),
                     width: input?.width,
                     height: input?.height,
                   }}
-                />
+                />,
               );
             } else if (!output.success) {
               final.push(
@@ -270,7 +273,7 @@ export function ChatMessageParts({
                   key={key}
                   title="Image generation failed"
                   error="The system encountered an error while processing your image."
-                />
+                />,
               );
             }
           }
@@ -285,7 +288,7 @@ export function ChatMessageParts({
                 icon={MusicIcon}
                 label="Synthesizing speech..."
                 status="active"
-              />
+              />,
             );
           } else if (hasOutput) {
             process.push(
@@ -294,7 +297,7 @@ export function ChatMessageParts({
                 icon={MusicIcon}
                 label="Speech synthesized"
                 status="complete"
-              />
+              />,
             );
             if (output.success && output.audioUrl) {
               final.push(
@@ -302,7 +305,7 @@ export function ChatMessageParts({
                   key={key}
                   src={output.audioUrl}
                   fileName={'audio-' + (input?.voice || 'speech') + '.mp3'}
-                />
+                />,
               );
             } else if (!output.success) {
               final.push(
@@ -310,7 +313,7 @@ export function ChatMessageParts({
                   key={key}
                   title="Speech generation failed"
                   error="The system encountered an error while synthesizing your audio."
-                />
+                />,
               );
             }
           }
@@ -326,7 +329,7 @@ export function ChatMessageParts({
                 icon={FileTextIcon}
                 label={`Generating ${type.toLowerCase()}...`}
                 status="active"
-              />
+              />,
             );
           } else if (hasOutput) {
             process.push(
@@ -335,7 +338,7 @@ export function ChatMessageParts({
                 icon={FileTextIcon}
                 label="Document created"
                 status="complete"
-              />
+              />,
             );
             if (output.success && output.url) {
               final.push(
@@ -344,7 +347,7 @@ export function ChatMessageParts({
                   url={output.url}
                   fileName={output.fileName}
                   type={input?.type || 'file'}
-                />
+                />,
               );
             } else if (!output.success) {
               final.push(
@@ -352,7 +355,7 @@ export function ChatMessageParts({
                   key={key}
                   title="File generation failed"
                   error="The system encountered an error while creating your document."
-                />
+                />,
               );
             }
           }
@@ -361,7 +364,11 @@ export function ChatMessageParts({
       }
     });
 
-    return { processParts: process, finalParts: final, hasActiveSteps: hasActive };
+    return {
+      processParts: process,
+      finalParts: final,
+      hasActiveSteps: hasActive,
+    };
   }, [parts, isVersioned, version, messageId]);
 
   const [isChainOpen, setIsChainOpen] = React.useState(hasActiveSteps);
@@ -373,8 +380,8 @@ export function ChatMessageParts({
   return (
     <MessageContent>
       {processParts.length > 0 && (
-        <ChainOfThought 
-          className="mb-4" 
+        <ChainOfThought
+          className="mb-4"
           open={isChainOpen}
           onOpenChange={setIsChainOpen}
         >

@@ -18,7 +18,9 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('[API_S3_PRESIGNED_URL] Error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal Server Error' },
+      {
+        error: error instanceof Error ? error.message : 'Internal Server Error',
+      },
       { status: 500 },
     );
   }

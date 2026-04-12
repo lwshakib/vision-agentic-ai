@@ -7,10 +7,7 @@ import {
   CLOUDFLARE_AI_GATEWAY_ENDPOINT,
   TAVILY_API_KEY,
 } from '@/lib/env';
-import { 
-  IMAGE_MODEL_ID, 
-  TTS_MODEL_ID,
-} from '@/lib/constants';
+import { IMAGE_MODEL_ID, TTS_MODEL_ID } from '@/lib/constants';
 import { fetchWithRetry } from '@/lib/utils';
 
 /**
@@ -111,12 +108,14 @@ export const generateImageTool: ToolDefinition = {
     properties: {
       prompt: {
         type: 'string',
-        description: 'Detailed description of the image to generate or the edits to apply.',
+        description:
+          'Detailed description of the image to generate or the edits to apply.',
       },
       image_urls: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Optional array of up to 4 reference image URLs or S3 keys for image-to-image generation.',
+        description:
+          'Optional array of up to 4 reference image URLs or S3 keys for image-to-image generation.',
         maxItems: 4,
       },
       num_inference_steps: {
@@ -146,14 +145,14 @@ export const generateImageTool: ToolDefinition = {
     },
     required: ['prompt'],
   },
-  execute: async ({ 
-    prompt, 
-    image_urls = [], 
-    num_inference_steps = 10, 
-    guidance = 3.5, 
-    seed, 
-    width = 512, 
-    height = 512 
+  execute: async ({
+    prompt,
+    image_urls = [],
+    num_inference_steps = 10,
+    guidance = 3.5,
+    seed,
+    width = 512,
+    height = 512,
   }) => {
     // 🛡️ Enforcement Guards
     const safeWidth = Math.min(width, 1024);
@@ -164,7 +163,9 @@ export const generateImageTool: ToolDefinition = {
 
     // 🔄 Process Reference Images
     if (image_urls.length > 0) {
-      console.log(`[Tool:generateImage] Processing ${image_urls.length} reference images...`);
+      console.log(
+        `[Tool:generateImage] Processing ${image_urls.length} reference images...`,
+      );
       await Promise.all(
         image_urls.map(async (url: string) => {
           try {
@@ -175,14 +176,17 @@ export const generateImageTool: ToolDefinition = {
 
             const imgRes = await fetchWithRetry(actualUrl);
             if (!imgRes.ok) throw new Error(`Fetch failed: ${imgRes.status}`);
-            
+
             // 🚀 High-performance Buffer to Base64 conversion
             const buffer = Buffer.from(await imgRes.arrayBuffer());
             images.push(buffer.toString('base64'));
           } catch (e) {
-            console.warn(`[Tool:generateImage] Failed to process image ${url}:`, e);
+            console.warn(
+              `[Tool:generateImage] Failed to process image ${url}:`,
+              e,
+            );
           }
-        })
+        }),
       );
     }
 
@@ -213,7 +217,9 @@ export const generateImageTool: ToolDefinition = {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Model error: ${response.status} - ${errorText.slice(0, 100)}`);
+      throw new Error(
+        `Model error: ${response.status} - ${errorText.slice(0, 100)}`,
+      );
     }
 
     const { image } = await response.json();
@@ -221,18 +227,22 @@ export const generateImageTool: ToolDefinition = {
 
     const resultBuffer = Buffer.from(image, 'base64');
     const key = `generated/flux2-${Date.now()}.jpg`;
-    const imageUrl = await s3Service.uploadFile(resultBuffer, key, 'image/jpeg');
+    const imageUrl = await s3Service.uploadFile(
+      resultBuffer,
+      key,
+      'image/jpeg',
+    );
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       image: imageUrl,
       info: {
         model: IMAGE_MODEL_ID,
         mode: images.length > 0 ? 'img2img' : 'text2img',
         references: images.length,
         dimensions: `${safeWidth}x${safeHeight}`,
-        steps: safeSteps
-      }
+        steps: safeSteps,
+      },
     };
   },
 };
@@ -251,7 +261,8 @@ export const textToSpeechTool: ToolDefinition = {
       },
       voice: {
         type: 'string',
-        description: 'The model ID of the speaker to use (e.g., orpheus, luna).',
+        description:
+          'The model ID of the speaker to use (e.g., orpheus, luna).',
       },
     },
     required: ['text'],
@@ -271,7 +282,7 @@ export const textToSpeechTool: ToolDefinition = {
     });
 
     if (!response.ok) throw new Error('Speech synthesis failed');
-    
+
     const buffer = Buffer.from(await response.arrayBuffer());
     const key = `tts/audio-${Date.now()}.mp3`;
     const audioUrl = await s3Service.uploadFile(buffer, key, 'audio/mpeg');
@@ -417,11 +428,11 @@ class ToolService {
 
             // Handle Horizontal Rule
             if (line.match(/^---+$/) || line.match(/^\*\*\*+$/)) {
-               doc.setLineWidth(0.2);
-               doc.line(margin, cursorY - 2, pageWidth - margin, cursorY - 2);
-               cursorY += lineHeight;
-               i++;
-               continue;
+              doc.setLineWidth(0.2);
+              doc.line(margin, cursorY - 2, pageWidth - margin, cursorY - 2);
+              cursorY += lineHeight;
+              i++;
+              continue;
             }
 
             let isHeader = false;
@@ -440,15 +451,15 @@ class ToolService {
             const isList = textToRender.match(/^[-*]\s+(.*)$/);
             let indentX = margin;
             if (isList) {
-              textToRender = "• " + isList[1];
+              textToRender = '• ' + isList[1];
               indentX = margin + 5;
             }
 
             let fontSize = 10;
             let isBold = false;
-            
+
             if (isHeader) {
-              fontSize = 20 - (headerLevel * 2); // # -> 18, ## -> 16, ### -> 14...
+              fontSize = 20 - headerLevel * 2; // # -> 18, ## -> 16, ### -> 14...
               fontSize = Math.max(10, fontSize);
               isBold = true;
               cursorY += 4; // Add top spacing for headers
@@ -458,14 +469,17 @@ class ToolService {
             doc.setFont('helvetica', isBold ? 'bold' : 'normal');
 
             // Wrap lines
-            const wrappedLines = doc.splitTextToSize(textToRender, maxLineWidth - (indentX - margin));
+            const wrappedLines = doc.splitTextToSize(
+              textToRender,
+              maxLineWidth - (indentX - margin),
+            );
 
             for (const wLine of wrappedLines) {
               if (cursorY + lineHeight > pageHeight - margin) {
                 doc.addPage();
                 cursorY = margin + 5;
               }
-              
+
               if (isHeader) {
                 const cleanHeader = wLine.replace(/\*|_/g, ''); // strip inline markdown from headers to keep it clean
                 doc.text(cleanHeader, indentX, cursorY);
@@ -475,17 +489,24 @@ class ToolService {
                 let currentX = indentX;
                 for (let part of parts) {
                   if (!part) continue;
-                  
-                  if ((part.startsWith('**') && part.endsWith('**')) || (part.startsWith('__') && part.endsWith('__'))) {
+
+                  if (
+                    (part.startsWith('**') && part.endsWith('**')) ||
+                    (part.startsWith('__') && part.endsWith('__'))
+                  ) {
                     doc.setFont('helvetica', 'bold');
                     const text = part.slice(2, -2);
                     doc.text(text, currentX, cursorY);
                     currentX += doc.getTextWidth(text);
-                  } else if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
-                     doc.setFont('helvetica', 'italic');
-                     const text = part.slice(1, -1);
-                     doc.text(text, currentX, cursorY);
-                     currentX += doc.getTextWidth(text);
+                  } else if (
+                    part.startsWith('*') &&
+                    part.endsWith('*') &&
+                    part.length > 2
+                  ) {
+                    doc.setFont('helvetica', 'italic');
+                    const text = part.slice(1, -1);
+                    doc.text(text, currentX, cursorY);
+                    currentX += doc.getTextWidth(text);
                   } else {
                     doc.setFont('helvetica', 'normal');
                     doc.text(part, currentX, cursorY);
@@ -493,12 +514,12 @@ class ToolService {
                   }
                 }
               }
-              
+
               cursorY += lineHeight * (fontSize / 10);
             }
-            
+
             if (isHeader) {
-               cursorY += 2; // Add bottom spacing for headers
+              cursorY += 2; // Add bottom spacing for headers
             }
             i++;
           }
@@ -516,9 +537,14 @@ class ToolService {
         json: 'application/json',
         markdown: 'text/markdown',
       };
-      const contentType = contentTypeMap[safeType] || 'application/octet-stream';
+      const contentType =
+        contentTypeMap[safeType] || 'application/octet-stream';
 
-      const url = await s3Service.uploadFile(buffer, `files/${fullFileName}`, contentType);
+      const url = await s3Service.uploadFile(
+        buffer,
+        `files/${fullFileName}`,
+        contentType,
+      );
 
       return {
         success: true,

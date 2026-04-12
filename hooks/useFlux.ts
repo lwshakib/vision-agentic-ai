@@ -25,6 +25,7 @@ export function useFlux({
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const lastTurnIndexRef = useRef(-1);
+  const sessionIdRef = useRef<number>(0);
 
   // Use a ref to track mute state inside the audio callback without closure staleness
   const isMutedRef = useRef(false);
@@ -33,6 +34,7 @@ export function useFlux({
   }, [isMuted]);
 
   const cleanup = useCallback(() => {
+    sessionIdRef.current++; // Invalidate any pending async start routines
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
@@ -56,6 +58,7 @@ export function useFlux({
   }, []);
 
   const start = useCallback(async () => {
+    const sessionId = ++sessionIdRef.current;
     try {
       // 1. Fetch Config
       const res = await fetch('/api/flux/config');
@@ -64,7 +67,7 @@ export function useFlux({
 
       // 2. Connect WebSocket
       const socketUrl = new URL(url);
-      if (token) {
+      if (token && !socketUrl.searchParams.has('token')) {
         socketUrl.searchParams.set('token', token);
       }
 
@@ -110,6 +113,13 @@ export function useFlux({
       // 3. Audio Capture & Raw Data Processing
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // If cleanup() was called while we were waiting for permissions, kill the stream immediately
+      if (sessionId !== sessionIdRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+
       streamRef.current = stream;
 
       // Initialize AudioContext with 16kHz sample rate (Required by Flux model)

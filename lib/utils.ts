@@ -32,7 +32,7 @@ export async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
   maxRetries = 3,
-  timeout = 30000
+  timeout = 30000,
 ): Promise<Response> {
   const defaultHeaders = {
     'User-Agent':
@@ -40,7 +40,7 @@ export async function fetchWithRetry(
   };
 
   let lastError: Error | null = null;
-  
+
   for (let i = 0; i < maxRetries; i++) {
     const controller = new AbortController();
     const timerId = setTimeout(() => controller.abort(), timeout);
@@ -56,14 +56,14 @@ export async function fetchWithRetry(
     } catch (err) {
       clearTimeout(timerId);
       lastError = err as Error;
-      
+
       const isTimeout = err instanceof Error && err.name === 'AbortError';
       const retryDelay = 1000 * Math.pow(2, i);
-      
+
       console.warn(
         `[fetchWithRetry] Attempt ${i + 1} failed: ${
           isTimeout ? 'Timeout' : lastError.message
-        }. ${i < maxRetries - 1 ? `Retrying in ${retryDelay}ms...` : 'Max retries reached.'}`
+        }. ${i < maxRetries - 1 ? `Retrying in ${retryDelay}ms...` : 'Max retries reached.'}`,
       );
 
       if (i < maxRetries - 1) {
@@ -72,5 +72,8 @@ export async function fetchWithRetry(
     }
   }
 
-  throw lastError || new Error(`Failed to fetch ${url} after ${maxRetries} attempts`);
+  throw (
+    lastError ||
+    new Error(`Failed to fetch ${url} after ${maxRetries} attempts`)
+  );
 }

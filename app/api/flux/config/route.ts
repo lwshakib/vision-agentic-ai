@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { aiService } from '@/services/ai.services';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { aiService } from '@/services/ai.services';
 
 /**
- * Fetches a short-lived token from Cloudflare AI Gateway
- * and returns the pre-configured WebSocket URL for Flux ASR.
+ * Provides a short-lived signed token for Flux ASR via Cloudflare AI Gateway.
+ * Uses the centralized AiService to generate the token and construct the WebSocket URL.
  */
 export async function GET() {
   const session = await auth.api.getSession({
@@ -18,11 +18,15 @@ export async function GET() {
 
   try {
     const token = await aiService.getShortLivedToken();
+    const url = aiService.getFluxWorkerUrl(token);
+
     return NextResponse.json({
-      url: aiService.getFluxWorkerUrl(token),
+      url,
+      // We also return token here just in case the hook needs it, but the url already has it
+      token,
     });
-  } catch (error) {
-    console.error('Failed to generate Flux token:', error);
-    return new NextResponse('Gateway Configuration Error', { status: 500 });
+  } catch (err) {
+    console.error('Failed to get ASR token:', err);
+    return new NextResponse('Server Configuration Error', { status: 500 });
   }
 }

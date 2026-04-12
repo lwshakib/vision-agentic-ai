@@ -31,10 +31,7 @@ import {
   MicOff,
 } from 'lucide-react';
 // Import S3 upload utilities and progress types.
-import {
-  uploadToS3,
-  type UploadProgress,
-} from '@/lib/s3-upload';
+import { uploadToS3, type UploadProgress } from '@/lib/s3-upload';
 import NextImage from 'next/image';
 import { useFlux } from '@/hooks/useFlux';
 import { toast } from 'sonner';
@@ -523,23 +520,25 @@ export default function ChatInput({
     // Filter only images for counting and size validation
     const filesArray = Array.from(files);
     const MAX_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
-    
+
     // Check for size limit first
-    const oversizedFiles = filesArray.filter(f => f.size > MAX_SIZE_BYTES);
+    const oversizedFiles = filesArray.filter((f) => f.size > MAX_SIZE_BYTES);
     if (oversizedFiles.length > 0) {
       toast.error('File too large', {
-        description: 'Each image must be less than 1MB.'
+        description: 'Each image must be less than 1MB.',
       });
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    const newImageFiles = filesArray.filter(f => f.type.startsWith('image/'));
-    const currentImageCount = filePreviews.filter(p => p.file.type.startsWith('image/')).length;
+    const newImageFiles = filesArray.filter((f) => f.type.startsWith('image/'));
+    const currentImageCount = filePreviews.filter((p) =>
+      p.file.type.startsWith('image/'),
+    ).length;
 
     if (currentImageCount + newImageFiles.length > 2) {
       toast.error('Limit Reached', {
-        description: 'You can only upload a maximum of 2 images per message.'
+        description: 'You can only upload a maximum of 2 images per message.',
       });
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;

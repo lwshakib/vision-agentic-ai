@@ -1,6 +1,11 @@
 'use client';
 
-import { CopyIcon, RotateCcwIcon, ThumbsUpIcon, ThumbsDownIcon } from 'lucide-react';
+import {
+  CopyIcon,
+  RotateCcwIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import {
   MessageAction,
@@ -40,14 +45,14 @@ export function MessageActionsList({
     : '';
 
   const handleFeedback = (type: 'up' | 'down') => {
-    setFeedback(prev => prev === type ? null : type);
+    setFeedback((prev) => (prev === type ? null : type));
   };
 
   return (
     <MessageActions
       className={cn(
         'mt-1 opacity-0 transition-opacity group-hover:opacity-100',
-        message.role === 'user' ? 'justify-end' : ''
+        message.role === 'user' ? 'justify-end' : '',
       )}
     >
       {fullText && (
@@ -76,18 +81,28 @@ export function MessageActionsList({
             label="Good response"
             onClick={() => handleFeedback('up')}
             tooltip="Good response"
-            className={cn(feedback === 'up' && 'text-green-600 bg-green-50 dark:bg-green-900/20')}
+            className={cn(
+              feedback === 'up' &&
+                'text-green-600 bg-green-50 dark:bg-green-900/20',
+            )}
           >
-            <ThumbsUpIcon className={cn('size-4', feedback === 'up' && 'fill-current')} />
+            <ThumbsUpIcon
+              className={cn('size-4', feedback === 'up' && 'fill-current')}
+            />
           </MessageAction>
 
           <MessageAction
             label="Bad response"
             onClick={() => handleFeedback('down')}
             tooltip="Bad response"
-            className={cn(feedback === 'down' && 'text-red-600 bg-red-50 dark:bg-red-900/20')}
+            className={cn(
+              feedback === 'down' &&
+                'text-red-600 bg-red-50 dark:bg-red-900/20',
+            )}
           >
-            <ThumbsDownIcon className={cn('size-4', feedback === 'down' && 'fill-current')} />
+            <ThumbsDownIcon
+              className={cn('size-4', feedback === 'down' && 'fill-current')}
+            />
           </MessageAction>
         </>
       )}

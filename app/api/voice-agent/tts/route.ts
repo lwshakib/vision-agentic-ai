@@ -19,7 +19,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 });
     }
 
-    const result = await textToSpeechTool.execute({ text, voice: voice || 'orpheus' });
+    const result = await textToSpeechTool.execute({
+      text,
+      voice: voice || 'orpheus',
+    });
 
     if (!result.success) {
       return NextResponse.json({ error: 'TTS failed' }, { status: 500 });

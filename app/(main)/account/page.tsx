@@ -261,8 +261,9 @@ export default function AccountPage() {
 
               <Card className="bg-muted/30 border-dashed">
                 <CardContent className="p-4 text-xs text-muted-foreground leading-relaxed">
-                  Your profile information is shared across Vision Agentic services
-                  to help us provide a consistent and personalized experience.
+                  Your profile information is shared across Vision Agentic
+                  services to help us provide a consistent and personalized
+                  experience.
                 </CardContent>
               </Card>
             </div>
