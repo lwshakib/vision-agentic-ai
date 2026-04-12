@@ -1,11 +1,13 @@
 'use client';
 
-import { CopyIcon } from 'lucide-react';
+import { CopyIcon, RotateCcwIcon, ThumbsUpIcon, ThumbsDownIcon } from 'lucide-react';
+import { useState } from 'react';
 import {
   MessageAction,
   MessageActions,
 } from '@/components/ai-elements/message';
 import type { ChatMessage } from '@/hooks/use-chat';
+import { cn } from '@/lib/utils';
 
 interface TextPart {
   type: string;
@@ -21,8 +23,13 @@ interface MessageActionsListProps {
 export function MessageActionsList({
   message,
   onCopy,
+  onRetry,
 }: MessageActionsListProps) {
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+
   if (message.isStreaming) return null;
+
+  const isAssistant = message.role === 'assistant';
 
   const fullText = Array.isArray(message.parts)
     ? (message.parts as TextPart[])
@@ -32,19 +39,58 @@ export function MessageActionsList({
         .join('\n\n')
     : '';
 
-  if (!fullText) return null;
+  const handleFeedback = (type: 'up' | 'down') => {
+    setFeedback(prev => prev === type ? null : type);
+  };
 
   return (
     <MessageActions
-      className={`mt-1 ${message.role === 'user' ? 'justify-end' : ''}`}
+      className={cn(
+        'mt-1 opacity-0 transition-opacity group-hover:opacity-100',
+        message.role === 'user' ? 'justify-end' : ''
+      )}
     >
-      <MessageAction
-        label="Copy"
-        onClick={() => onCopy(fullText)}
-        tooltip="Copy this response"
-      >
-        <CopyIcon className="size-4" />
-      </MessageAction>
+      {fullText && (
+        <MessageAction
+          label="Copy"
+          onClick={() => onCopy(fullText)}
+          tooltip="Copy this response"
+        >
+          <CopyIcon className="size-4" />
+        </MessageAction>
+      )}
+
+      {isAssistant && onRetry && (
+        <MessageAction
+          label="Regenerate"
+          onClick={onRetry}
+          tooltip="Regenerate response"
+        >
+          <RotateCcwIcon className="size-4" />
+        </MessageAction>
+      )}
+
+      {isAssistant && (
+        <>
+          <MessageAction
+            label="Good response"
+            onClick={() => handleFeedback('up')}
+            tooltip="Good response"
+            className={cn(feedback === 'up' && 'text-green-600 bg-green-50 dark:bg-green-900/20')}
+          >
+            <ThumbsUpIcon className={cn('size-4', feedback === 'up' && 'fill-current')} />
+          </MessageAction>
+
+          <MessageAction
+            label="Bad response"
+            onClick={() => handleFeedback('down')}
+            tooltip="Bad response"
+            className={cn(feedback === 'down' && 'text-red-600 bg-red-50 dark:bg-red-900/20')}
+          >
+            <ThumbsDownIcon className={cn('size-4', feedback === 'down' && 'fill-current')} />
+          </MessageAction>
+        </>
+      )}
     </MessageActions>
   );
 }

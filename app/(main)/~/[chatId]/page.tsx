@@ -257,9 +257,8 @@ export default function ChatPage() {
       (p: MessagePart) => p.type === 'file' || p.type === 'attachment',
     ) as MessagePart[];
 
-    // Remove this assistant message and any subsequent messages to clean up the UI.
-    const newMessages = messages.slice(0, messageIndex);
-    setMessages(newMessages);
+    // Instead of removing the assistant message, we retain the chat history 
+    // and just re-send the user message to generate a new alternative response at the bottom.
 
     // Re-send the user message to trigger a fresh AI response.
     if (filesParts.length > 0) {

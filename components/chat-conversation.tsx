@@ -15,7 +15,7 @@ import { ConversationSkeleton, ChatInputSkeleton } from './chats/chat-skeleton';
 import {
   SearchLoading as SearchLoadingUI,
   ToolLoading as ToolLoadingUI,
-} from './chats/tool-status';
+} from '@/components/tools/tool-status';
 import type { ChatMessage, ChatStatus } from '@/hooks/use-chat';
 
 export type { ChatMessage };

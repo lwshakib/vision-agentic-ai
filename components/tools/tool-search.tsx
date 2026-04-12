@@ -1,6 +1,6 @@
 'use client';
 
-import { Source, SourceTrigger, SourceContent } from './source';
+import { Source, SourceTrigger, SourceContent } from '../chats/source';
 
 interface SearchResult {
   title?: string;
