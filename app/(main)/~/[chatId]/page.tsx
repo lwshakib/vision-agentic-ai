@@ -61,7 +61,7 @@ export default function ChatPage() {
       if (!text || !isVoiceMode) return;
 
       if (ttsAbortControllerRef.current) {
-        ttsAbortControllerRef.current.abort();
+        ttsAbortControllerRef.current.abort(new Error('User interrupted speech'));
       }
       const controller = new AbortController();
       ttsAbortControllerRef.current = controller;
@@ -106,6 +106,15 @@ export default function ChatPage() {
           setIsSpeaking(false);
         }
       } catch (error) {
+        // Ignore intentional aborts
+        if (error instanceof Error && error.message === 'User interrupted speech') {
+          setIsSpeaking(false);
+          return;
+        }
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          setIsSpeaking(false);
+          return;
+        }
         console.error('Speech playback failed:', error);
         setIsSpeaking(false);
       }
@@ -189,7 +198,7 @@ export default function ChatPage() {
   const handleStop = useCallback(() => {
     stop(); // Abort LLM stream
     if (ttsAbortControllerRef.current) {
-      ttsAbortControllerRef.current.abort();
+      ttsAbortControllerRef.current.abort(new Error('User interrupted speech'));
       ttsAbortControllerRef.current = null;
     }
     if (audioRef.current) {
