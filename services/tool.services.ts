@@ -409,16 +409,96 @@ class ToolService {
               }
             }
 
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            const wrappedLines = doc.splitTextToSize(line, maxLineWidth);
+            if (!line) {
+              cursorY += lineHeight;
+              i++;
+              continue;
+            }
+
+            // Handle Horizontal Rule
+            if (line.match(/^---+$/) || line.match(/^\*\*\*+$/)) {
+               doc.setLineWidth(0.2);
+               doc.line(margin, cursorY - 2, pageWidth - margin, cursorY - 2);
+               cursorY += lineHeight;
+               i++;
+               continue;
+            }
+
+            let isHeader = false;
+            let headerLevel = 0;
+            let textToRender = line;
+
+            // Handle Headers
+            const headerMatch = textToRender.match(/^(#{1,6})\s+(.*)$/);
+            if (headerMatch) {
+              isHeader = true;
+              headerLevel = headerMatch[1].length;
+              textToRender = headerMatch[2];
+            }
+
+            // Handle Basic Lists
+            const isList = textToRender.match(/^[-*]\s+(.*)$/);
+            let indentX = margin;
+            if (isList) {
+              textToRender = "• " + isList[1];
+              indentX = margin + 5;
+            }
+
+            let fontSize = 10;
+            let isBold = false;
+            
+            if (isHeader) {
+              fontSize = 20 - (headerLevel * 2); // # -> 18, ## -> 16, ### -> 14...
+              fontSize = Math.max(10, fontSize);
+              isBold = true;
+              cursorY += 4; // Add top spacing for headers
+            }
+
+            doc.setFontSize(fontSize);
+            doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+
+            // Wrap lines
+            const wrappedLines = doc.splitTextToSize(textToRender, maxLineWidth - (indentX - margin));
+
             for (const wLine of wrappedLines) {
               if (cursorY + lineHeight > pageHeight - margin) {
                 doc.addPage();
                 cursorY = margin + 5;
               }
-              doc.text(wLine, margin, cursorY);
-              cursorY += lineHeight;
+              
+              if (isHeader) {
+                const cleanHeader = wLine.replace(/\*|_/g, ''); // strip inline markdown from headers to keep it clean
+                doc.text(cleanHeader, indentX, cursorY);
+              } else {
+                // Inline bold/italic parser for standard paragraphs
+                const parts = wLine.split(/(\*\*.*?\*\*|__.*?__|\*.*?\*)/g);
+                let currentX = indentX;
+                for (let part of parts) {
+                  if (!part) continue;
+                  
+                  if ((part.startsWith('**') && part.endsWith('**')) || (part.startsWith('__') && part.endsWith('__'))) {
+                    doc.setFont('helvetica', 'bold');
+                    const text = part.slice(2, -2);
+                    doc.text(text, currentX, cursorY);
+                    currentX += doc.getTextWidth(text);
+                  } else if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+                     doc.setFont('helvetica', 'italic');
+                     const text = part.slice(1, -1);
+                     doc.text(text, currentX, cursorY);
+                     currentX += doc.getTextWidth(text);
+                  } else {
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(part, currentX, cursorY);
+                    currentX += doc.getTextWidth(part);
+                  }
+                }
+              }
+              
+              cursorY += lineHeight * (fontSize / 10);
+            }
+            
+            if (isHeader) {
+               cursorY += 2; // Add bottom spacing for headers
             }
             i++;
           }
