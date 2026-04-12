@@ -2,8 +2,8 @@
  * Text-to-Speech API Route
  * Provides a secure endpoint for converting AI responses to speech.
  */
-// Import the centralized AI service.
-import { aiService } from '@/services/ai.services';
+// Import the localized TTS tool implementation.
+import { textToSpeechTool } from '@/services/tool.services';
 import { NextResponse } from 'next/server';
 import { getUser } from '@/actions/user';
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 });
     }
 
-    const result = await aiService.textToSpeech(text, voice || 'orpheus');
+    const result = await textToSpeechTool.execute({ text, voice: voice || 'orpheus' });
 
     if (!result.success) {
       return NextResponse.json({ error: 'TTS failed' }, { status: 500 });
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       audioUrl: result.audioUrl,
-      text: result.text,
+      text: text, // The tool doesn't echo back the text, so we return the input text directly
     });
   } catch (error) {
     console.error('[TTS_API_ERROR]', error);

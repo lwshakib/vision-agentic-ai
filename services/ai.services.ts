@@ -392,10 +392,18 @@ class AiService {
             });
           }
 
-          controller.close();
+          try {
+            controller.close();
+          } catch (e) {
+            // Ignore if already closed
+          }
         } catch (error) {
           console.error('[AiService] Streaming error:', error);
-          controller.error(error);
+          try {
+            controller.error(error);
+          } catch (e) {
+            // Ignore if already closed
+          }
         }
       },
     });

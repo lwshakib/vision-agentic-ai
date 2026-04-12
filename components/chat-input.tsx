@@ -917,7 +917,10 @@ export default function ChatInput({
 
                         {voiceStatus === 'connecting' ? (
                           <button
-                            onClick={() => onVoiceModeChange?.(false)}
+                            onClick={() => {
+                              stopFlux();
+                              onVoiceModeChange?.(false);
+                            }}
                             className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-700 text-white transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
                           >
                             <X size={16} />
@@ -926,6 +929,7 @@ export default function ChatInput({
                         ) : voiceStatus === 'active' ? (
                           <button
                             onClick={() => {
+                              stopFlux();
                               setVoiceStatus('ending');
                               setTimeout(() => onVoiceModeChange?.(false), 800);
                             }}
@@ -1037,7 +1041,10 @@ export default function ChatInput({
                       {/* Status Interaction Button */}
                       {voiceStatus === 'connecting' ? (
                         <button
-                          onClick={() => onVoiceModeChange?.(false)}
+                          onClick={() => {
+                            stopFlux();
+                            onVoiceModeChange?.(false);
+                          }}
                           className="flex items-center gap-2 px-3 h-10 rounded-full bg-neutral-700 text-white transition-all hover:scale-105 active:scale-95 font-semibold"
                         >
                           <X size={16} />
@@ -1046,6 +1053,7 @@ export default function ChatInput({
                       ) : voiceStatus === 'active' ? (
                         <button
                           onClick={() => {
+                            stopFlux();
                             setVoiceStatus('ending');
                             setTimeout(() => onVoiceModeChange?.(false), 800);
                           }}
