@@ -27,13 +27,65 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 ### Code Contributions
 
-1. **Fork** the repository.
-2. **Clone** your fork to your local machine.
-3. **Branch**: Create a new branch for your feature or fix (e.g., `feature/cool-new-tool`).
-4. **Develop**: Make your changes, following the [Style Guide](#style-guide).
-5. **Lint and Format**: Ensure your changes follow the style guide.
-6. **Push**: Push your branch to your fork.
-7. **PR**: Open a Pull Request against the main repository.
+Follow these step-by-step instructions to contribute code to the repository:
+
+1. **Fork the repository**: Click the "Fork" button at the top right of this page to create your own copy of the project under your GitHub account.
+
+2. **Clone your fork**:
+   Clone the forked repository to your local machine:
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/vision-agentic-ai.git
+   cd vision-agentic-ai
+   ```
+
+3. **Set up the upstream remote**:
+   Link your local repository to the original repository to keep it in sync:
+   ```bash
+   git remote add upstream https://github.com/lwshakib/vision-agentic-ai.git
+   ```
+
+4. **Fetch and sync with upstream**:
+   Make sure you are on the `main` branch and it is up to date before starting any new work:
+   ```bash
+   git checkout main
+   git fetch upstream
+   git merge upstream/main
+   ```
+
+5. **Create a branch**:
+   Create a new branch for your feature or bug fix. Use a descriptive name:
+   ```bash
+   git checkout -b feature/cool-new-tool
+   ```
+
+6. **Develop**:
+   Make your changes, ensuring you follow our [Style Guide](#style-guide).
+
+7. **Lint and Format**:
+   Ensure your changes follow the style guide and pass all formatting checks:
+   ```bash
+   bun run format
+   bun run lint
+   ```
+
+8. **Commit your changes**:
+   Commit your changes using Conventional Commits. Keep commits atomic and descriptive:
+   ```bash
+   git add .
+   git commit -m "feat: add support for real-time speech-to-text"
+   ```
+
+9. **Push to your fork**:
+   Push the changes to your remote branch:
+   ```bash
+   git push origin feature/cool-new-tool
+   ```
+
+10. **Create a Pull Request (PR)**:
+    - Go to the original repository (`lwshakib/vision-agentic-ai`).
+    - Click on "Compare & pull request".
+    - Clearly describe what your PR does, the problem it solves, and link any related issues.
+    - Submit the PR for review!
 
 ## 🛠 Development Setup
 

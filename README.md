@@ -3,6 +3,8 @@
 Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform built with **Next.js 16**, **React 19**, and **Bun**. It provides a sophisticated suite of AI tools, including real-time web exploration, automated deep content extraction, high-quality image generation using FLUX models, and natural voice synthesis.
 
 ![Vision Agentic AI Demo](./public/demo.png)
+![Vision Agentic AI Demo 2](./public/demo-2.png)
+![Vision Agentic AI Demo 3](./public/demo-3.png)
 
 ## ✨ Key Features
 
@@ -36,30 +38,50 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
 
 2. **Install dependencies**:
 
+   Ensure you have [Bun](https://bun.sh/) installed. If not, follow the official installation guide. Then, run:
+
    ```bash
    bun install
    ```
 
 3. **Set up environment variables**:
 
+   Create a copy of the example environment file:
+
    ```bash
    cp .env.example .env
-   # Update the environment variables in .env (Google AI, Tavily, Cloudinary, Resend, etc.)
    ```
 
+   Open the `.env` file and configure the required keys. Some key variables include:
+   - **Authentication**: `BETTER_AUTH_SECRET` (generate a secure random string), `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET`.
+   - **Database**: `DATABASE_URL` for your PostgreSQL instance.
+   - **External APIs**: `TAVILY_API_KEY` and `RESEND_API_KEY`.
+   - **Cloudflare AI Gateway**: `CLOUDFLARE_AI_GATEWAY_API_KEY` and `CLOUDFLARE_AI_GATEWAY_ENDPOINT`.
+   - **Media Storage**: Setup your AWS S3 or Cloudflare R2 bucket variables like `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_S3_BUCKET_NAME`.
+
 4. **Initialize the database**:
+
+   Set up your PostgreSQL database schema with Prisma:
 
    ```bash
    bun run db:migrate
    ```
 
-5. **Run the development server**:
+5. **(Optional) Storage Bucket Setup**:
+
+   If using S3 or Cloudflare R2, you can initialize your buckets:
+
+   ```bash
+   bun run bucket:setup
+   ```
+
+6. **Run the development server**:
 
    ```bash
    bun run dev
    ```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+7. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🛠️ Tech Stack
 

@@ -135,7 +135,8 @@ function LiveWaveform({
 
         // Visual styling: Dynamic alpha based on loudness.
         ctx.globalAlpha = 0.35 + v * 0.65;
-        ctx.fillStyle = '#e5e7eb';
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        ctx.fillStyle = isDarkMode ? '#e5e7eb' : '#374151';
 
         // Draw the bar centered vertically.
         ctx.fillRect(i * step, centerY - h / 2, barWidth, h);
@@ -297,7 +298,7 @@ function FilePreviewItem({
 
   return (
     <div className="relative group">
-      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-neutral-700">
+      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-neutral-200 dark:bg-neutral-700">
         {/* Render local thumbnail if it's an image. */}
         {isImage && (
           <NextImage
@@ -311,14 +312,14 @@ function FilePreviewItem({
         )}
         {/* Generic video icon placeholder for video files. */}
         {isVideo && (
-          <div className="w-full h-full flex items-center justify-center bg-neutral-800">
-            <VideoIcon className="w-6 h-6 text-neutral-400" />
+          <div className="w-full h-full flex items-center justify-center bg-neutral-300 dark:bg-neutral-800">
+            <VideoIcon className="w-6 h-6 text-neutral-500 dark:text-neutral-400" />
           </div>
         )}
         {/* Generic file icon for other types. */}
         {!isImage && !isVideo && (
           <div className="w-full h-full flex items-center justify-center">
-            <FileIcon className="w-6 h-6 text-neutral-400" />
+            <FileIcon className="w-6 h-6 text-neutral-500 dark:text-neutral-400" />
           </div>
         )}
 
@@ -821,7 +822,7 @@ export default function ChatInput({
 
       {/* Main interactive input chassis. */}
       <div
-        className={`w-full rounded-2xl bg-neutral-800 text-white px-4 py-3 transition-all duration-200 ease-out ${
+        className={`w-full rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white px-4 py-3 transition-all duration-200 ease-out ${
           className ?? ''
         }`}
       >
@@ -830,7 +831,7 @@ export default function ChatInput({
           <div className="flex items-center gap-3">
             <button
               disabled
-              className="h-9 w-9 rounded-full bg-neutral-700 flex items-center justify-center opacity-40 cursor-not-allowed"
+              className="h-9 w-9 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white flex items-center justify-center opacity-40 cursor-not-allowed"
             >
               <Plus size={18} />
             </button>
@@ -841,7 +842,7 @@ export default function ChatInput({
             {/* Cancel recording. */}
             <button
               onClick={() => stopRecording(false)}
-              className="h-9 w-9 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center"
+              className="h-9 w-9 rounded-full bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-white flex items-center justify-center"
             >
               <X size={18} />
             </button>
@@ -849,7 +850,7 @@ export default function ChatInput({
             {/* Confirm and Transcribe. */}
             <button
               onClick={() => stopRecording(true)}
-              className="h-9 w-9 rounded-full bg-white text-black flex items-center justify-center"
+              className="h-9 w-9 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center"
             >
               <Check size={18} />
             </button>
@@ -857,8 +858,8 @@ export default function ChatInput({
         ) : isTranscribing ? (
           /* -------- TRANSCRIBING STATE UI -------- */
           <div className="flex items-center justify-center gap-3 py-1">
-            <div className="h-6 w-6 rounded-full border-2 border-neutral-400 border-t-transparent animate-spin" />
-            <span className="text-xs text-neutral-300">
+            <div className="h-6 w-6 rounded-full border-2 border-neutral-500 dark:border-neutral-400 border-t-transparent animate-spin" />
+            <span className="text-xs text-neutral-600 dark:text-neutral-300">
               Transcribing audio...
             </span>
           </div>
@@ -893,7 +894,7 @@ export default function ChatInput({
                   {/* Bottom-left: Attach button. */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-10 w-10 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                    className="h-10 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95"
                   >
                     <Plus size={18} />
                   </button>
@@ -908,7 +909,7 @@ export default function ChatInput({
                           className={`h-10 w-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
                             isMuted
                               ? 'bg-red-500/20 text-red-500'
-                              : 'bg-neutral-700 text-white'
+                              : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white hover:bg-neutral-300 dark:hover:bg-neutral-600'
                           }`}
                         >
                           {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
@@ -920,7 +921,7 @@ export default function ChatInput({
                               stopFlux();
                               onVoiceModeChange?.(false);
                             }}
-                            className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-700 text-white transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
+                            className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
                           >
                             <X size={16} />
                             <span className="text-sm font-medium">Cancel</span>
@@ -932,13 +933,13 @@ export default function ChatInput({
                               setVoiceStatus('ending');
                               setTimeout(() => onVoiceModeChange?.(false), 800);
                             }}
-                            className="group flex items-center gap-3 px-5 h-10 rounded-full bg-white text-black transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
+                            className="group flex items-center gap-3 px-5 h-10 rounded-full bg-black dark:bg-white text-white dark:text-black transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
                           >
                             <div className="flex items-center gap-[1px] h-3">
                               {[1, 2, 3, 4].map((i) => (
                                 <div
                                   key={i}
-                                  className="w-[1.5px] bg-black rounded-full"
+                                  className="w-[1.5px] bg-white dark:bg-black rounded-full"
                                   style={{
                                     height: isMuted
                                       ? '2px'
@@ -953,8 +954,8 @@ export default function ChatInput({
                             </span>
                           </button>
                         ) : voiceStatus === 'ending' ? (
-                          <div className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-800 border border-neutral-700 animate-pulse">
-                            <span className="text-sm font-medium text-neutral-400">
+                          <div className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 animate-pulse">
+                            <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
                               Ending...
                             </span>
                           </div>
@@ -965,7 +966,7 @@ export default function ChatInput({
                         <button
                           onClick={startRecording}
                           disabled={isTranscribing}
-                          className="h-10 w-10 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
+                          className="h-10 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 hover:bg-neutral-300 dark:hover:bg-neutral-600"
                         >
                           <Mic size={18} />
                         </button>
@@ -981,7 +982,7 @@ export default function ChatInput({
                             }
                           }}
                           disabled={isSubmitting}
-                          className="h-10 w-10 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
+                          className="h-10 w-10 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                         >
                           {isGenerating ? (
                             <Square fill="currentColor" size={14} />
@@ -1001,7 +1002,7 @@ export default function ChatInput({
               <>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-10 w-10 rounded-full bg-neutral-700 hover:bg-neutral-600 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                  className="h-10 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95"
                 >
                   <Plus size={18} />
                 </button>
@@ -1031,7 +1032,7 @@ export default function ChatInput({
                         className={`h-10 w-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
                           isMuted
                             ? 'bg-red-500/20 text-red-500'
-                            : 'bg-neutral-700 text-white'
+                            : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white hover:bg-neutral-300 dark:hover:bg-neutral-600'
                         }`}
                       >
                         {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
@@ -1044,7 +1045,7 @@ export default function ChatInput({
                             stopFlux();
                             onVoiceModeChange?.(false);
                           }}
-                          className="flex items-center gap-2 px-3 h-10 rounded-full bg-neutral-700 text-white transition-all hover:scale-105 active:scale-95 font-semibold"
+                          className="flex items-center gap-2 px-3 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white transition-all hover:scale-105 active:scale-95 font-semibold"
                         >
                           <X size={16} />
                           <span className="text-xs">Cancel</span>
@@ -1056,13 +1057,13 @@ export default function ChatInput({
                             setVoiceStatus('ending');
                             setTimeout(() => onVoiceModeChange?.(false), 800);
                           }}
-                          className="group flex items-center gap-2 px-3 h-10 rounded-full bg-white text-black transition-all hover:scale-105 active:scale-95"
+                          className="group flex items-center gap-2 px-3 h-10 rounded-full bg-black dark:bg-white text-white dark:text-black transition-all hover:scale-105 active:scale-95"
                         >
                           <div className="flex items-center gap-[1px] h-3">
                             {[1, 2, 3, 4].map((i) => (
                               <div
                                 key={i}
-                                className="w-[1.5px] bg-black rounded-full"
+                                className="w-[1.5px] bg-white dark:bg-black rounded-full"
                                 style={{
                                   height: isMuted
                                     ? '2px'
@@ -1077,8 +1078,8 @@ export default function ChatInput({
                           </span>
                         </button>
                       ) : (
-                        <div className="px-3 h-10 rounded-full bg-neutral-800 border border-neutral-700 flex items-center">
-                          <span className="text-xs font-medium text-neutral-400">
+                        <div className="px-3 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 flex items-center">
+                          <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
                             Ending...
                           </span>
                         </div>
@@ -1089,7 +1090,7 @@ export default function ChatInput({
                       <button
                         onClick={startRecording}
                         disabled={isTranscribing}
-                        className="h-10 w-10 rounded-full bg-neutral-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
+                        className="h-10 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 hover:bg-neutral-300 dark:hover:bg-neutral-600"
                       >
                         <Mic size={18} />
                       </button>
@@ -1105,7 +1106,7 @@ export default function ChatInput({
                           }
                         }}
                         disabled={isSubmitting}
-                        className="h-10 w-10 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
+                        className="h-10 w-10 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                       >
                         {isGenerating ? (
                           <Square fill="currentColor" size={14} />
