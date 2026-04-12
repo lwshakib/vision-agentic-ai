@@ -346,9 +346,10 @@ class ToolService {
 
     const safeFileName = fileName || 'generated-file';
     const safeType = type || 'pdf';
-    const fullFileName = safeFileName.endsWith(`.${safeType}`)
+    const extension = safeType === 'markdown' ? 'md' : safeType;
+    const fullFileName = safeFileName.endsWith(`.${extension}`)
       ? safeFileName
-      : `${safeFileName}.${safeType}`;
+      : `${safeFileName}.${extension}`;
 
     try {
       let buffer: Buffer;
@@ -429,11 +430,19 @@ class ToolService {
           buffer = Buffer.from(normalizedContent, 'utf-8');
       }
 
-      await s3Service.uploadFile(buffer, `files/${fullFileName}`, `application/${safeType}`);
+      const contentTypeMap: Record<string, string> = {
+        pdf: 'application/pdf',
+        csv: 'text/csv',
+        json: 'application/json',
+        markdown: 'text/markdown',
+      };
+      const contentType = contentTypeMap[safeType] || 'application/octet-stream';
+
+      const url = await s3Service.uploadFile(buffer, `files/${fullFileName}`, contentType);
 
       return {
         success: true,
-        path: `files/${fullFileName}`,
+        url,
         fileName: fullFileName,
       };
     } catch (error) {

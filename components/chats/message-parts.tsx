@@ -135,29 +135,32 @@ export function ChatMessageParts({
             );
           }
 
-          if (typeof part.type === 'string' && part.type.startsWith('tool-')) {
+          if (typeof part.type === 'string' && (part.type.startsWith('tool-') || part.type === 'tool-ui')) {
             const toolCall = part;
+            const toolName = part.type === 'tool-ui' ? (part.toolName as string) : part.type.replace('tool-', '');
+
+            // Determine generic state from various possible property names
+            const state = (toolCall.state || toolCall.status) as string;
+            const input = (toolCall.input || toolCall.args) as any;
+            const output = (toolCall.output || toolCall.result) as any;
+
+            const isLoading =
+              state === 'input-streaming' ||
+              state === 'input-available' ||
+              state === 'running';
+            const hasOutput = (state === 'output-available' || state === 'ready' || output) && output;
 
             // Web Search
-            if (toolCall.type === 'tool-webSearch') {
-              const input = toolCall.input;
-              const output = toolCall.output;
-              const isLoading =
-                toolCall.state === 'input-streaming' ||
-                toolCall.state === 'input-available';
-              const hasOutput = toolCall.state === 'output-available' && output;
-
+            if (toolName === 'webSearch') {
               if (isLoading) {
                 const text = input?.query?.trim()
-                  ? `Searching web for "${input.query}"..`
-                  : 'Searching web..';
+                  ? `Searching web for "${input.query}"...`
+                  : 'Searching web...';
                 return (
                   <ToolCard
                     key={key}
                     icon={SearchIcon}
-                    title={
-                      text.endsWith('..') ? text.slice(0, -2) + '...' : text
-                    }
+                    title={text}
                     isLoading={true}
                     isSimpleLoading={true}
                   >
@@ -173,27 +176,19 @@ export function ChatMessageParts({
             }
 
             // Extract Web URL
-            if (toolCall.type === 'tool-extractWebUrl') {
-              const input = toolCall.input;
-              const output = toolCall.output;
-              const isLoading =
-                toolCall.state === 'input-streaming' ||
-                toolCall.state === 'input-available';
-              const hasOutput = toolCall.state === 'output-available' && output;
+            if (toolName === 'extractWebUrl') {
               const urls = input?.urls ?? output?.urls ?? [];
 
               if (isLoading) {
                 const text =
                   urls.length > 0
-                    ? `Extracting content from ${urls.length} URL${urls.length > 1 ? 's' : ''}..`
-                    : 'Extracting content..';
+                    ? `Extracting content from ${urls.length} URL${urls.length > 1 ? 's' : ''}...`
+                    : 'Extracting content...';
                 return (
                   <ToolCard
                     key={key}
                     icon={GlobeIcon}
-                    title={
-                      text.endsWith('..') ? text.slice(0, -2) + '...' : text
-                    }
+                    title={text}
                     isLoading={true}
                     isSimpleLoading={true}
                   >
@@ -208,21 +203,14 @@ export function ChatMessageParts({
               return null;
             }
 
-            // Image to Image
-            if (toolCall.type === 'tool-imageToImage') {
-              const input = toolCall.input;
-              const output = toolCall.output;
-              const isLoading =
-                toolCall.state === 'input-streaming' ||
-                toolCall.state === 'input-available';
-              const hasOutput = toolCall.state === 'output-available' && output;
-
+            // Generate Image & Image to Image
+            if (toolName === 'generateImage' || toolName === 'imageToImage') {
               if (isLoading) {
                 return (
                   <ToolCard
                     key={key}
                     icon={ImageIcon}
-                    title="Generating image from your image..."
+                    title={toolName === 'imageToImage' ? 'Generating image from yours...' : 'Generating image...'}
                     isLoading={true}
                     isSimpleLoading={true}
                   >
@@ -238,7 +226,9 @@ export function ChatMessageParts({
                     imageSrc={output.image}
                     prompt={input?.prompt}
                     options={{
-                      model: input?.model || 'ImageToImage',
+                      model: input?.model || (toolName === 'generateImage' ? 'FLUX.2' : 'ImageToImage'),
+                      width: input?.width,
+                      height: input?.height,
                     }}
                   />
                 );
@@ -255,64 +245,8 @@ export function ChatMessageParts({
               }
             }
 
-            // Generate Image
-            if (toolCall.type === 'tool-generateImage') {
-              const input = toolCall.input;
-              const output = toolCall.output;
-              const isLoading =
-                toolCall.state === 'input-streaming' ||
-                toolCall.state === 'input-available';
-              const hasOutput = toolCall.state === 'output-available' && output;
-
-              if (isLoading) {
-                return (
-                  <ToolCard
-                    key={key}
-                    icon={ImageIcon}
-                    title="Generating image..."
-                    isLoading={true}
-                    isSimpleLoading={true}
-                  >
-                    {null}
-                  </ToolCard>
-                );
-              }
-
-              if (hasOutput && output.success && output.image) {
-                return (
-                  <ToolImage
-                    key={key}
-                    imageSrc={output.image}
-                    prompt={input?.prompt}
-                    options={{
-                      model: input?.model || 'FLUX.2',
-                      width: input?.width,
-                      height: input?.height,
-                    }}
-                  />
-                );
-              }
-
-              if (hasOutput && !output.success) {
-                return (
-                  <ToolError
-                    key={key}
-                    title="Image generation failed"
-                    error="The system encountered an error while generating your visual."
-                  />
-                );
-              }
-            }
-
             // Text to Speech
-            if (toolCall.type === 'tool-textToSpeech') {
-              const input = toolCall.input;
-              const output = toolCall.output;
-              const isLoading =
-                toolCall.state === 'input-streaming' ||
-                toolCall.state === 'input-available';
-              const hasOutput = toolCall.state === 'output-available' && output;
-
+            if (toolName === 'textToSpeech') {
               if (isLoading) {
                 return (
                   <ToolCard
@@ -350,14 +284,7 @@ export function ChatMessageParts({
             }
 
             // Generate File
-            if (toolCall.type === 'tool-generateFile') {
-              const input = toolCall.input;
-              const output = toolCall.output;
-              const isLoading =
-                toolCall.state === 'input-streaming' ||
-                toolCall.state === 'input-available';
-              const hasOutput = toolCall.state === 'output-available' && output;
-
+            if (toolName === 'generateFile') {
               if (isLoading) {
                 const type = input?.type?.toUpperCase() || 'FILE';
                 return (
