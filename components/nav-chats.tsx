@@ -90,10 +90,18 @@ export function NavChats({
           <SidebarMenuItem key={item.id || item.name}>
             {/* Primary link to the chat session. */}
             <SidebarMenuButton asChild tooltip={item.name}>
-              <Link href={item.url}>
-                {/* Dynamically render icon or fallback to default MessageSquare. */}
-                {item.icon ? <item.icon /> : <MessageSquare />}
-                <span>{truncate(item.name, 28)}</span>
+              <Link
+                href={item.url}
+                className="grid grid-cols-[auto_1fr] items-center gap-2 overflow-hidden px-2 py-1.5"
+              >
+                {/* Fixed-size icon container. */}
+                <div className="flex h-4 w-4 shrink-0 items-center justify-center">
+                  {item.icon ? <item.icon className="size-4" /> : <MessageSquare className="size-4" />}
+                </div>
+                {/* Title with robust CSS truncation. */}
+                <span className="min-w-0 truncate text-sm font-medium">
+                  {item.name}
+                </span>
               </Link>
             </SidebarMenuButton>
 

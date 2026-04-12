@@ -126,8 +126,13 @@ export function NavProjects({
 
                 {/* Navigation: Clicking the text goes to the project page. */}
                 <SidebarMenuButton asChild tooltip={project.title}>
-                  <Link href={`/project/${project.id}`} className="pl-8!">
-                    <span className="truncate">{project.title}</span>
+                  <Link
+                    href={`/project/${project.id}`}
+                    className="grid grid-cols-[1fr] items-center overflow-hidden pl-8! pr-8!"
+                  >
+                    <span className="min-w-0 truncate font-medium">
+                      {project.title}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
 
@@ -174,9 +179,14 @@ export function NavProjects({
                           <SidebarMenuSubItem className="group/subitem">
                             {/* Individual Chat Link. */}
                             <SidebarMenuSubButton asChild>
-                              <Link href={subItem.url}>
-                                <MessageSquare className="size-4" />
-                                <span>{subItem.title}</span>
+                              <Link
+                                href={subItem.url}
+                                className="grid grid-cols-[auto_1fr] items-center gap-2 overflow-hidden px-2"
+                              >
+                                <MessageSquare className="size-4 shrink-0" />
+                                <span className="min-w-0 truncate">
+                                  {subItem.title}
+                                </span>
                               </Link>
                             </SidebarMenuSubButton>
 
