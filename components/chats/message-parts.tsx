@@ -146,8 +146,8 @@ export function ChatMessageParts({
             : part.type.replace('tool-', '');
 
         const state = (toolCall.state || toolCall.status) as string;
-        const input = (toolCall.input || toolCall.args) as Record<string, unknown>;
-        const output = (toolCall.output || toolCall.result) as Record<string, unknown>;
+        const input = toolCall.input || toolCall.args;
+        const output = toolCall.output || toolCall.result;
 
         const isLoading =
           state === 'input-streaming' ||

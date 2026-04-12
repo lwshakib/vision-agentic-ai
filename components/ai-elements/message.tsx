@@ -71,6 +71,8 @@ export const MessageContent = ({
 );
 
 import { Actions, Action } from './actions';
+import type { ActionsProps, ActionProps } from './actions';
+
 export { Actions as MessageActions, Action as MessageAction };
 export type {
   ActionsProps as MessageActionsProps,

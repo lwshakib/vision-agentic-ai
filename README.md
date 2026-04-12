@@ -96,8 +96,25 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
 - **UI Components**: [Radix UI](https://www.radix-ui.com/), [shadcn/ui](https://ui.shadcn.com/), [Framer Motion](https://www.framer.com/motion/)
 - **Email**: [Resend](https://resend.com/), [React Email](https://react.email/)
 
-## 📂 Project Structure
+## 🏗️ Architecture
 
+```mermaid
+graph TD
+    Client[Next.js Client UI] -->|Server Actions / API| Server[Next.js Server]
+    Server -->|Authentication| Auth[Better-Auth]
+    Server -->|Data Operations| DB[(PostgreSQL & Prisma)]
+    Server -->|AI Processing| AICore[AI Core Services]
+    
+    AICore <-->|Secure Routing| Gateway[Cloudflare AI Gateway]
+    Gateway -->|Conversations| GLM[GLM-4.7-Flash]
+    Gateway -->|Image Generation| FLUX[Flux AI]
+    Gateway -->|Speech Synthesis| Audio[Aura-2 & Whisper]
+    
+    AICore -.->|Web Search| Tavily[Tavily API]
+    Server -.->|File Storage| Storage[S3 / Cloudinary]
+```
+
+## 📂 Project Structure
 - **`actions/`**: Server-side logic for data mutations and external API integrations.
 - **`app/`**: Next.js App Router structure (Auth, Main workspace, API routes).
 - **`components/`**: Modular React components (AI elements, Chat system, UI primitives).
