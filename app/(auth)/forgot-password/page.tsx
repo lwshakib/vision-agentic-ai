@@ -6,7 +6,7 @@
 'use client';
 
 // Import the Logo icon component to display the application logo.
-import { Logo as LogoIcon } from '@/components/logo';
+import { Logo as LogoIcon } from '@/components/shared/logo';
 // Import UI components for buttons, inputs, labels.
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

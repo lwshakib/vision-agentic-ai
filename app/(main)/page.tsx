@@ -8,13 +8,13 @@
 // Import essential React and UI hooks.
 import { useState, Suspense, useCallback, useRef, useEffect } from 'react';
 // Import custom ChatInput component for user message entry.
-import ChatInput from '@/components/chat-input';
+import ChatInput from '@/components/chats/chat-input';
 // Import Next.js navigation hooks.
 import { useRouter, useSearchParams } from 'next/navigation';
 // Import AI SDK hooks for handling real-time chat interactions.
 import { useChat, type ChatMessage } from '@/hooks/use-chat';
 import { toast } from 'sonner';
-import { ChatConversationView } from '@/components/chat-conversation';
+import { ChatConversationView } from '@/components/chats/chat-conversation';
 // Import global store for managing chat history/sidebar state.
 import { useChatStore } from '@/hooks/use-chat-store';
 

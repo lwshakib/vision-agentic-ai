@@ -5,7 +5,7 @@
  */
 
 // Import the reusable LoginPage component that contains the actual sign-in form logic.
-import LoginPage from '@/components/login';
+import LoginPage from '@/components/auth/login';
 
 /**
  * SignIn Component

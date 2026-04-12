@@ -11,7 +11,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { FolderKanban, MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import ChatInput from '@/components/chat-input';
+import ChatInput from '@/components/chats/chat-input';
 import { useChatStore } from '@/hooks/use-chat-store';
 import Link from 'next/link';
 

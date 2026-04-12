@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ModeToggle } from '@/components/mode-toggle';
+import { ModeToggle } from '@/components/shared/mode-toggle';
 import { UserNav } from '@/components/account/user-nav';
 import { ProfileImageUpload } from '@/components/account/profile-image-upload';
 import { UsageText } from '@/components/account/usage-text';

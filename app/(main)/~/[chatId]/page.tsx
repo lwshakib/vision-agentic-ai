@@ -12,7 +12,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useChat } from '@/hooks/use-chat';
 // Import custom components.
-import ChatInput from '@/components/chat-input';
+import ChatInput from '@/components/chats/chat-input';
 import { ChatConversationList } from '@/components/chats/conversation-list';
 // Import utility for notifications.
 import { toast } from 'sonner';

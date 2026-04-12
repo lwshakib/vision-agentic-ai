@@ -7,7 +7,7 @@
 'use client';
 
 // Import Logo icon for branding.
-import { Logo as LogoIcon } from '@/components/logo';
+import { Logo as LogoIcon } from '@/components/shared/logo';
 // Import UI components for form interactions.
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

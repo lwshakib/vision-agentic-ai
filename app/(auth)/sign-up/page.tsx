@@ -5,7 +5,7 @@
  */
 
 // Import the SignUp component which contains the logic and UI for user registration.
-import SignUp from '@/components/sign-up';
+import SignUp from '@/components/auth/sign-up';
 
 /**
  * Page Component

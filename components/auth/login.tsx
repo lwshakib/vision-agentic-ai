@@ -8,7 +8,7 @@
 'use client';
 
 // Import Branding.
-import { Logo as LogoIcon } from '@/components/logo';
+import { Logo as LogoIcon } from '@/components/shared/logo';
 // Import UI primitives.
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

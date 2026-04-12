@@ -7,10 +7,10 @@
 'use client';
 
 // Import sub-components for input and message display.
-import ChatInput from '@/components/chat-input';
-import { ChatConversationList as ConversationList } from './chats/conversation-list';
+import ChatInput from './chat-input';
+import { ChatConversationList as ConversationList } from './conversation-list';
 // Import skeleton loaders for a smooth initial experience.
-import { ConversationSkeleton, ChatInputSkeleton } from './chats/chat-skeleton';
+import { ConversationSkeleton, ChatInputSkeleton } from './chat-skeleton';
 // Import specialized loading indicators for AI tool usage.
 import {
   SearchLoading as SearchLoadingUI,

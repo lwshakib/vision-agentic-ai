@@ -1,10 +1,10 @@
-# <img src="./public/logo.svg" width="40" alt="Vision Agentic AI Logo" style="vertical-align: middle;"> Vision Agentic AI
+# <img src="./public/icons/logo.svg" width="40" alt="Vision Agentic AI Logo" style="vertical-align: middle;"> Vision Agentic AI
 
 Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform built with **Next.js 16**, **React 19**, and **Bun**. It provides a sophisticated suite of AI tools, including real-time web exploration, automated deep content extraction, high-quality image generation using FLUX models, and natural voice synthesis.
 
-![Vision Agentic AI Demo](./public/demo.png)
-![Vision Agentic AI Demo 2](./public/demo-2.png)
-![Vision Agentic AI Demo 3](./public/demo-3.png)
+![Vision Agentic AI Demo](./public/images/demo.png)
+![Vision Agentic AI Demo 2](./public/images/demo-2.png)
+![Vision Agentic AI Demo 3](./public/images/demo-3.png)
 
 ## ✨ Key Features
 
