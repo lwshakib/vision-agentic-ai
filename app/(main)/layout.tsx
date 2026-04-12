@@ -5,8 +5,8 @@
  */
 
 // Import the AppSidebar, which contains the branding, navigation, and user context.
-import { AppSidebar } from '@/components/app-sidebar';
-import { FloatingSidebarTrigger } from '@/components/floating-sidebar-trigger';
+import { AppSidebar } from '@/components/layout/app-sidebar';
+import { FloatingSidebarTrigger } from '@/components/layout/floating-sidebar-trigger';
 // Import Sidebar primitives to manage the sliding drawer state and content spacing.
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 

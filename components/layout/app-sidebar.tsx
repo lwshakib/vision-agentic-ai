@@ -18,10 +18,10 @@ import {
 } from 'lucide-react';
 
 // Import specialized sub-navigation components.
-import { NavMain } from '@/components/nav-main';
-import { NavProjects } from '@/components/nav-projects';
-import { NavChats } from '@/components/nav-chats';
-import { NavUser } from '@/components/nav-user';
+import { NavMain } from '@/components/layout/nav-main';
+import { NavProjects } from '@/components/layout/nav-projects';
+import { NavChats } from '@/components/layout/nav-chats';
+import { NavUser } from '@/components/layout/nav-user';
 // Import core UI primitives for buttons, inputs, and feedback.
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,7 +57,7 @@ import { useRouter } from 'next/navigation';
 
 // Import local UI extensions.
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Logo } from './logo';
+import { Logo } from '@/components/shared/logo';
 // Import global state store for chat-related data.
 import { useChatStore } from '@/hooks/use-chat-store';
 

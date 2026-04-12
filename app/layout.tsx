@@ -9,7 +9,7 @@ import type { Metadata } from 'next';
 // Import global CSS styles that apply to the entire application.
 import './globals.css';
 // Import the ThemeProvider to handle light/dark mode switching across the app.
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '@/components/providers/theme-provider';
 // Import the Toaster component for displaying toast notifications.
 import { Toaster } from '@/components/ui/sonner';
 
