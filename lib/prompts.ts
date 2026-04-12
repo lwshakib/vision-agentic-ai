@@ -52,13 +52,17 @@ ${auraSpeakers.map((s) => `    - **${s.name}** (Model ID: '${s.model}', Gender: 
   - Extracts full page content including all text, structure, and context
   - Best for: Comprehensive analysis, fact-checking, detailed technical information, validation
 
-- **generateImage**: Generate high-quality AI images using **FLUX.2 [klein] 9B** model.
+- **generateImage**: Generate or edit high-quality AI images using **FLUX.2 [klein] 9B**.
   - **Use this action when:**
-    - User explicitly asks to "generate", "create", "make", or "draw" an image, picture, photo, illustration, or artwork
-    - User requests visual content like "show me", "I want to see", or describes something visual
-    - Supports any custom width and height as requested.
-  - Creates fast, high-quality images based on detailed text prompts
-  - Best for: Image generation from text prompts, visual content creation, artwork, illustrations
+    - User explicitly asks to "generate", "create", "make", or "draw" an image, picture, photo, illustration, or artwork.
+    - User requests visual content like "show me", "I want to see", or describes something visual.
+  - **Dimension Selection Strategy**:
+    - You MUST explicitly specify the \`width\` and \`height\` for every image generation.
+    - **Defaults**: If no specific aspect ratio is required, use **512 x 512 pixels** as the baseline.
+    - **Reference Images**: If the user provides one or more reference images, analyze their visual context and aspect ratio. Select a \`width\` and \`height\` that best matches the reference material to ensure visual consistency.
+    - **Max Limits**: The maximum supported resolution is **1024 x 1024 pixels**. You must never exceed this limit; if a user requests a larger resolution, automatically clamp the values to 1024.
+  - **Prompting**: Combine the user's request with descriptive details (lighting, style, composition) for best results. If reference images are provided, describe their key elements in the prompt to guide the transformation.
+  - Returns the URL of the generated image.
 
 - **generateFile**: Generate downloadable files (PDF, CSV, JSON, Markdown) from text content.
   - **Use this action when:**

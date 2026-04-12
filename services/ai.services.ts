@@ -14,6 +14,7 @@ import {
 } from '@/lib/constants';
 import { s3Service } from '@/services/s3.services';
 import { nanoid } from 'nanoid';
+import { fetchWithRetry } from '@/lib/utils';
 
 export type AiMessageContent =
   | string
@@ -108,8 +109,8 @@ class AiService {
 
               try {
                 if (url.startsWith('http')) {
-                  console.log(`[AiService] Proxying image to Base64: ${url.slice(0, 50)}...`);
-                  const imageRes = await fetch(url);
+                  console.log(`[AiService] Proxying image to Base64 (Robust): ${url.slice(0, 50)}...`);
+                  const imageRes = await fetchWithRetry(url);
                   if (!imageRes.ok) throw new Error(`HTTP ${imageRes.status}`);
                   const buffer = Buffer.from(await imageRes.arrayBuffer());
                   const base64 = buffer.toString('base64');

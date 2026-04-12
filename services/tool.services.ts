@@ -11,6 +11,7 @@ import {
   IMAGE_MODEL_ID, 
   TTS_MODEL_ID,
 } from '@/lib/constants';
+import { fetchWithRetry } from '@/lib/utils';
 
 /**
  * AI Tool Interface Definitions
@@ -104,52 +105,135 @@ export const extractWebUrlTool: ToolDefinition = {
  */
 export const generateImageTool: ToolDefinition = {
   description:
-    'Generate high-quality images using AI FLUX.1 [schnell]. Output is a stable URL.',
+    'Generate or edit high-quality images using FLUX.2 [klein] 9B. Supports text-to-image and multi-reference image-to-image (img2img).',
   parameters: {
     type: 'object',
     properties: {
       prompt: {
         type: 'string',
-        description: 'Detailed description of the image to generate.',
+        description: 'Detailed description of the image to generate or the edits to apply.',
+      },
+      image_urls: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Optional array of up to 4 reference image URLs or S3 keys for image-to-image generation.',
+        maxItems: 4,
+      },
+      num_inference_steps: {
+        type: 'number',
+        description: 'Number of diffusion steps (max 50).',
+        default: 10,
+      },
+      guidance: {
+        type: 'number',
+        description: 'Controls how strictly the model follows the prompt.',
+        default: 3.5,
+      },
+      seed: {
+        type: 'number',
+        description: 'Random seed for deterministic generation.',
       },
       width: {
         type: 'number',
-        default: 1024,
-        description: 'Width of the image in pixels.',
+        default: 512,
+        description: 'Width of the image in pixels (max 1024).',
       },
       height: {
         type: 'number',
-        default: 1024,
-        description: 'Height of the image in pixels.',
+        default: 512,
+        description: 'Height of the image in pixels (max 1024).',
       },
     },
     required: ['prompt'],
   },
-  execute: async ({ prompt, width = 1024, height = 1024 }) => {
+  execute: async ({ 
+    prompt, 
+    image_urls = [], 
+    num_inference_steps = 10, 
+    guidance = 3.5, 
+    seed, 
+    width = 512, 
+    height = 512 
+  }) => {
+    // 🛡️ Enforcement Guards
+    const safeWidth = Math.min(width, 1024);
+    const safeHeight = Math.min(height, 1024);
+    const safeSteps = Math.min(num_inference_steps, 50);
+
+    const images: string[] = [];
+
+    // 🔄 Process Reference Images
+    if (image_urls.length > 0) {
+      console.log(`[Tool:generateImage] Processing ${image_urls.length} reference images...`);
+      await Promise.all(
+        image_urls.map(async (url: string) => {
+          try {
+            let actualUrl = url;
+            if (!url.startsWith('http')) {
+              actualUrl = await s3Service.getSignedUrl(url);
+            }
+
+            const imgRes = await fetchWithRetry(actualUrl);
+            if (!imgRes.ok) throw new Error(`Fetch failed: ${imgRes.status}`);
+            
+            // 🚀 High-performance Buffer to Base64 conversion
+            const buffer = Buffer.from(await imgRes.arrayBuffer());
+            images.push(buffer.toString('base64'));
+          } catch (e) {
+            console.warn(`[Tool:generateImage] Failed to process image ${url}:`, e);
+          }
+        })
+      );
+    }
+
+    const payload: any = {
+      model: IMAGE_MODEL_ID,
+      prompt,
+      width: safeWidth,
+      height: safeHeight,
+      num_inference_steps: safeSteps,
+      guidance,
+    };
+
+    if (images.length > 0) {
+      payload.images = images;
+    }
+    if (seed !== undefined) {
+      payload.seed = seed;
+    }
+
     const response = await fetch(CLOUDFLARE_AI_GATEWAY_ENDPOINT!, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${CLOUDFLARE_AI_GATEWAY_API_KEY}`,
       },
-      body: JSON.stringify({
-        model: IMAGE_MODEL_ID,
-        prompt,
-        width,
-        height,
-        num_inference_steps: 4,
-      }),
+      body: JSON.stringify(payload),
     });
 
-    if (!response.ok) throw new Error('Image generation fetch failed');
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Model error: ${response.status} - ${errorText.slice(0, 100)}`);
+    }
+
     const { image } = await response.json();
-    if (!image) throw new Error('No image returned from model');
+    if (!image) throw new Error('No image in response');
 
-    const buffer = Buffer.from(image, 'base64');
-    const key = `generated/image-${Date.now()}.jpg`;
-    const imageUrl = await s3Service.uploadFile(buffer, key, 'image/jpeg');
+    const resultBuffer = Buffer.from(image, 'base64');
+    const key = `generated/flux2-${Date.now()}.jpg`;
+    const imageUrl = await s3Service.uploadFile(resultBuffer, key, 'image/jpeg');
 
-    return { success: true, image: imageUrl };
+    return { 
+      success: true, 
+      image: imageUrl,
+      info: {
+        model: IMAGE_MODEL_ID,
+        mode: images.length > 0 ? 'img2img' : 'text2img',
+        references: images.length,
+        dimensions: `${safeWidth}x${safeHeight}`,
+        steps: safeSteps
+      }
+    };
   },
 };
 
