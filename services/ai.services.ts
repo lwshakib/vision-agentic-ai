@@ -7,13 +7,10 @@ import { SYSTEM_PROMPT } from '@/lib/prompts';
 import {
   TOKEN_LIMIT_THRESHOLD,
   CHAT_MODEL_ID,
-  IMAGE_MODEL_ID,
-  TTS_MODEL_ID,
   ASR_MODEL_ID,
   STT_MODEL_ID,
 } from '@/lib/constants';
 import { s3Service } from '@/services/s3.services';
-import { nanoid } from 'nanoid';
 import { fetchWithRetry } from '@/lib/utils';
 
 export type AiMessageContent =
@@ -28,7 +25,7 @@ export interface AiMessage {
   content: AiMessageContent;
   name?: string;
   tool_call_id?: string;
-  tool_calls?: any[];
+  tool_calls?: { id: string; type: string; function: { name: string; arguments: string } }[];
   reasoning?: string;
 }
 
@@ -38,7 +35,7 @@ export interface StreamOptions {
   onFinish?: (result: {
     content: string;
     reasoning?: string;
-    toolInvocations: any[];
+    toolInvocations: Record<string, unknown>[];
   }) => Promise<void>;
   abortSignal?: AbortSignal;
 }
@@ -130,18 +127,18 @@ class AiService {
                       ? 'image/jpeg'
                       : `image/${ext}`;
                   return {
-                    type: 'image_url',
+                    type: 'image_url' as const,
                     image_url: { url: `data:${mimeType};base64,${base64}` },
                   };
                 } else {
                   // Project Path: Generate a signed URL for AI access
                   const signedUrl = await s3Service.getSignedUrl(url);
                   return {
-                    type: 'image_url',
+                    type: 'image_url' as const,
                     image_url: { url: signedUrl },
                   };
                 }
-              } catch (e) {
+              } catch {
                 return null;
               }
             }
@@ -149,7 +146,7 @@ class AiService {
           }),
         );
 
-        let finalContent = processedContent.filter((p): p is any => {
+        const finalContent = processedContent.filter((p): p is Exclude<typeof p, null> => {
           if (p === null) return false;
           // Use type assertion to satisfy TS that text exists when type is 'text'
           if (p.type === 'text' && !(p as { text: string }).text.trim())
@@ -164,15 +161,15 @@ class AiService {
 
         if (!hasText && hasImage) {
           finalContent.unshift({
-            type: 'text',
+            type: 'text' as const,
             text: 'Please analyze this image.',
           });
         } else if (finalContent.length === 0) {
-          finalContent.push({ type: 'text', text: '...' });
+          finalContent.push({ type: 'text' as const, text: '...' });
         }
 
         // Strict Filtering: Only include recognized properties to avoid 'unpacking' errors in the Gateway
-        const sanitizedMsg: any = {
+        const sanitizedMsg: AiMessage = {
           role: msg.role,
           content: finalContent,
         };
@@ -181,7 +178,7 @@ class AiService {
         if (msg.tool_call_id) sanitizedMsg.tool_call_id = msg.tool_call_id;
         if (msg.tool_calls) sanitizedMsg.tool_calls = msg.tool_calls;
 
-        return sanitizedMsg as AiMessage;
+        return sanitizedMsg;
       }),
     );
   }
@@ -195,7 +192,7 @@ class AiService {
 
     return new ReadableStream({
       start: async (controller) => {
-        const sendChunk = (data: Record<string, any>) => {
+        const sendChunk = (data: Record<string, unknown>) => {
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify(data)}\n\n`),
           );
@@ -224,11 +221,11 @@ class AiService {
 
         let finalContent = '';
         let finalReasoning = '';
-        const finalToolInvocations: any[] = [];
+        const finalToolInvocations: Record<string, unknown>[] = [];
 
         try {
           let toolCallsAttempt = 0;
-          const contextHistory: any[] = [...currentMessages];
+          const contextHistory: AiMessage[] = [...currentMessages];
 
           while (toolCallsAttempt < 5) {
             // Limited to 5 tool call rounds for safety
@@ -281,7 +278,7 @@ class AiService {
             const textDecoder = new TextDecoder();
             let buffer = '';
             let assistantContent = '';
-            let toolCalls: any[] = [];
+            let toolCalls: { id: string; type: string; function: { name: string; arguments: string } }[] = [];
 
             while (true) {
               const { done, value } = await reader.read();
@@ -313,6 +310,7 @@ class AiService {
                         sendChunk({ type: 'content', delta: delta.content });
                       }
                       if (delta.tool_calls) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         delta.tool_calls.forEach((tc: any) => {
                           const idx = tc.index;
                           if (!toolCalls[idx]) {
@@ -332,7 +330,7 @@ class AiService {
                         });
                       }
                     }
-                  } catch (e) {
+                  } catch {
                     continue; // Skip invalid JSON
                   }
                 }
@@ -349,18 +347,23 @@ class AiService {
             if (toolCalls.length > 0) {
               toolCallsAttempt++;
               for (const tc of toolCalls) {
-                const toolName = tc.function.name;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const toolName = (tc as any).function.name;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const tool = (toolDefinitions as any)[toolName];
                 let args = {};
                 try {
-                  args = JSON.parse(tc.function.arguments || '{}');
-                } catch (e) {}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  args = JSON.parse((tc as any).function.arguments || '{}');
+                } catch {}
 
                 sendChunk({
                   type: 'tool_call',
-                  id: tc.id,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  id: (tc as any).id,
                   name: toolName,
-                  args: tc.function.arguments,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  args: (tc as any).function.arguments,
                 });
 
                 if (tool) {
@@ -368,19 +371,22 @@ class AiService {
                     const result = await tool.execute(args);
                     sendChunk({
                       type: 'tool_result',
-                      id: tc.id,
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      id: (tc as any).id,
                       name: toolName,
                       result,
                     });
                     finalToolInvocations.push({
-                      toolCallId: tc.id,
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      toolCallId: (tc as any).id,
                       toolName,
                       args,
                       result,
                     });
                     contextHistory.push({
                       role: 'tool',
-                      tool_call_id: tc.id,
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      tool_call_id: (tc as any).id,
                       name: toolName,
                       content:
                         typeof result === 'string'
@@ -396,13 +402,15 @@ class AiService {
                     );
                     sendChunk({
                       type: 'tool_result',
-                      id: tc.id,
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      id: (tc as any).id,
                       name: toolName,
                       error: msg,
                     });
                     contextHistory.push({
                       role: 'tool',
-                      tool_call_id: tc.id,
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      tool_call_id: (tc as any).id,
                       name: toolName,
                       content: `Error: ${msg}`,
                     });
@@ -410,7 +418,8 @@ class AiService {
                 } else {
                   sendChunk({
                     role: 'tool',
-                    tool_call_id: tc.id,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    tool_call_id: (tc as any).id,
                     content: 'Error: Tool not found',
                   });
                 }
@@ -430,14 +439,14 @@ class AiService {
 
           try {
             controller.close();
-          } catch (e) {
+          } catch {
             // Ignore if already closed
           }
         } catch (error) {
           console.error('[AiService] Streaming error:', error);
           try {
             controller.error(error);
-          } catch (e) {
+          } catch {
             // Ignore if already closed
           }
         }
@@ -513,7 +522,7 @@ class AiService {
 
     try {
       return JSON.parse(content);
-    } catch (e) {
+    } catch {
       console.error('[AiService] JSON Parse Error. Content:', content);
       throw new Error(`Model returned invalid JSON: ${content.slice(0, 100)}`);
     }

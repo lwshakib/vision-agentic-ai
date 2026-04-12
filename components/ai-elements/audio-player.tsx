@@ -12,7 +12,7 @@ import {
   MediaTimeRange,
   MediaVolumeRange,
 } from 'media-chrome/react';
-import type { ComponentProps, CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { DownloadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';

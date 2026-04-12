@@ -21,6 +21,7 @@ export interface ToolDefinition {
     properties: Record<string, unknown>;
     required?: string[];
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   execute: (args: any) => Promise<any>;
 }
 
@@ -190,6 +191,7 @@ export const generateImageTool: ToolDefinition = {
       );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload: any = {
       model: IMAGE_MODEL_ID,
       prompt,
@@ -487,7 +489,7 @@ class ToolService {
                 // Inline bold/italic parser for standard paragraphs
                 const parts = wLine.split(/(\*\*.*?\*\*|__.*?__|\*.*?\*)/g);
                 let currentX = indentX;
-                for (let part of parts) {
+                for (const part of parts) {
                   if (!part) continue;
 
                   if (

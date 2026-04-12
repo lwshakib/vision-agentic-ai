@@ -48,8 +48,9 @@ async function main() {
     console.log(
       `\u001b[32m[Info] Bucket "${AWS_S3_BUCKET_NAME}" already exists.\u001b[0m`,
     );
-  } catch (error: any) {
-    if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+  } catch (error: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).name === 'NotFound' || (error as any).$metadata?.httpStatusCode === 404) {
       console.log(
         `\u001b[33m[Setup] Bucket "${AWS_S3_BUCKET_NAME}" not found. Creating...\u001b[0m`,
       );

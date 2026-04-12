@@ -5,9 +5,7 @@ import {
   BrainIcon,
   ChevronDownIcon,
   DotIcon,
-  ImageIcon,
   type LucideIcon,
-  SearchIcon,
 } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { createContext, memo, useContext, useMemo } from 'react';

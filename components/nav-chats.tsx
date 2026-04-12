@@ -40,7 +40,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { truncate } from '@/lib/utils';
 
 /**
  * Component to display a flat list of chats with individual action menus.

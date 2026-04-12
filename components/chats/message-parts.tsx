@@ -146,8 +146,8 @@ export function ChatMessageParts({
             : part.type.replace('tool-', '');
 
         const state = (toolCall.state || toolCall.status) as string;
-        const input = (toolCall.input || toolCall.args) as any;
-        const output = (toolCall.output || toolCall.result) as any;
+        const input = (toolCall.input || toolCall.args) as Record<string, unknown>;
+        const output = (toolCall.output || toolCall.result) as Record<string, unknown>;
 
         const isLoading =
           state === 'input-streaming' ||
@@ -172,11 +172,12 @@ export function ChatMessageParts({
             >
               {!isLoading && hasOutput && output?.results?.length > 0 && (
                 <ChainOfThoughtSearchResults>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {output.results.map((r: any, idx: number) => {
                     let hostname = 'Result';
                     try {
                       hostname = r.url ? new URL(r.url).hostname : 'Result';
-                    } catch (e) {}
+                    } catch {}
                     return (
                       <ChainOfThoughtSearchResult key={idx}>
                         {hostname}
@@ -205,11 +206,12 @@ export function ChatMessageParts({
             >
               {!isLoading && hasOutput && output?.results?.length > 0 && (
                 <ChainOfThoughtSearchResults>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {output.results.map((r: any, idx: number) => {
                     let hostname = 'Result';
                     try {
                       hostname = r.url ? new URL(r.url).hostname : 'Result';
-                    } catch (e) {}
+                    } catch {}
                     return (
                       <ChainOfThoughtSearchResult key={idx}>
                         {hostname}

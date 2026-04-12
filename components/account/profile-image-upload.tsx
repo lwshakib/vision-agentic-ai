@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Camera, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { uploadToS3 } from '@/lib/s3-upload';

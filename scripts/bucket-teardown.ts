@@ -47,8 +47,9 @@ async function main() {
   // 1. Check if bucket exists
   try {
     await client.send(new HeadBucketCommand({ Bucket: AWS_S3_BUCKET_NAME }));
-  } catch (error: any) {
-    if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+  } catch (error: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).name === 'NotFound' || (error as any).$metadata?.httpStatusCode === 404) {
       console.log(
         `\u001b[32m[Info] Bucket "${AWS_S3_BUCKET_NAME}" does not exist. Nothing to teardown.\u001b[0m\n`,
       );
