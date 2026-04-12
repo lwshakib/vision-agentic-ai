@@ -15,7 +15,7 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
 - 📂 **Workspace & Project Management**: Organize specialized chats into dedicated projects with full context retention.
 - 📄 **Dynamic File Generation**: Generate downloadable PDF, CSV, JSON, or Markdown files based on AI analysis.
 - 🔒 **Secure Authentication**: Enterprise-grade user accounts and session management via **BetterAuth**.
-- 🖼️ **Media Asset Library**: Centralized management for all generated and uploaded images, powered by **Cloudinary**.
+- 🖼️ **Media Asset Library**: Centralized management for all generated and uploaded images, powered by **AWS S3 / Cloudflare R2**.
 - ⚡ **Optimistic & Fluid UI**: High-performance interface with immediate feedback, powered by **Framer Motion** and **Radix UI**.
 - 🌗 **Adaptive Design System**: Fully responsive design with System, Light, and Dark mode support.
 
@@ -92,7 +92,7 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
 - **Authentication**: [Better-Auth](https://better-auth.com/)
 - **AI Models & Infrastructure**: [GLM-4.7-Flash](https://github.com/THUDM/GLM-4), [Tavily AI](https://tavily.com/), [Flux AI](https://fal.ai/models/fal-ai/flux/schnell)
 - **Audio Intelligence**: Aura-2 (TTS) & Whisper Large v3 Turbo (ASR)
-- **Image Hosting**: [Cloudinary](https://cloudinary.com/)
+- **Image Hosting**: [AWS S3](https://aws.amazon.com/s3/) / [Cloudflare R2](https://www.cloudflare.com/products/r2/)
 - **UI Components**: [Radix UI](https://www.radix-ui.com/), [shadcn/ui](https://ui.shadcn.com/), [Framer Motion](https://www.framer.com/motion/)
 - **Email**: [Resend](https://resend.com/), [React Email](https://react.email/)
 
@@ -111,7 +111,7 @@ graph TD
     Gateway -->|Speech Synthesis| Audio[Aura-2 & Whisper]
     
     AICore -.->|Web Search| Tavily[Tavily API]
-    Server -.->|File Storage| Storage[S3 / Cloudinary]
+    Server -.->|File Storage| Storage[S3 / R2]
 ```
 
 ## 📂 Project Structure

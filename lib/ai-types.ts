@@ -26,7 +26,7 @@ export interface ToolUIPart {
  */
 export interface FileUIPart {
   type: 'file';
-  url: string; // External link (Cloudinary)
+  url: string; // External link (S3/R2)
   mediaType?: string; // Mime type (image/png, application/pdf)
   filename?: string; // Original name
   data?: string; // Base64 or raw data if applicable
