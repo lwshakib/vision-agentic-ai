@@ -10,6 +10,7 @@
 
 'use client';
 
+import * as React from 'react';
 import {
   useCallback,
   useEffect,
@@ -30,6 +31,10 @@ import {
   Square,
   MicOff,
 } from 'lucide-react';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import * as PopoverPrimitive from '@radix-ui/react-popover';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { cn } from '@/lib/utils';
 // Import S3 upload utilities and progress types.
 import { uploadToS3, type UploadProgress } from '@/lib/s3-upload';
 import NextImage from 'next/image';
@@ -267,6 +272,173 @@ function CircularProgress({ percentage }: { percentage: number }) {
     </div>
   );
 }
+
+/* ------------------ UI PRIMITIVES ------------------ */
+
+const TooltipProvider = TooltipPrimitive.Provider;
+const Tooltip = TooltipPrimitive.Root;
+const TooltipTrigger = TooltipPrimitive.Trigger;
+const TooltipContent = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> & {
+    showArrow?: boolean;
+  }
+>(({ className, sideOffset = 4, showArrow = false, ...props }, ref) => (
+  <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(
+        'relative z-50 max-w-[280px] rounded-md bg-popover text-popover-foreground px-1.5 py-1 text-xs animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 shadow-md',
+        className,
+      )}
+      {...props}
+    >
+      {props.children}
+      {showArrow && (
+        <TooltipPrimitive.Arrow className="-my-px fill-popover" />
+      )}
+    </TooltipPrimitive.Content>
+  </TooltipPrimitive.Portal>
+));
+TooltipContent.displayName = TooltipPrimitive.Content.displayName;
+
+const Popover = PopoverPrimitive.Root;
+const PopoverTrigger = PopoverPrimitive.Trigger;
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = 'center', sideOffset = 4, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        'z-50 w-64 rounded-xl bg-popover dark:bg-[#303030] p-2 text-popover-foreground dark:text-white shadow-md outline-none animate-in data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+        className,
+      )}
+      {...props}
+    />
+  </PopoverPrimitive.Portal>
+));
+PopoverContent.displayName = PopoverPrimitive.Content.displayName;
+
+const Dialog = DialogPrimitive.Root;
+const DialogPortal = DialogPrimitive.Portal;
+const DialogTrigger = DialogPrimitive.Trigger;
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      'fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      className,
+    )}
+    {...props}
+  />
+));
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-[90vw] md:max-w-[800px] translate-x-[-50%] translate-y-[-50%] gap-4 border-none bg-transparent p-0 shadow-none duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        className,
+      )}
+      {...props}
+    >
+      <div className="relative bg-card dark:bg-[#303030] rounded-[28px] overflow-hidden shadow-2xl p-1">
+        {children}
+        <DialogPrimitive.Close className="absolute right-3 top-3 z-10 rounded-full bg-background/50 dark:bg-[#303030] p-1 hover:bg-accent dark:hover:bg-[#515151] transition-all">
+          <X className="h-5 w-5 text-muted-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-white" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      </div>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+DialogContent.displayName = DialogPrimitive.Content.displayName;
+
+/* ------------------ ICONS ------------------ */
+
+const PlusIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M12 5V19"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M5 12H19"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const SendIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M12 5.25L12 18.75"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M18.75 12L12 5.25L5.25 12"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const MicIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+    <line x1="12" y1="19" x2="12" y2="23"></line>
+  </svg>
+);
 
 /* ------------------ FILE PREVIEW ------------------ */
 
@@ -794,261 +966,134 @@ export default function ChatInput({
   }, [isMultiline]);
 
   return (
-    <div className="w-full">
-      {/* File Upload List: Displayed above the input box. */}
-      {filePreviews.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-2">
-          {filePreviews.map((preview) => (
-            <FilePreviewItem
-              key={preview.id}
-              preview={preview}
-              onRemove={() => removeFile(preview.id)}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Hidden file selector system hook. */}
-
-      {/* Hidden file selector system hook. */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept="image/*,video/*"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-
-      {/* Main interactive input chassis. */}
-      <div
-        className={`w-full rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white px-4 py-3 transition-all duration-200 ease-out ${
-          className ?? ''
-        }`}
-      >
-        {isRecording ? (
-          /* -------- ACTIVE MANUAL RECORDING UI -------- */
-          <div className="flex items-center gap-3">
-            <button
-              disabled
-              className="h-9 w-9 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white flex items-center justify-center opacity-40 cursor-not-allowed"
-            >
-              <Plus size={18} />
-            </button>
-
-            {/* Live audio stream visualization. */}
-            <LiveWaveform active={isRecording} />
-
-            {/* Cancel recording. */}
-            <button
-              onClick={() => stopRecording(false)}
-              className="h-9 w-9 rounded-full bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-white flex items-center justify-center"
-            >
-              <X size={18} />
-            </button>
-
-            {/* Confirm and Transcribe. */}
-            <button
-              onClick={() => stopRecording(true)}
-              className="h-9 w-9 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center"
-            >
-              <Check size={18} />
-            </button>
-          </div>
-        ) : isTranscribing ? (
-          /* -------- TRANSCRIBING STATE UI -------- */
-          <div className="flex items-center justify-center gap-3 py-1">
-            <div className="h-6 w-6 rounded-full border-2 border-neutral-500 dark:border-neutral-400 border-t-transparent animate-spin" />
-            <span className="text-xs text-neutral-600 dark:text-neutral-300">
-              Transcribing audio...
-            </span>
-          </div>
-        ) : (
-          /* -------- NORMAL INPUT UI -------- */
-          <div
-            className={
-              isMultiline ? 'flex flex-col gap-3' : 'flex items-center gap-3'
-            }
-          >
-            {isMultiline ? (
-              /* Expanded View: Toolbar below text area. */
-              <>
-                <textarea
-                  ref={textareaRef}
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    // Send on Enter (if no Shift key).
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendOrStop();
-                    }
-                  }}
-                  placeholder={placeholder}
-                  rows={1}
-                  className="w-full resize-none bg-transparent outline-none text-sm leading-6 max-h-40 overflow-y-auto transition-[height] duration-200 ease-out"
-                  disabled={isSubmitting}
+    <TooltipProvider delayDuration={100}>
+      <div className="w-full">
+        <div
+          className={cn(
+            'flex flex-col rounded-[28px] p-2 shadow-sm transition-colors bg-white border dark:bg-[#303030] dark:border-transparent cursor-text',
+            className,
+          )}
+        >
+          {/* File Upload List: Displayed inside the new container. */}
+          {filePreviews.length > 0 && (
+            <div className="mb-1 flex flex-wrap gap-2 px-1 pt-1">
+              {filePreviews.map((preview) => (
+                <FilePreviewItem
+                  key={preview.id}
+                  preview={preview}
+                  onRemove={() => removeFile(preview.id)}
                 />
+              ))}
+            </div>
+          )}
 
-                <div className="flex items-center justify-between gap-3">
-                  {/* Bottom-left: Attach button. */}
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="h-10 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-                  >
-                    <Plus size={18} />
-                  </button>
+          {/* Hidden file selector system hook. */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,video/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
 
-                  <div className="flex items-center gap-3">
-                    {/* Voice input controls. */}
-                    {isVoiceMode ? (
-                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
-                        {/* Mute Toggle */}
-                        <button
-                          onClick={() => setIsMuted(!isMuted)}
-                          className={`h-10 w-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
-                            isMuted
-                              ? 'bg-red-500/20 text-red-500'
-                              : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white hover:bg-neutral-300 dark:hover:bg-neutral-600'
-                          }`}
-                        >
-                          {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
-                        </button>
+          {/* Main Input Chassis */}
+          {isRecording ? (
+            <div className="flex items-center gap-3 h-[52px] px-3">
+              <button
+                disabled
+                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors opacity-40 cursor-not-allowed"
+              >
+                <PlusIcon className="h-6 w-6" />
+              </button>
 
-                        {voiceStatus === 'connecting' ? (
-                          <button
-                            onClick={() => {
-                              stopFlux();
-                              onVoiceModeChange?.(false);
-                            }}
-                            className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
-                          >
-                            <X size={16} />
-                            <span className="text-sm font-medium">Cancel</span>
-                          </button>
-                        ) : voiceStatus === 'active' ? (
-                          <button
-                            onClick={() => {
-                              stopFlux();
-                              setVoiceStatus('ending');
-                              setTimeout(() => onVoiceModeChange?.(false), 800);
-                            }}
-                            className="group flex items-center gap-3 px-5 h-10 rounded-full bg-black dark:bg-white text-white dark:text-black transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
-                          >
-                            <div className="flex items-center gap-[1px] h-3">
-                              {[1, 2, 3, 4].map((i) => (
-                                <div
-                                  key={i}
-                                  className="w-[1.5px] bg-white dark:bg-black rounded-full"
-                                  style={{
-                                    height: isMuted
-                                      ? '2px'
-                                      : `${4 + volume * (8 + Math.random() * 8)}px`,
-                                    opacity: isMuted ? 0.3 : 1,
-                                  }}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-sm font-bold uppercase tracking-wider">
-                              End
-                            </span>
-                          </button>
-                        ) : voiceStatus === 'ending' ? (
-                          <div className="flex items-center gap-2 px-4 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 animate-pulse">
-                            <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
-                              Ending...
-                            </span>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={startRecording}
-                          disabled={isTranscribing}
-                          className="h-10 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 hover:bg-neutral-300 dark:hover:bg-neutral-600"
-                        >
-                          <Mic size={18} />
-                        </button>
+              <LiveWaveform active={isRecording} />
 
-                        <button
-                          onClick={() => {
-                            if (isGenerating) {
-                              onStop?.();
-                            } else if (hasText || filePreviews.length > 0) {
-                              handleSendOrStop();
-                            } else {
-                              onVoiceModeChange?.(true);
-                            }
-                          }}
-                          disabled={isSubmitting}
-                          className="h-10 w-10 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
-                        >
-                          {isGenerating ? (
-                            <Square fill="currentColor" size={14} />
-                          ) : hasText || filePreviews.length > 0 ? (
-                            <ArrowUp size={18} />
-                          ) : (
-                            <AudioLines size={18} />
-                          )}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : (
-              /* Inline View: Toolbar on same line as text input. */
-              <>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-10 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-700 dark:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-                >
-                  <Plus size={18} />
-                </button>
+              <button
+                onClick={() => stopRecording(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+              >
+                <X size={18} />
+              </button>
 
-                <textarea
-                  ref={textareaRef}
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendOrStop();
-                    }
-                  }}
-                  placeholder={placeholder}
-                  rows={1}
-                  className="flex-1 resize-none bg-transparent outline-none text-sm leading-6 max-h-40 overflow-y-auto transition-[height] duration-200 ease-out"
-                  disabled={isSubmitting}
-                />
+              <button
+                onClick={() => stopRecording(true)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-black dark:bg-white text-white dark:text-black transition-colors"
+              >
+                <Check size={18} />
+              </button>
+            </div>
+          ) : isTranscribing ? (
+            <div className="flex items-center justify-center gap-3 h-[52px]">
+              <div className="h-5 w-5 rounded-full border-2 border-neutral-500 dark:border-neutral-400 border-t-transparent animate-spin" />
+              <span className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">
+                Transcribing audio...
+              </span>
+            </div>
+          ) : (
+            <>
+              <textarea
+                ref={textareaRef}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendOrStop();
+                  }
+                }}
+                placeholder={placeholder}
+                rows={1}
+                className="custom-scrollbar w-full resize-none border-0 bg-transparent p-3 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-300 focus:ring-0 focus-visible:outline-none min-h-12"
+                disabled={isSubmitting}
+              />
 
-                <div className="flex items-center gap-2 h-10">
-                  {isVoiceMode ? (
-                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
-                      {/* Mute Toggle */}
+              <div className="mt-0.5 p-1 pt-0">
+                <div className="flex items-center gap-2">
+                  {/* Left Side: Attach File */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none"
+                      >
+                        <PlusIcon className="h-6 w-6" />
+                        <span className="sr-only">Attach image</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" showArrow={true}>
+                      <p>Attach image</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  {/* Middle: Voice/Flux Interaction Status */}
+                  {isVoiceMode && (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 ml-1">
+                      <div className="h-4 w-px bg-border dark:bg-gray-600 mr-1" />
+                      
                       <button
                         onClick={() => setIsMuted(!isMuted)}
-                        className={`h-10 w-10 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
+                        className={cn(
+                          'flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:scale-105 active:scale-95',
                           isMuted
                             ? 'bg-red-500/20 text-red-500'
-                            : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white hover:bg-neutral-300 dark:hover:bg-neutral-600'
-                        }`}
+                            : 'text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#515151]',
+                        )}
                       >
                         {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
                       </button>
 
-                      {/* Status Interaction Button */}
                       {voiceStatus === 'connecting' ? (
                         <button
                           onClick={() => {
                             stopFlux();
                             onVoiceModeChange?.(false);
                           }}
-                          className="flex items-center gap-2 px-3 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white transition-all hover:scale-105 active:scale-95 font-semibold"
+                          className="flex items-center gap-2 px-3 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
                         >
-                          <X size={16} />
-                          <span className="text-xs">Cancel</span>
+                          <X size={14} />
+                          <span className="text-xs font-bold">CANCEL</span>
                         </button>
                       ) : voiceStatus === 'active' ? (
                         <button
@@ -1057,7 +1102,7 @@ export default function ChatInput({
                             setVoiceStatus('ending');
                             setTimeout(() => onVoiceModeChange?.(false), 800);
                           }}
-                          className="group flex items-center gap-2 px-3 h-10 rounded-full bg-black dark:bg-white text-white dark:text-black transition-all hover:scale-105 active:scale-95"
+                          className="group flex items-center gap-2 px-4 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
                         >
                           <div className="flex items-center gap-[1px] h-3">
                             {[1, 2, 3, 4].map((i) => (
@@ -1073,57 +1118,86 @@ export default function ChatInput({
                               />
                             ))}
                           </div>
-                          <span className="text-xs font-bold uppercase">
+                          <span className="text-[10px] font-bold uppercase tracking-wider">
                             End
                           </span>
                         </button>
                       ) : (
-                        <div className="px-3 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 flex items-center">
-                          <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                            Ending...
+                        <div className="flex items-center gap-2 px-3 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 animate-pulse">
+                          <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                            ENDING...
                           </span>
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <>
-                      <button
-                        onClick={startRecording}
-                        disabled={isTranscribing}
-                        className="h-10 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 hover:bg-neutral-300 dark:hover:bg-neutral-600"
-                      >
-                        <Mic size={18} />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (isGenerating) {
-                            onStop?.();
-                          } else if (hasText || filePreviews.length > 0) {
-                            handleSendOrStop();
-                          } else {
-                            onVoiceModeChange?.(true);
-                          }
-                        }}
-                        disabled={isSubmitting}
-                        className="h-10 w-10 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
-                      >
-                        {isGenerating ? (
-                          <Square fill="currentColor" size={14} />
-                        ) : hasText || filePreviews.length > 0 ? (
-                          <ArrowUp size={18} />
-                        ) : (
-                          <AudioLines size={18} />
-                        )}
-                      </button>
-                    </>
                   )}
+
+                  {/* Right-aligned buttons container */}
+                  <div className="ml-auto flex items-center gap-2">
+                    {!isVoiceMode && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={startRecording}
+                            disabled={isTranscribing}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none"
+                          >
+                            <MicIcon className="h-5 w-5" />
+                            <span className="sr-only">Record voice</span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" showArrow={true}>
+                          <p>Record voice</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isGenerating) {
+                              onStop?.();
+                            } else if (hasText || filePreviews.length > 0) {
+                              handleSendOrStop();
+                            } else {
+                              onVoiceModeChange?.(true);
+                            }
+                          }}
+                          disabled={isSubmitting}
+                          className={cn(
+                            'flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none disabled:pointer-events-none',
+                            isGenerating || hasText || hasFiles
+                              ? 'bg-black text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80'
+                              : 'text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#515151]',
+                            'disabled:bg-black/40 dark:disabled:bg-[#515151]',
+                          )}
+                        >
+                          {isGenerating ? (
+                            <Square fill="currentColor" size={12} />
+                          ) : hasText || filePreviews.length > 0 ? (
+                            <SendIcon className="h-6 w-6" />
+                          ) : (
+                            <AudioLines size={18} />
+                          )}
+                          <span className="sr-only">
+                            {isGenerating ? 'Stop' : 'Send message'}
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" showArrow={true}>
+                        <p>{isGenerating ? 'Stop' : 'Send'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
-              </>
-            )}
-          </div>
-        )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
