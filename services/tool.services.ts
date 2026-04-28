@@ -1,11 +1,14 @@
+import { z } from 'zod';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { GoogleGenAI } from '@google/genai';
 import { s3Service } from './s3.services';
 
 import {
   CLOUDFLARE_AI_GATEWAY_API_KEY,
   CLOUDFLARE_AI_GATEWAY_ENDPOINT,
   TAVILY_API_KEY,
+  GOOGLE_API_KEY,
 } from '@/lib/env';
 import { IMAGE_MODEL_ID, TTS_MODEL_ID } from '@/lib/constants';
 import { fetchWithRetry } from '@/lib/utils';
@@ -16,11 +19,7 @@ import { fetchWithRetry } from '@/lib/utils';
  */
 export interface ToolDefinition {
   description: string;
-  parameters: {
-    type: 'object';
-    properties: Record<string, unknown>;
-    required?: string[];
-  };
+  schema: z.ZodObject<any, any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   execute: (args: any) => Promise<any>;
 }
@@ -30,16 +29,9 @@ export interface ToolDefinition {
  */
 export const webSearchTool: ToolDefinition = {
   description: 'Search the web for current information using Tavily.',
-  parameters: {
-    type: 'object',
-    properties: {
-      query: {
-        type: 'string',
-        description: 'Search query for the web',
-      },
-    },
-    required: ['query'],
-  },
+  schema: z.object({
+    query: z.string().describe('Search query for the web'),
+  }),
   execute: async ({ query }) => {
     if (!TAVILY_API_KEY) throw new Error('Tavily API key is missing');
     const res = await fetch('https://api.tavily.com/search', {
@@ -63,23 +55,12 @@ export const webSearchTool: ToolDefinition = {
 export const extractWebUrlTool: ToolDefinition = {
   description:
     'Extract comprehensive, detailed content from one or more URLs for deep research. Returns full page content.',
-  parameters: {
-    type: 'object',
-    properties: {
-      urls: {
-        type: 'array',
-        items: {
-          type: 'string',
-          format: 'uri',
-          description: 'Website URL to extract detailed content from',
-        },
-        minItems: 1,
-        maxItems: 3,
-        description: 'Array of 1-3 URLs to extract.',
-      },
-    },
-    required: ['urls'],
-  },
+  schema: z.object({
+    urls: z.array(z.string().url().describe('Website URL to extract detailed content from'))
+      .min(1)
+      .max(3)
+      .describe('Array of 1-3 URLs to extract.'),
+  }),
   execute: async ({ urls }) => {
     // Implementation using a simple reader mode proxy or direct fetch if allowed
     const results = await Promise.all(
@@ -104,48 +85,31 @@ export const extractWebUrlTool: ToolDefinition = {
 export const generateImageTool: ToolDefinition = {
   description:
     'Generate or edit high-quality images using FLUX.2 [klein] 9B. Supports text-to-image and multi-reference image-to-image (img2img).',
-  parameters: {
-    type: 'object',
-    properties: {
-      prompt: {
-        type: 'string',
-        description:
-          'Detailed description of the image to generate or the edits to apply.',
-      },
-      image_urls: {
-        type: 'array',
-        items: { type: 'string' },
-        description:
-          'Optional array of up to 4 reference image URLs or S3 keys for image-to-image generation.',
-        maxItems: 4,
-      },
-      num_inference_steps: {
-        type: 'number',
-        description: 'Number of diffusion steps (max 50).',
-        default: 10,
-      },
-      guidance: {
-        type: 'number',
-        description: 'Controls how strictly the model follows the prompt.',
-        default: 3.5,
-      },
-      seed: {
-        type: 'number',
-        description: 'Random seed for deterministic generation.',
-      },
-      width: {
-        type: 'number',
-        default: 512,
-        description: 'Width of the image in pixels (max 1024).',
-      },
-      height: {
-        type: 'number',
-        default: 512,
-        description: 'Height of the image in pixels (max 1024).',
-      },
-    },
-    required: ['prompt'],
-  },
+  schema: z.object({
+    prompt: z.string().describe('Detailed description of the image to generate or the edits to apply.'),
+    image_urls: z.array(z.string())
+      .max(4)
+      .optional()
+      .describe('Optional array of up to 4 reference image URLs or S3 keys for image-to-image generation.'),
+    num_inference_steps: z.number()
+      .max(50)
+      .default(10)
+      .describe('Number of diffusion steps (max 50).'),
+    guidance: z.number()
+      .default(3.5)
+      .describe('Controls how strictly the model follows the prompt.'),
+    seed: z.number()
+      .optional()
+      .describe('Random seed for deterministic generation.'),
+    width: z.number()
+      .max(1024)
+      .default(512)
+      .describe('Width of the image in pixels (max 1024).'),
+    height: z.number()
+      .max(1024)
+      .default(512)
+      .describe('Height of the image in pixels (max 1024).'),
+  }),
   execute: async ({
     prompt,
     image_urls = [],
@@ -253,45 +217,65 @@ export const generateImageTool: ToolDefinition = {
  * tool: textToSpeech
  */
 export const textToSpeechTool: ToolDefinition = {
-  description: 'Convert text to speech using an AI model (Aura-2).',
-  parameters: {
-    type: 'object',
-    properties: {
-      text: {
-        type: 'string',
-        description: 'The text to convert to speech',
+  description: 'Convert text to speech using Gemini Native Audio Generation (TTS). Supports controllable style, tone, and emotional delivery through natural language prompts or audio tags like [whispers] or [excitedly].',
+  schema: z.object({
+    text: z.string().describe('The text to convert to speech. You can include performance directions like "Say in a spooky voice: Hello there" or use tags like [laughs] or [gasp].'),
+    voice: z.string()
+      .default('Kore')
+      .describe('The voice name to use. Popular: Zephyr (Bright), Puck (Upbeat), Kore (Firm), Fenrir (Excitable), Leda (Youthful), Enceladus (Breathy).'),
+  }),
+  execute: async ({ text, voice = 'Kore' }) => {
+    const genAI = new GoogleGenAI({ apiKey: GOOGLE_API_KEY! });
+
+    const result = await genAI.models.generateContent({
+      model: TTS_MODEL_ID,
+      contents: [{ role: 'user', parts: [{ text }] }],
+      config: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        responseModalities: ['AUDIO'] as any,
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: voice },
+          },
+        } as any,
       },
-      voice: {
-        type: 'string',
-        description:
-          'The model ID of the speaker to use (e.g., orpheus, luna).',
-      },
-    },
-    required: ['text'],
-  },
-  execute: async ({ text, voice = 'orpheus' }) => {
-    const response = await fetch(CLOUDFLARE_AI_GATEWAY_ENDPOINT!, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${CLOUDFLARE_AI_GATEWAY_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: TTS_MODEL_ID,
-        text,
-        voice,
-      }),
     });
 
-    if (!response.ok) throw new Error('Speech synthesis failed');
+    const data = result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!data) throw new Error('Speech synthesis failed: No audio data returned');
 
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const key = `tts/audio-${Date.now()}.mp3`;
-    const audioUrl = await s3Service.uploadFile(buffer, key, 'audio/mpeg');
+    const pcmBuffer = Buffer.from(data, 'base64');
+    const wavHeader = createWavHeader(pcmBuffer.length);
+    const finalBuffer = Buffer.concat([wavHeader, pcmBuffer]);
+
+    const key = `tts/audio-${Date.now()}.wav`;
+    const audioUrl = await s3Service.uploadFile(finalBuffer, key, 'audio/wav');
 
     return { success: true, audioUrl };
   },
 };
+
+/**
+ * Helper to generate a standard RIFF/WAVE header for 24kHz 16-bit mono PCM data.
+ * Gemini TTS returns raw PCM, which needs a header to be playable as a .wav file.
+ */
+function createWavHeader(pcmLength: number, sampleRate: number = 24000): Buffer {
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(pcmLength + 36, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16); // Subchunk1Size
+  header.writeUInt16LE(1, 20); // AudioFormat (1 = PCM)
+  header.writeUInt16LE(1, 22); // NumChannels (1 = Mono)
+  header.writeUInt32LE(sampleRate, 24); // SampleRate
+  header.writeUInt32LE(sampleRate * 2, 28); // ByteRate
+  header.writeUInt16LE(2, 32); // BlockAlign
+  header.writeUInt16LE(16, 34); // BitsPerSample
+  header.write('data', 36);
+  header.writeUInt32LE(pcmLength, 40);
+  return header;
+}
 
 /**
  * tool: generateFile
@@ -299,25 +283,12 @@ export const textToSpeechTool: ToolDefinition = {
 export const generateFileTool: ToolDefinition = {
   description:
     'Generate a downloadable file (PDF, CSV, JSON, or Markdown) from text content.',
-  parameters: {
-    type: 'object',
-    properties: {
-      fileName: {
-        type: 'string',
-        description: 'The name of the file to create (e.g., report, data).',
-      },
-      type: {
-        type: 'string',
-        enum: ['pdf', 'csv', 'json', 'markdown'],
-        description: 'The type of file to generate.',
-      },
-      content: {
-        type: 'string',
-        description: 'The full text content to be included in the file.',
-      },
-    },
-    required: ['fileName', 'type', 'content'],
-  },
+  schema: z.object({
+    fileName: z.string().describe('The name of the file to create (e.g., report, data).'),
+    type: z.enum(['pdf', 'csv', 'json', 'markdown'])
+      .describe('The type of file to generate.'),
+    content: z.string().describe('The full text content to be included in the file.'),
+  }),
   execute: async ({ fileName, type, content }) => {
     return toolService.generateFile({ fileName, type, content });
   },
