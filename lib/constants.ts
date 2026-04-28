@@ -5,7 +5,7 @@
 /**
  * The full context window limit for Kimi K2.5 (256k tokens).
  */
-export const CHAT_CONTEXT_WINDOW_LIMIT = 256000;
+export const CHAT_CONTEXT_WINDOW_LIMIT = 1000000;
 
 /**
  * The maximum character limit for a single speech synthesis request.
@@ -26,8 +26,6 @@ export const TOKEN_LIMIT_THRESHOLD =
 /**
  * Model Shorthand IDs (Passed in request bodies to AI Gateway)
  */
-export const CHAT_MODEL_ID = 'kimi-k2.5';
+export const CHAT_MODEL_ID = 'gemini-3.1-flash-lite-preview';
 export const IMAGE_MODEL_ID = 'flux-2-klein-9b';
-export const TTS_MODEL_ID = 'aura-2-en';
-export const ASR_MODEL_ID = 'whisper-large-v3-turbo';
-export const STT_MODEL_ID = 'flux';
+export const TTS_MODEL_ID = 'gemini-3.1-flash-tts-preview';
