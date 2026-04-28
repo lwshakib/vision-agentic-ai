@@ -1,17 +1,18 @@
+import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
+import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
-  CLOUDFLARE_AI_GATEWAY_API_KEY,
-  CLOUDFLARE_AI_GATEWAY_ENDPOINT,
+  GOOGLE_API_KEY,
 } from '@/lib/env';
 import { toolDefinitions } from '@/services/tool.services';
 import { SYSTEM_PROMPT } from '@/lib/prompts';
 import {
   TOKEN_LIMIT_THRESHOLD,
   CHAT_MODEL_ID,
-  ASR_MODEL_ID,
-  STT_MODEL_ID,
 } from '@/lib/constants';
 import { s3Service } from '@/services/s3.services';
 import { fetchWithRetry } from '@/lib/utils';
+import { nanoid } from 'nanoid';
 
 export type AiMessageContent =
   | string
@@ -41,153 +42,128 @@ export interface StreamOptions {
 }
 
 class AiService {
-  private readonly gatewayEndpoint: string;
-  private readonly gatewayKey: string;
+  private readonly ai: GoogleGenAI;
 
   constructor() {
-    this.gatewayEndpoint = CLOUDFLARE_AI_GATEWAY_ENDPOINT || '';
-    this.gatewayKey = CLOUDFLARE_AI_GATEWAY_API_KEY || '';
-
-    if (!this.gatewayEndpoint || !this.gatewayKey) {
+    if (!GOOGLE_API_KEY) {
       console.warn(
-        '[AiService] Warning: Cloudflare AI Gateway configuration is missing.',
+        '[AiService] Warning: GOOGLE_API_KEY is missing.',
       );
     }
-  }
-
-  /**
-   * Transforms the Gateway endpoint into a WebSocket URL for Deepgram Flux STT.
-   */
-  public getFluxWorkerUrl(token: string): string {
-    const gatewayUrl = this.gatewayEndpoint.replace(/\/$/, '');
-    const wsBaseUrl = gatewayUrl.replace(/^http/, 'ws');
-    const u = new URL(wsBaseUrl);
-    u.searchParams.set('model', STT_MODEL_ID);
-    u.searchParams.set('token', token);
-    u.searchParams.set('encoding', 'linear16');
-    u.searchParams.set('sample_rate', '16000');
-    return u.toString();
-  }
-
-  /**
-   * Fetches a short-lived signed token from the AI Gateway.
-   */
-  public async getShortLivedToken(): Promise<string> {
-    const gatewayUrl = this.gatewayEndpoint.replace(/\/$/, '');
-    const response = await fetch(`${gatewayUrl}/short-lived-token`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${this.gatewayKey}`,
-      },
+    this.ai = new GoogleGenAI({
+      apiKey: GOOGLE_API_KEY || '',
     });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch short-lived token: ${response.status}`);
-    }
-
-    const { token } = await response.json();
-    return token;
   }
 
   /**
-   * Advanced Vision Pre-processing
-   * Automatically converts external URLs to Base64 and S3 keys to signed URLs.
-   * Enforces a 2-image limit for efficiency.
+   * Translates local AiMessage to Gemini content format.
    */
-  public async processMessages(messages: AiMessage[]): Promise<AiMessage[]> {
-    return Promise.all(
-      messages.map(async (msg) => {
-        if (typeof msg.content === 'string') return msg;
-        if (!Array.isArray(msg.content)) return msg;
+  private async formatToGemini(messages: AiMessage[]): Promise<any[]> {
+    const geminiMsgs: any[] = [];
 
-        let imageCount = 0;
-        const processedContent = await Promise.all(
-          msg.content.map(async (part) => {
-            if (part.type === 'text') return part;
-            if (part.type === 'image_url') {
-              const url = part.image_url.url;
-              if (!url || url.startsWith('data:')) return part;
+    for (const msg of messages) {
+      if (msg.role === 'system') continue; // Handled in config
 
-              if (imageCount >= 2) return null; // Enforce limit
-              imageCount++;
+      const parts: any[] = [];
 
+      // 1. Handle Content (Text or Multimodal)
+      if (typeof msg.content === 'string' && msg.content.trim()) {
+        parts.push({ text: msg.content });
+      } else if (Array.isArray(msg.content)) {
+        for (const part of msg.content) {
+          if (part.type === 'text' && part.text.trim()) {
+            parts.push({ text: part.text });
+          } else if (part.type === 'image_url') {
+            const url = part.image_url.url;
+            if (url.startsWith('data:')) {
+              const [header, base64] = url.split(',');
+              const mimeType = header.split(':')[1].split(';')[0];
+              parts.push({
+                inlineData: {
+                  mimeType,
+                  data: base64,
+                },
+              });
+            } else {
               try {
-                if (url.startsWith('http')) {
-                  console.log(
-                    `[AiService] Proxying image to Base64 (Robust): ${url.slice(0, 50)}...`,
-                  );
-                  const imageRes = await fetchWithRetry(url);
-                  if (!imageRes.ok) throw new Error(`HTTP ${imageRes.status}`);
-                  const buffer = Buffer.from(await imageRes.arrayBuffer());
-                  const base64 = buffer.toString('base64');
-                  const pathname = new URL(url).pathname;
-                  const ext = pathname.split('.').pop()?.toLowerCase() || 'png';
-                  const mimeType =
-                    ext === 'jpg' || ext === 'jpeg'
-                      ? 'image/jpeg'
-                      : `image/${ext}`;
-                  return {
-                    type: 'image_url' as const,
-                    image_url: { url: `data:${mimeType};base64,${base64}` },
-                  };
-                } else {
-                  // Project Path: Generate a signed URL for AI access
-                  const signedUrl = await s3Service.getSignedUrl(url);
-                  return {
-                    type: 'image_url' as const,
-                    image_url: { url: signedUrl },
-                  };
-                }
-              } catch {
-                return null;
+                const res = await fetchWithRetry(url);
+                const buffer = Buffer.from(await res.arrayBuffer());
+                const contentType = res.headers.get('content-type') || 'image/jpeg';
+                parts.push({
+                  inlineData: {
+                    mimeType: contentType,
+                    data: buffer.toString('base64'),
+                  },
+                });
+              } catch (e) {
+                console.error(`[AiService] Failed to fetch image: ${url}`, e);
               }
             }
-            return part;
-          }),
-        );
-
-        const finalContent = processedContent.filter((p): p is Exclude<typeof p, null> => {
-          if (p === null) return false;
-          // Use type assertion to satisfy TS that text exists when type is 'text'
-          if (p.type === 'text' && !(p as { text: string }).text.trim())
-            return false;
-          return true;
-        });
-
-        // Safety: 'not enough values to unpack' often happens if content is empty or malformed.
-        // If content is empty or only has images with no text, add a placeholder prompt.
-        const hasText = finalContent.some((p) => p.type === 'text');
-        const hasImage = finalContent.some((p) => p.type === 'image_url');
-
-        if (!hasText && hasImage) {
-          finalContent.unshift({
-            type: 'text' as const,
-            text: 'Please analyze this image.',
-          });
-        } else if (finalContent.length === 0) {
-          finalContent.push({ type: 'text' as const, text: '...' });
+          }
         }
+      }
 
-        // Strict Filtering: Only include recognized properties to avoid 'unpacking' errors in the Gateway
-        const sanitizedMsg: AiMessage = {
-          role: msg.role,
-          content: finalContent,
-        };
+      // 2. Handle Tool Calls (Assistant's side)
+      if (msg.tool_calls && msg.tool_calls.length > 0) {
+        msg.tool_calls.forEach((tc) => {
+          parts.push({
+            functionCall: {
+              name: tc.function.name,
+              args: JSON.parse(tc.function.arguments || '{}'),
+              id: tc.id,
+            },
+          });
+        });
+      }
 
-        if (msg.name) sanitizedMsg.name = msg.name;
-        if (msg.tool_call_id) sanitizedMsg.tool_call_id = msg.tool_call_id;
-        if (msg.tool_calls) sanitizedMsg.tool_calls = msg.tool_calls;
+      // 3. Handle Tool Responses (User's side)
+      if (msg.role === 'tool') {
+        parts.push({
+          functionResponse: {
+            name: msg.name,
+            response: { result: msg.content },
+            id: msg.tool_call_id,
+          },
+        });
+      }
 
-        return sanitizedMsg;
-      }),
-    );
+      // 🛡️ Safety: Skip if no valid parts were generated for this turn
+      if (parts.length === 0) continue;
+
+      const role = msg.role === 'assistant' ? 'model' : 'user';
+      const lastMsg = geminiMsgs[geminiMsgs.length - 1];
+
+      // 🔄 Group consecutive roles to satisfy Gemini's alternating roles requirement
+      if (lastMsg && lastMsg.role === role) {
+        lastMsg.parts.push(...parts);
+      } else {
+        geminiMsgs.push({ role, parts });
+      }
+    }
+
+    return geminiMsgs;
   }
 
   /**
-   * Streams text data from the AI model (Kimi K2.5) with multi-turn tool calling support.
+   * Helper to map ToolDefinition to Gemini functionDeclarations.
+   */
+  private getTools() {
+    const functionDeclarations = Object.entries(toolDefinitions).map(([name, tool]) => {
+      return {
+        name,
+        description: tool.description,
+        parametersJsonSchema: zodToJsonSchema(tool.schema as any),
+      };
+    });
+
+    return [{ functionDeclarations }];
+  }
+
+  /**
+   * Streams text data from the AI model (Gemini) with multi-turn tool calling support.
    */
   public async streamText(messages: AiMessage[], options?: StreamOptions) {
-    const { sessionId, onFinish, abortSignal } = options || {};
+    const { onFinish, abortSignal } = options || {};
     const encoder = new TextEncoder();
 
     return new ReadableStream({
@@ -200,233 +176,167 @@ class AiService {
 
         let systemPrompt = SYSTEM_PROMPT;
         if (options?.isVoiceMode) {
-          systemPrompt += `\n\n[VOICE MODE ACTIVE] CRITICAL SYSTEM INSTRUCTION: You are currently speaking through a Text-To-Speech engine. You MUST format your ENTIRE response as plain spoken text natively readable by humans. DO NOT use ANY Markdown formatting whatsoever. ABSOLUTELY NO asterisks (*), NO bold, NO italics, NO bullet points, NO hash symbols (#), and NO code blocks. If you use markdown, the speech engine will physically read out the punctuation. Respond naturally as if you are speaking.`;
+          systemPrompt += `\n\n[VOICE MODE ACTIVE] CRITICAL SYSTEM INSTRUCTION: You are currently speaking through a Text-To-Speech engine. You MUST format your ENTIRE response as plain spoken text natively readable by humans. DO NOT use ANY Markdown formatting whatsoever. Respond naturally as if you are speaking.`;
         }
 
-        // Process messages to handle vision stability (Base64 conversion)
-        const processedHistory = await this.processMessages(messages);
-        const currentMessages = this.manageContext([
-          { role: 'system', content: systemPrompt },
-          ...processedHistory,
-        ] as AiMessage[]);
-
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.gatewayKey}`,
-        };
-
-        if (sessionId) {
-          headers['x-session-affinity'] = sessionId;
+        const contents = await this.formatToGemini(messages);
+        if (contents.length === 0) {
+          throw new Error('[AiService] No valid message content to send to Gemini.');
         }
+
+        const tools = this.getTools();
+
+        // Separate the last message from history for the chat API
+        const history = contents.slice(0, -1);
+        const lastMessage = contents[contents.length - 1];
 
         let finalContent = '';
         let finalReasoning = '';
         const finalToolInvocations: Record<string, unknown>[] = [];
 
         try {
+          // Initialize Chat Session
+          const chat = this.ai.chats.create({
+            model: CHAT_MODEL_ID,
+            history: history,
+            config: {
+              systemInstruction: systemPrompt,
+              tools,
+              thinkingConfig: {
+                includeThoughts: true,
+                thinkingLevel: ThinkingLevel.LOW,
+              }
+            },
+          });
+
           let toolCallsAttempt = 0;
-          const contextHistory: AiMessage[] = [...currentMessages];
+          let currentInput = lastMessage;
 
           while (toolCallsAttempt < 5) {
-            // Limited to 5 tool call rounds for safety
             if (abortSignal?.aborted) break;
 
-            const formattedTools = Object.entries(toolDefinitions).map(
-              ([name, tool]) => {
-                const cleanParams = JSON.parse(JSON.stringify(tool.parameters));
-                if (cleanParams.properties) {
-                  Object.keys(cleanParams.properties).forEach((key) => {
-                    delete cleanParams.properties[key].default;
-                  });
-                }
-                return {
-                  type: 'function',
-                  function: {
-                    name,
-                    description: tool.description,
-                    parameters: cleanParams,
-                  },
-                };
-              },
-            );
-
-            const payload = {
-              model: CHAT_MODEL_ID,
-              messages: contextHistory,
-              tools: formattedTools.length > 0 ? formattedTools : undefined,
-              stream: true,
-              temperature: 0.7,
-            };
-
-            const response = await fetch(this.gatewayEndpoint, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(payload),
-              signal: abortSignal,
+            // 🚀 Use sendMessageStream for a better real-time experience
+            const partsToSend = ((currentInput as any).parts || (Array.isArray(currentInput) ? currentInput : [currentInput])).filter(Boolean);
+            if (partsToSend.length === 0) break;
+            
+            const stream = await chat.sendMessageStream({
+              message: partsToSend as any
             });
 
-            if (!response.ok) {
-              const errorBody = await response.text();
-              throw new Error(
-                `Gateway Error: ${response.status} - ${errorBody.slice(0, 100)}`,
-              );
-            }
+            let turnToolCalls: any[] = [];
 
-            const reader = response.body?.getReader();
-            if (!reader) throw new Error('No reader available');
+            for await (const chunk of stream) {
+              if (abortSignal?.aborted) break;
 
-            const textDecoder = new TextDecoder();
-            let buffer = '';
-            let assistantContent = '';
-            let toolCalls: { id: string; type: string; function: { name: string; arguments: string } }[] = [];
+              // 1. Stream regular text content using the SDK helper
+              if (chunk.text) {
+                finalContent += chunk.text;
+                sendChunk({ type: 'content', delta: chunk.text });
+              }
 
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              buffer += textDecoder.decode(value, { stream: true });
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || '';
-
-              for (const line of lines) {
-                const trimmedLine = line.trim();
-                if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
-                if (trimmedLine.startsWith('data: ')) {
-                  try {
-                    const data = JSON.parse(trimmedLine.slice(6));
-                    const delta = data.choices?.[0]?.delta;
-
-                    if (delta) {
-                      if (delta.reasoning_content) {
-                        finalReasoning += delta.reasoning_content;
-                        sendChunk({
-                          type: 'reasoning',
-                          delta: delta.reasoning_content,
-                        });
-                      }
-                      if (delta.content) {
-                        assistantContent += delta.content;
-                        finalContent += delta.content;
-                        sendChunk({ type: 'content', delta: delta.content });
-                      }
-                      if (delta.tool_calls) {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        delta.tool_calls.forEach((tc: any) => {
-                          const idx = tc.index;
-                          if (!toolCalls[idx]) {
-                            toolCalls[idx] = {
-                              id: tc.id,
-                              type: 'function',
-                              function: {
-                                name: tc.function.name,
-                                arguments: '',
-                              },
-                            };
-                          }
-                          if (tc.function.arguments) {
-                            toolCalls[idx].function.arguments +=
-                              tc.function.arguments;
-                          }
-                        });
-                      }
-                    }
-                  } catch {
-                    continue; // Skip invalid JSON
+              // 2. Handle Thoughts (Reasoning) explicitly
+              const candidate = chunk.candidates?.[0];
+              if (candidate?.content?.parts) {
+                for (const part of candidate.content.parts) {
+                  if (part.thought && part.text) {
+                    finalReasoning += part.text;
+                    sendChunk({ type: 'reasoning', delta: part.text });
                   }
                 }
               }
+
+              // 3. Accumulate tool calls for the next turn
+              if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+                turnToolCalls.push(...chunk.functionCalls);
+              }
             }
 
-            toolCalls = toolCalls.filter(Boolean);
-            contextHistory.push({
-              role: 'assistant',
-              content: assistantContent || '', // Ensure empty string instead of null/undefined
-              tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
-            });
+            if (abortSignal?.aborted) break;
 
-            if (toolCalls.length > 0) {
-              toolCallsAttempt++;
-              for (const tc of toolCalls) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const toolName = (tc as any).function.name;
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const tool = (toolDefinitions as any)[toolName];
-                let args = {};
-                try {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  args = JSON.parse((tc as any).function.arguments || '{}');
-                } catch {}
+            if (turnToolCalls.length === 0) {
+              break;
+            }
 
-                sendChunk({
-                  type: 'tool_call',
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  id: (tc as any).id,
-                  name: toolName,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  args: (tc as any).function.arguments,
+            // Execute collected tool calls in parallel
+            toolCallsAttempt++;
+            const functionResponseParts: any[] = [];
+            for (const fc of turnToolCalls) {
+              const { name, args, id } = fc;
+              
+              if (!name) {
+                functionResponseParts.push({
+                  functionResponse: {
+                    name: 'unknown',
+                    response: { error: 'Missing function name' },
+                    id: id || '',
+                  },
                 });
+                continue;
+              }
 
-                if (tool) {
+              const tool = (toolDefinitions as any)[name];
+
+              sendChunk({
+                type: 'tool_call',
+                id: id || `call_${nanoid()}`,
+                name,
+                args: JSON.stringify(args),
+              });
+
+              if (tool) {
                   try {
                     const result = await tool.execute(args);
                     sendChunk({
                       type: 'tool_result',
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      id: (tc as any).id,
-                      name: toolName,
+                      id: id,
+                      name,
                       result,
                     });
                     finalToolInvocations.push({
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      toolCallId: (tc as any).id,
-                      toolName,
+                      toolCallId: id,
+                      toolName: name,
                       args,
                       result,
                     });
-                    contextHistory.push({
-                      role: 'tool',
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      tool_call_id: (tc as any).id,
-                      name: toolName,
-                      content:
-                        typeof result === 'string'
-                          ? result
-                          : JSON.stringify(result),
+                    functionResponseParts.push({
+                      functionResponse: {
+                        name: name || 'unknown',
+                        response: { result },
+                        id: id || '',
+                      },
                     });
                   } catch (err) {
-                    const msg =
-                      err instanceof Error ? err.message : String(err);
-                    console.error(
-                      `[AiService] Tool execution failed (${toolName}):`,
-                      err,
-                    );
+                    const msg = err instanceof Error ? err.message : String(err);
                     sendChunk({
                       type: 'tool_result',
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      id: (tc as any).id,
-                      name: toolName,
+                      id: id,
+                      name,
                       error: msg,
                     });
-                    contextHistory.push({
-                      role: 'tool',
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      tool_call_id: (tc as any).id,
-                      name: toolName,
-                      content: `Error: ${msg}`,
+                    functionResponseParts.push({
+                      functionResponse: {
+                        name,
+                        response: { error: msg },
+                        id,
+                      },
                     });
                   }
                 } else {
-                  sendChunk({
-                    role: 'tool',
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    tool_call_id: (tc as any).id,
-                    content: 'Error: Tool not found',
+                  functionResponseParts.push({
+                    functionResponse: {
+                      name,
+                      response: { error: 'Tool not found' },
+                      id,
+                    },
                   });
                 }
               }
-            } else {
-              break; // No more tool calls, finish the interaction
-            }
+
+              // Set the tool responses as the input for the next round
+              currentInput = {
+                role: 'user',
+                parts: functionResponseParts,
+              };
           }
 
           if (onFinish) {
@@ -437,18 +347,10 @@ class AiService {
             });
           }
 
-          try {
-            controller.close();
-          } catch {
-            // Ignore if already closed
-          }
+          controller.close();
         } catch (error) {
-          console.error('[AiService] Streaming error:', error);
-          try {
-            controller.error(error);
-          } catch {
-            // Ignore if already closed
-          }
+          console.error('[AiService] Gemini error:', error);
+          controller.error(error);
         }
       },
     });
@@ -457,31 +359,29 @@ class AiService {
   /**
    * Generates a non-streaming text response.
    */
-  public async generateText(messages: AiMessage[], sessionId?: string) {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.gatewayKey}`,
-    };
+  public async generateText(messages: AiMessage[]) {
+    const contents = await this.formatToGemini(messages);
+    const history = contents.slice(0, -1);
+    const lastMessage = contents[contents.length - 1];
 
-    if (sessionId) {
-      headers['x-session-affinity'] = sessionId;
-    }
+    const tools = this.getTools();
 
-    const processedMessages = await this.processMessages(messages);
-
-    const response = await fetch(this.gatewayEndpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model: CHAT_MODEL_ID,
-        messages: processedMessages,
-        stream: false,
-      }),
+    const chat = this.ai.chats.create({
+      model: CHAT_MODEL_ID,
+      history,
+      config: {
+        systemInstruction: SYSTEM_PROMPT,
+        tools,
+      },
     });
 
-    if (!response.ok) throw new Error('Text generation failed');
-    const data = await response.json();
-    return data.choices[0].message.content;
+    const partsToSend = ((lastMessage as any).parts || [lastMessage]).filter(Boolean);
+    if (partsToSend.length === 0) throw new Error('No content to send');
+
+    const response = await chat.sendMessage({
+      message: partsToSend as any
+    });
+    return response.text;
   }
 
   /**
@@ -489,110 +389,74 @@ class AiService {
    */
   public async generateObject<T>(
     messages: AiMessage[],
-    options?: { sessionId?: string },
+    options?: { schema?: any },
   ): Promise<T> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.gatewayKey}`,
+    const contents = await this.formatToGemini(messages);
+    const history = contents.slice(0, -1);
+    const lastMessage = contents[contents.length - 1];
+
+    const config: any = {
+      systemInstruction: SYSTEM_PROMPT,
+      responseMimeType: 'application/json',
+      tools: this.getTools(),
     };
 
-    if (options?.sessionId) {
-      headers['x-session-affinity'] = options.sessionId;
+    if (options?.schema) {
+      if (options.schema instanceof z.ZodType) {
+        // Use standard JSON Schema for Zod
+        config.responseJsonSchema = zodToJsonSchema(options.schema as any);
+      } else {
+        // Use Gemini-specific schema format
+        config.responseSchema = options.schema;
+      }
     }
 
-    const processedMessages = await this.processMessages(messages);
-
-    const response = await fetch(this.gatewayEndpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model: CHAT_MODEL_ID,
-        messages: processedMessages,
-        response_format: { type: 'json_object' },
-        stream: false,
-      }),
+    const chat = this.ai.chats.create({
+      model: CHAT_MODEL_ID,
+      history,
+      config,
     });
 
-    if (!response.ok) throw new Error('Object generation failed');
+    const partsToSend = ((lastMessage as any).parts || [lastMessage]).filter(Boolean);
+    if (partsToSend.length === 0) throw new Error('No content to send');
 
-    const result = await response.json();
-    const content = result.choices?.[0]?.message?.content;
-
+    const response = await chat.sendMessage({
+      message: partsToSend as any
+    });
+    const content = response.text;
     if (!content) throw new Error('No content in JSON response');
 
     try {
       return JSON.parse(content);
     } catch {
-      console.error('[AiService] JSON Parse Error. Content:', content);
       throw new Error(`Model returned invalid JSON: ${content.slice(0, 100)}`);
     }
   }
 
   /**
-   * Helper to manage context window.
-   */
-  private manageContext(messages: AiMessage[]): AiMessage[] {
-    const systemMsg = messages.find((m) => m.role === 'system');
-    const otherMsgs = messages.filter((m) => m.role !== 'system');
-
-    while (
-      this.estimateMessageTokens(
-        [systemMsg, ...otherMsgs].filter((m): m is AiMessage => !!m),
-      ) > TOKEN_LIMIT_THRESHOLD &&
-      otherMsgs.length > 0
-    ) {
-      otherMsgs.shift();
-    }
-
-    return [systemMsg, ...otherMsgs].filter(
-      (m): m is AiMessage => m !== undefined,
-    );
-  }
-
-  private estimateTokens(content: AiMessageContent): number {
-    if (typeof content === 'string') return Math.ceil(content.length / 4);
-    if (Array.isArray(content)) {
-      return content.reduce((acc, part) => {
-        if (part.type === 'text') return acc + Math.ceil(part.text.length / 4);
-        if (part.type === 'image_url') return acc + 1000;
-        return acc;
-      }, 0);
-    }
-    return 0;
-  }
-
-  private estimateMessageTokens(messages: AiMessage[]): number {
-    return messages.reduce((acc, msg) => {
-      let count = this.estimateTokens(msg.content);
-      if (msg.tool_calls)
-        count += Math.ceil(JSON.stringify(msg.tool_calls).length / 4);
-      return acc + count;
-    }, 0);
-  }
-
-  /**
-   * Transcribes audio using Whisper.
+   * Transcribes audio using Gemini (Multimodal).
+   * Note: Gemini can handle audio directly in generateContent.
    */
   public async transcribeAudio(audioBuffer: Buffer) {
-    const response = await fetch(this.gatewayEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.gatewayKey}`,
-      },
-      body: JSON.stringify({
-        model: ASR_MODEL_ID,
-        audio: {
-          body: audioBuffer.toString('base64'),
-          contentType: 'audio/mpeg',
+    const response = await this.ai.models.generateContent({
+      model: CHAT_MODEL_ID,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: 'Transcribe this audio exactly as spoken.' },
+            {
+              inlineData: {
+                mimeType: 'audio/mpeg',
+                data: audioBuffer.toString('base64'),
+              },
+            },
+          ],
         },
-        language: 'en',
-      }),
+      ],
     });
 
-    if (!response.ok) throw new Error('Transcription failed');
-    const data = (await response.json()) as { text: string };
-    return data.text;
+    return response.text;
   }
 }
 
