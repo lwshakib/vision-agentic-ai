@@ -18,7 +18,7 @@ export type AiMessageContent =
   | string
   | (
       | { type: 'text'; text: string }
-      | { type: 'image_url'; image_url: { url: string } }
+      | { type: 'file'; file: { mimeType?: string; data?: string }; url?: string }
     )[];
 
 export interface AiMessage {
@@ -73,30 +73,34 @@ class AiService {
         for (const part of msg.content) {
           if (part.type === 'text' && part.text.trim()) {
             parts.push({ text: part.text });
-          } else if (part.type === 'image_url') {
-            const url = part.image_url.url;
-            if (url.startsWith('data:')) {
-              const [header, base64] = url.split(',');
-              const mimeType = header.split(':')[1].split(';')[0];
+          } else if (part.type === 'file') {
+            const fileData = part.file;
+            if (fileData.data) {
+              // Case 1: Direct base64 data provided
               parts.push({
                 inlineData: {
-                  mimeType,
-                  data: base64,
+                  mimeType: fileData.mimeType,
+                  data: fileData.data,
                 },
               });
             } else {
-              try {
-                const res = await fetchWithRetry(url);
-                const buffer = Buffer.from(await res.arrayBuffer());
-                const contentType = res.headers.get('content-type') || 'image/jpeg';
-                parts.push({
-                  inlineData: {
-                    mimeType: contentType,
-                    data: buffer.toString('base64'),
-                  },
-                });
-              } catch (e) {
-                console.error(`[AiService] Failed to fetch image: ${url}`, e);
+              const url = part.url;
+              if (url) {
+                // Case 2: Remote URL provided (e.g. from S3)
+                try {
+                  const res = await fetchWithRetry(url);
+                  if (!res.ok) throw new Error(`Failed to fetch file from URL: ${url}`);
+                  const buffer = Buffer.from(await res.arrayBuffer());
+                  const contentType = res.headers.get('content-type') || fileData.mimeType || 'application/octet-stream';
+                  parts.push({
+                    inlineData: {
+                      mimeType: contentType,
+                      data: buffer.toString('base64'),
+                    },
+                  });
+                } catch (e) {
+                  console.error(`[AiService] Failed to fetch remote file:`, e);
+                }
               }
             }
           }
