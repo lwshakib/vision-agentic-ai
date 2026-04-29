@@ -10,63 +10,56 @@ export async function formatToGemini(messages: AiMessage[]): Promise<any[]> {
   const geminiMsgs: any[] = [];
 
   for (const msg of messages) {
-    if (msg.role === 'system') continue; // Handled in config
-    let geminiThoughtSignature: string | undefined = undefined;
+    if (msg.role === 'system') continue;
     const parts: any[] = [];
 
-    // 1. Handle Content (Text or Multimodal)
+    // 1. Handle Reasoning/Thinking (Assistant side)
+    if (msg.role === 'assistant' && msg.reasoning) {
+      parts.push({ text: msg.reasoning, thought: true });
+    }
+
+    let effectiveSignature = msg.thought_signature;
+
+    // 2. Handle Content (Text or Multimodal)
     if (typeof msg.content === 'string' && msg.content.trim()) {
       parts.push({ text: msg.content });
     } else if (Array.isArray(msg.content)) {
       for (const part of msg.content) {
         if (part.type === 'text' && part.text.trim()) {
           parts.push({ text: part.text });
+        } else if ((part as any).type === 'thought_signature') {
+          effectiveSignature = (part as any).text || (part as any).thought_signature;
         } else if (part.type === 'file') {
           const fileData = part.file;
           if (fileData.data) {
-            // Case 1: Direct base64 data provided
             parts.push({
               inlineData: {
                 mimeType: fileData.mimeType,
                 data: fileData.data,
               },
             });
-          } else {
-            const url = part.url;
-            if (url) {
-              // Case 2: Remote URL provided (e.g. from S3)
-              try {
-                const res = await fetchWithRetry(url);
-                if (!res.ok) throw new Error(`Failed to fetch file from URL: ${url}`);
-                const buffer = Buffer.from(await res.arrayBuffer());
-                const contentType = res.headers.get('content-type') || fileData.mimeType || 'application/octet-stream';
-                parts.push({
-                  inlineData: {
-                    mimeType: contentType,
-                    data: buffer.toString('base64'),
-                  },
-                });
-              } catch (e) {
-                console.error(`[llm] Failed to fetch remote file:`, e);
-              }
+          } else if (part.url) {
+            try {
+              const res = await fetchWithRetry(part.url);
+              if (!res.ok) throw new Error(`Failed to fetch file: ${part.url}`);
+              const buffer = Buffer.from(await res.arrayBuffer());
+              const contentType = res.headers.get('content-type') || fileData.mimeType || 'application/octet-stream';
+              parts.push({
+                inlineData: {
+                  mimeType: contentType,
+                  data: buffer.toString('base64'),
+                },
+              });
+            } catch (e) {
+              console.error(`[llm] Failed to fetch remote file:`, e);
             }
           }
-        } else if ((part as any).type === 'thought_signature') {
-          geminiThoughtSignature = (part as any).text || (part as any).thought_signature;
         }
       }
     }
 
-    // Capture thought_signature if it was on the message object or found in parts
-    const finalThoughtSignature = msg.thought_signature || geminiThoughtSignature;
-
-    // 2. Handle Tool Calls (Assistant's side)
+    // 3. Handle Tool Calls (Assistant side)
     if (msg.tool_calls && msg.tool_calls.length > 0) {
-      // If we have a thought signature, include it in its own part at the beginning
-      if (finalThoughtSignature) {
-        parts.push({ thoughtSignature: finalThoughtSignature });
-      }
-
       msg.tool_calls.forEach((tc) => {
         parts.push({
           functionCall: {
@@ -74,11 +67,13 @@ export async function formatToGemini(messages: AiMessage[]): Promise<any[]> {
             args: JSON.parse(tc.function.arguments || '{}'),
             id: tc.id,
           },
+          // CRITICAL: Gemini 3 requires signature to be in the SAME part as functionCall
+          thoughtSignature: effectiveSignature,
         });
       });
     }
 
-    // 3. Handle Tool Responses (User's side)
+    // 4. Handle Tool Responses (User side)
     if (msg.role === 'tool') {
       parts.push({
         functionResponse: {
@@ -89,13 +84,11 @@ export async function formatToGemini(messages: AiMessage[]): Promise<any[]> {
       });
     }
 
-    // 🛡️ Safety: Skip if no valid parts were generated for this turn
     if (parts.length === 0) continue;
 
     const role = msg.role === 'assistant' ? 'model' : 'user';
     const lastMsg = geminiMsgs[geminiMsgs.length - 1];
 
-    // 🔄 Group consecutive roles to satisfy Gemini's alternating roles requirement
     if (lastMsg && lastMsg.role === role) {
       lastMsg.parts.push(...parts);
     } else {
