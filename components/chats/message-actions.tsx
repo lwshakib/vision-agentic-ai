@@ -13,6 +13,7 @@ import {
 } from '@/components/ai-elements/message';
 import type { ChatMessage } from '@/hooks/use-chat';
 import { cn } from '@/lib/utils';
+import { CheckIcon } from 'lucide-react';
 
 interface TextPart {
   type: string;
@@ -31,6 +32,7 @@ export function MessageActionsList({
   onRetry,
 }: MessageActionsListProps) {
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   if (message.isStreaming) return null;
 
@@ -57,11 +59,15 @@ export function MessageActionsList({
     >
       {fullText && (
         <MessageAction
-          label="Copy"
-          onClick={() => onCopy(fullText)}
-          tooltip="Copy this response"
+          label={isCopied ? "Copied" : "Copy"}
+          onClick={() => {
+             onCopy(fullText);
+             setIsCopied(true);
+             setTimeout(() => setIsCopied(false), 2000);
+          }}
+          tooltip={isCopied ? "Copied to clipboard" : "Copy this response"}
         >
-          <CopyIcon className="size-4" />
+          {isCopied ? <CheckIcon className="size-4 text-green-600" /> : <CopyIcon className="size-4" />}
         </MessageAction>
       )}
 
