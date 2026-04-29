@@ -1,4 +1,4 @@
-import { CHAT_MODEL_ID } from '@/lib/constants';
+import { CHAT_MODEL_ID } from './constants';
 import { googleGenAi } from './client';
 
 /**

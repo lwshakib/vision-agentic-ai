@@ -1,4 +1,4 @@
-import { CHAT_MODEL_ID } from '@/lib/constants';
+import { CHAT_MODEL_ID } from './constants';
 import { SYSTEM_PROMPT } from '@/lib/prompts';
 import { googleGenAi } from './client';
 import { formatToGemini, getTools } from './utils';

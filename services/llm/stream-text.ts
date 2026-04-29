@@ -1,6 +1,6 @@
 import { ThinkingLevel } from '@google/genai';
 import { nanoid } from 'nanoid';
-import { CHAT_MODEL_ID } from '@/lib/constants';
+import { CHAT_MODEL_ID } from './constants';
 import { SYSTEM_PROMPT } from '@/lib/prompts';
 import { toolDefinitions } from '@/services/tools';
 import { googleGenAi } from './client';

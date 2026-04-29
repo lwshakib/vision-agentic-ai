@@ -1,5 +1,5 @@
 import { googleGenAi } from './client';
-import { TTS_MODEL_ID } from '@/lib/constants';
+import { TTS_MODEL_ID } from './constants';
 import { s3Service } from '@/services/s3.services';
 
 /**

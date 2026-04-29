@@ -1,6 +1,6 @@
 import { fetchWithRetry } from '@/lib/utils';
 import { s3Service } from '@/services/s3.services';
-import { IMAGE_MODEL_ID } from '@/lib/constants';
+import { IMAGE_MODEL_ID } from './constants';
 import { googleGenAi } from './client';
 
 export interface GenerateImageOptions {
