@@ -1,4 +1,4 @@
-import { createClient } from '@deepgram/sdk';
+import { DeepgramClient } from '@deepgram/sdk';
 import { DEEPGRAM_API_KEY } from '@/lib/env';
 import { s3Service } from '@/services/s3.services';
 
@@ -13,7 +13,7 @@ export async function textToSpeech(
     throw new Error('DEEPGRAM_API_KEY is not configured');
   }
 
-  const deepgram = createClient(DEEPGRAM_API_KEY);
+  const deepgram = new DeepgramClient(DEEPGRAM_API_KEY);
 
   try {
     const response = await deepgram.speak.v1.audio.generate(
