@@ -8,4 +8,4 @@ export * from './transcribe-audio';
 export * from './text-to-speech';
 export * from './generate-image';
 export * from './generate-file';
-export * from './podcast';
+export * from './generate-podcast';
