@@ -50,9 +50,9 @@ export async function formatToGemini(messages: AiMessage[]): Promise<any[]> {
                 console.error(`[llm] Failed to fetch remote file:`, e);
               }
             }
-          } else if ((part as any).type === 'thought_signature') {
-            geminiThoughtSignature = (part as any).text || (part as any).thought_signature;
           }
+        } else if ((part as any).type === 'thought_signature') {
+          geminiThoughtSignature = (part as any).text || (part as any).thought_signature;
         }
       }
     }
@@ -82,9 +82,9 @@ export async function formatToGemini(messages: AiMessage[]): Promise<any[]> {
     if (msg.role === 'tool') {
       parts.push({
         functionResponse: {
-          name: msg.name,
+          name: msg.name || 'unknown',
           response: { result: msg.content },
-          id: msg.tool_call_id,
+          id: msg.tool_call_id || '',
         },
       });
     }
