@@ -11,6 +11,7 @@ export interface SpeakerCharacter {
   languageCode: string;
   accent: string;
   description: string;
+  provider: 'deepgram' | 'google';
 }
 
 /**
@@ -27,6 +28,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Clear, Confident, Energetic, Enthusiastic. Great for casual chat, customer service, and IVR.',
+    provider: 'deepgram',
   },
   {
     name: 'Andromeda',
@@ -36,6 +38,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Casual, Expressive, Comfortable. Best for customer service and IVR.',
+    provider: 'deepgram',
   },
   {
     name: 'Helena',
@@ -45,6 +48,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Caring, Natural, Positive, Friendly, Raspy. Ideal for IVR and casual chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Apollo',
@@ -54,6 +58,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Confident, Comfortable, Casual. Perfect for casual chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Arcas',
@@ -63,6 +68,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Natural, Smooth, Clear, Comfortable. Great for customer service and casual chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Aries',
@@ -72,6 +78,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Warm, Energetic, Caring. Best for casual chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Amalthea',
@@ -81,6 +88,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'Filipino',
     description: 'Engaging, Natural, Cheerful. Casual chat specialist.',
+    provider: 'deepgram',
   },
   {
     name: 'Asteria',
@@ -90,6 +98,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Clear, Confident, Knowledgeable, Energetic. Recommended for advertising.',
+    provider: 'deepgram',
   },
   {
     name: 'Athena',
@@ -99,6 +108,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Calm, Smooth, Professional. Perfect for storytelling.',
+    provider: 'deepgram',
   },
   {
     name: 'Atlas',
@@ -108,6 +118,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Enthusiastic, Confident, Approachable, Friendly. Great for advertising.',
+    provider: 'deepgram',
   },
   {
     name: 'Aurora',
@@ -117,6 +128,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Cheerful, Expressive, Energetic. Ideal for interviews.',
+    provider: 'deepgram',
   },
   {
     name: 'Callista',
@@ -126,6 +138,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Clear, Energetic, Professional, Smooth. Optimized for IVR.',
+    provider: 'deepgram',
   },
   {
     name: 'Cora',
@@ -135,6 +148,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Smooth, Melodic, Caring. Perfect for storytelling.',
+    provider: 'deepgram',
   },
   {
     name: 'Cordelia',
@@ -144,6 +158,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Approachable, Warm, Polite. Great for storytelling.',
+    provider: 'deepgram',
   },
   {
     name: 'Delia',
@@ -153,6 +168,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Casual, Friendly, Cheerful, Breathy. Best for interviews.',
+    provider: 'deepgram',
   },
   {
     name: 'Draco',
@@ -162,6 +178,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'British',
     description: 'Warm, Approachable, Trustworthy, Baritone. Ideal for storytelling.',
+    provider: 'deepgram',
   },
   {
     name: 'Electra',
@@ -171,6 +188,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Professional, Engaging, Knowledgeable. Great for IVR, advertising, and customer service.',
+    provider: 'deepgram',
   },
   {
     name: 'Harmonia',
@@ -180,6 +198,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Empathetic, Clear, Calm, Confident. Specialist in customer service.',
+    provider: 'deepgram',
   },
   {
     name: 'Hera',
@@ -189,6 +208,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Smooth, Warm, Professional. Best for informative content.',
+    provider: 'deepgram',
   },
   {
     name: 'Hermes',
@@ -198,6 +218,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Expressive, Engaging, Professional. Great for informative content.',
+    provider: 'deepgram',
   },
   {
     name: 'Hyperion',
@@ -207,6 +228,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'Australian',
     description: 'Caring, Warm, Empathetic. Ideal for interviews.',
+    provider: 'deepgram',
   },
   {
     name: 'Iris',
@@ -216,6 +238,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Cheerful, Positive, Approachable. Great for IVR, advertising, and customer service.',
+    provider: 'deepgram',
   },
   {
     name: 'Janus',
@@ -225,6 +248,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Southern, Smooth, Trustworthy. Perfect for storytelling.',
+    provider: 'deepgram',
   },
   {
     name: 'Juno',
@@ -234,6 +258,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Natural, Engaging, Melodic, Breathy. Great for interviews.',
+    provider: 'deepgram',
   },
   {
     name: 'Jupiter',
@@ -243,6 +268,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Expressive, Knowledgeable, Baritone. Best for informative content.',
+    provider: 'deepgram',
   },
   {
     name: 'Luna',
@@ -252,6 +278,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Friendly, Natural, Engaging. Optimized for IVR.',
+    provider: 'deepgram',
   },
   {
     name: 'Mars',
@@ -261,6 +288,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Smooth, Patient, Trustworthy, Baritone. Great for customer service.',
+    provider: 'deepgram',
   },
   {
     name: 'Minerva',
@@ -270,6 +298,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Positive, Friendly, Natural. Ideal for storytelling.',
+    provider: 'deepgram',
   },
   {
     name: 'Neptune',
@@ -279,6 +308,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Professional, Patient, Polite. Great for customer service.',
+    provider: 'deepgram',
   },
   {
     name: 'Odysseus',
@@ -288,6 +318,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Calm, Smooth, Comfortable, Professional. Recommended for advertising.',
+    provider: 'deepgram',
   },
   {
     name: 'Ophelia',
@@ -297,6 +328,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Expressive, Enthusiastic, Cheerful. Ideal for interviews.',
+    provider: 'deepgram',
   },
   {
     name: 'Orion',
@@ -306,6 +338,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Approachable, Comfortable, Calm, Polite. Best for informative content.',
+    provider: 'deepgram',
   },
   {
     name: 'Orpheus',
@@ -315,6 +348,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Professional, Clear, Confident, Trustworthy. Ideal for customer service and storytelling.',
+    provider: 'deepgram',
   },
   {
     name: 'Pandora',
@@ -324,6 +358,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'British',
     description: 'Smooth, Calm, Melodic, Breathy. Great for IVR and informative content.',
+    provider: 'deepgram',
   },
   {
     name: 'Phoebe',
@@ -333,6 +368,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Energetic, Warm, Casual. Great for customer service.',
+    provider: 'deepgram',
   },
   {
     name: 'Pluto',
@@ -342,6 +378,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Smooth, Calm, Empathetic, Baritone. Ideal for interviews and storytelling.',
+    provider: 'deepgram',
   },
   {
     name: 'Saturn',
@@ -351,6 +388,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Knowledgeable, Confident, Baritone. Great for customer service.',
+    provider: 'deepgram',
   },
   {
     name: 'Selene',
@@ -360,6 +398,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Expressive, Engaging, Energetic. Best for informative content.',
+    provider: 'deepgram',
   },
   {
     name: 'Theia',
@@ -369,6 +408,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'Australian',
     description: 'Expressive, Polite, Sincere. Ideal for informative content.',
+    provider: 'deepgram',
   },
   {
     name: 'Vesta',
@@ -378,6 +418,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Natural, Expressive, Patient, Empathetic. Great for customer service, interview, and storytelling.',
+    provider: 'deepgram',
   },
   {
     name: 'Zeus',
@@ -387,6 +428,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'en',
     accent: 'American',
     description: 'Deep, Trustworthy, Smooth. Optimized for IVR.',
+    provider: 'deepgram',
   },
 
   // --- SPANISH (es) ---
@@ -398,6 +440,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Colombian',
     description: 'Clear, Energetic, Positive, Friendly, Enthusiastic. Great for Casual Chat, Advertising, and IVR.',
+    provider: 'deepgram',
   },
   {
     name: 'Estrella',
@@ -407,6 +450,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Mexican',
     description: 'Approachable, Natural, Calm, Comfortable, Expressive. Ideal for Casual Chat and Interview.',
+    provider: 'deepgram',
   },
   {
     name: 'Nestor',
@@ -416,6 +460,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Peninsular',
     description: 'Calm, Professional, Approachable, Clear, Confident. Great for Casual Chat and Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Sirio',
@@ -425,6 +470,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Mexican',
     description: 'Calm, Professional, Comfortable, Empathetic, Baritone. Best for Casual Chat and Interview.',
+    provider: 'deepgram',
   },
   {
     name: 'Carina',
@@ -434,6 +480,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Peninsular',
     description: 'Professional, Raspy, Energetic, Breathy, Confident. Ideal for Interview, Customer Service, and IVR. Supports codeswitching with English.',
+    provider: 'deepgram',
   },
   {
     name: 'Alvaro',
@@ -443,6 +490,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Peninsular',
     description: 'Calm, Professional, Clear, Knowledgeable, Approachable. Great for Interview and Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Diana',
@@ -452,6 +500,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Peninsular',
     description: 'Professional, Confident, Expressive, Polite, Knowledgeable. Best for Storytelling and Advertising. Supports codeswitching with English.',
+    provider: 'deepgram',
   },
   {
     name: 'Aquila',
@@ -461,6 +510,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Latin American',
     description: 'Expressive, Enthusiastic, Confident, Casual, Comfortable. Ideal for Casual Chat and Informative content. Supports codeswitching with English.',
+    provider: 'deepgram',
   },
   {
     name: 'Selena',
@@ -470,6 +520,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Latin American',
     description: 'Approachable, Casual, Friendly, Calm, Positive. Great for Customer Service and Informative content. Supports codeswitching with English.',
+    provider: 'deepgram',
   },
   {
     name: 'Javier',
@@ -479,6 +530,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Mexican',
     description: 'Approachable, Professional, Friendly, Comfortable, Calm. Great for Casual Chat, IVR, and Storytelling. Supports codeswitching with English.',
+    provider: 'deepgram',
   },
   {
     name: 'Agustina',
@@ -488,6 +540,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Peninsular',
     description: 'Calm, Clear, Expressive, Knowledgeable, Professional. Best for Interview and Casual Chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Antonia',
@@ -497,6 +550,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Argentine',
     description: 'Approachable, Enthusiastic, Friendly, Natural, Professional. Ideal for Customer Service, Interview, and Casual Chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Gloria',
@@ -506,6 +560,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Colombian',
     description: 'Casual, Clear, Expressive, Natural, Smooth. Great for Customer Service and Casual Chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Luciano',
@@ -515,6 +570,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Mexican',
     description: 'Charismatic, Cheerful, Energetic, Expressive, Friendly. Ideal for Customer Service and Casual Chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Olivia',
@@ -524,6 +580,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Mexican',
     description: 'Breathy, Calm, Casual, Expressive, Warm. Great for Customer Service and Casual Chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Silvia',
@@ -533,6 +590,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Peninsular',
     description: 'Charismatic, Clear, Expressive, Natural, Warm. Best for Customer Service and Casual Chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Valerio',
@@ -542,6 +600,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'es',
     accent: 'Mexican',
     description: 'Deep, Knowledgeable, Natural, Polite, Professional. Ideal for Customer Service and Informative content.',
+    provider: 'deepgram',
   },
 
   // --- DUTCH (nl) ---
@@ -553,6 +612,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'nl',
     accent: 'Dutch',
     description: 'Caring, Knowledgeable, Positive, Smooth, Warm. Great for Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Sander',
@@ -562,6 +622,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'nl',
     accent: 'Dutch',
     description: 'Calm, Clear, Deep, Professional, Smooth. Ideal for Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Beatrix',
@@ -571,6 +632,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'nl',
     accent: 'Dutch',
     description: 'Cheerful, Enthusiastic, Friendly, Trustworthy, Warm. Best for Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Daphne',
@@ -580,6 +642,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'nl',
     accent: 'Dutch',
     description: 'Calm, Clear, Confident, Professional, Smooth. Ideal for Healthcare, Interview, Casual Chat, and Audiobooks.',
+    provider: 'deepgram',
   },
   {
     name: 'Cornelia',
@@ -589,6 +652,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'nl',
     accent: 'Dutch',
     description: 'Approachable, Friendly, Polite, Positive, Warm. Great for Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Hestia',
@@ -598,6 +662,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'nl',
     accent: 'Dutch',
     description: 'Approachable, Caring, Expressive, Friendly, Knowledgeable. Ideal for Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Lars',
@@ -607,6 +672,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'nl',
     accent: 'Dutch',
     description: 'Breathy, Casual, Comfortable, Sincere, Trustworthy. Best for Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Roman',
@@ -616,6 +682,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'nl',
     accent: 'Dutch',
     description: 'Calm, Casual, Deep, Natural, Patient. Ideal for Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Leda',
@@ -625,6 +692,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'nl',
     accent: 'Dutch',
     description: 'Caring, Comfortable, Empathetic, Friendly, Sincere. Recommended for Sales.',
+    provider: 'deepgram',
   },
 
   // --- FRENCH (fr) ---
@@ -636,6 +704,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'fr',
     accent: 'French',
     description: 'Charismatic, Cheerful, Enthusiastic, Friendly, Natural. Great for Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Hector',
@@ -645,6 +714,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'fr',
     accent: 'French',
     description: 'Confident, Empathetic, Expressive, Friendly, Patient. Ideal for Customer Service.',
+    provider: 'deepgram',
   },
 
   // --- GERMAN (de) ---
@@ -656,6 +726,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'de',
     accent: 'German',
     description: 'Casual, Cheerful, Engaging, Expressive, Friendly. Great for Customer Service and Healthcare.',
+    provider: 'deepgram',
   },
   {
     name: 'Viktoria',
@@ -665,6 +736,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'de',
     accent: 'German',
     description: 'Charismatic, Cheerful, Enthusiastic, Friendly, Warm. Ideal for Customer Service and Sales.',
+    provider: 'deepgram',
   },
   {
     name: 'Elara',
@@ -674,6 +746,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'de',
     accent: 'German',
     description: 'Calm, Clear, Natural, Patient, Trustworthy. Recommended for Healthcare and Financial Services.',
+    provider: 'deepgram',
   },
   {
     name: 'Aurelia',
@@ -683,6 +756,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'de',
     accent: 'German',
     description: 'Approachable, Casual, Comfortable, Natural, Sincere. Great for Customer Service and Sales.',
+    provider: 'deepgram',
   },
   {
     name: 'Lara',
@@ -692,6 +766,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'de',
     accent: 'German',
     description: 'Caring, Cheerful, Empathetic, Expressive, Warm. Ideal for Healthcare and Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Fabian',
@@ -701,6 +776,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'de',
     accent: 'German',
     description: 'Confident, Knowledgeable, Natural, Polite, Professional. Great for Financial Services.',
+    provider: 'deepgram',
   },
   {
     name: 'Kara',
@@ -710,6 +786,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'de',
     accent: 'German',
     description: 'Caring, Empathetic, Expressive, Professional, Warm. Ideal for Healthcare.',
+    provider: 'deepgram',
   },
 
   // --- ITALIAN (it) ---
@@ -721,6 +798,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Approachable, Cheerful, Clear, Engaging, Expressive. Great for Customer Service and Audiobooks.',
+    provider: 'deepgram',
   },
   {
     name: 'Dionisio',
@@ -730,6 +808,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Confident, Engaging, Friendly, Melodic, Positive. Ideal for Sales and Casual Chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Melia',
@@ -739,6 +818,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Clear, Comfortable, Engaging, Friendly, Natural. Best for Casual Chat and Interview.',
+    provider: 'deepgram',
   },
   {
     name: 'Elio',
@@ -748,6 +828,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Breathy, Calm, Professional, Smooth, Trustworthy. Ideal for Interview and Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Flavio',
@@ -757,6 +838,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Confident, Deep, Empathetic, Professional, Trustworthy. Great for Casual Chat and Interview.',
+    provider: 'deepgram',
   },
   {
     name: 'Maia',
@@ -766,6 +848,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Caring, Energetic, Expressive, Professional, Warm. Best for Interview and Healthcare.',
+    provider: 'deepgram',
   },
   {
     name: 'Cinzia',
@@ -775,6 +858,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Approachable, Friendly, Smooth, Trustworthy, Warm. Great for Narration and Interview.',
+    provider: 'deepgram',
   },
   {
     name: 'Cesare',
@@ -784,6 +868,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Clear, Empathetic, Knowledgeable, Natural, Smooth. Ideal for IVR and Casual Chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Perseo',
@@ -793,6 +878,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Casual, Clear, Natural, Polite, Smooth. Best for Casual Chat and Customer Service.',
+    provider: 'deepgram',
   },
   {
     name: 'Demetra',
@@ -802,6 +888,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'it',
     accent: 'Italian',
     description: 'Calm, Comfortable, Patient. Great for Narration and Casual Chat.',
+    provider: 'deepgram',
   },
 
   // --- JAPANESE (ja) ---
@@ -813,6 +900,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'ja',
     accent: 'Japanese',
     description: 'Calm, Confident, Knowledgeable, Professional, Smooth. Ideal for Interview and IVR.',
+    provider: 'deepgram',
   },
   {
     name: 'Izanami',
@@ -822,6 +910,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'ja',
     accent: 'Japanese',
     description: 'Approachable, Clear, Knowledgeable, Polite, Professional. Best for Customer Service and IVR.',
+    provider: 'deepgram',
   },
   {
     name: 'Uzume',
@@ -831,6 +920,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'ja',
     accent: 'Japanese',
     description: 'Approachable, Clear, Polite, Professional, Trustworthy. Ideal for Commercial and IVR.',
+    provider: 'deepgram',
   },
   {
     name: 'Ebisu',
@@ -840,6 +930,7 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'ja',
     accent: 'Japanese',
     description: 'Calm, Deep, Natural, Patient, Sincere. Great for Casual Chat.',
+    provider: 'deepgram',
   },
   {
     name: 'Ama',
@@ -849,5 +940,42 @@ export const auraSpeakers: SpeakerCharacter[] = [
     languageCode: 'ja',
     accent: 'Japanese',
     description: 'Casual, Comfortable, Confident, Knowledgeable, Natural. Best for Interview and IVR.',
+    provider: 'deepgram',
   },
+];
+
+/**
+ * Gemini-specific voices for multi-speaker podcast generation.
+ */
+export const geminiVoices: SpeakerCharacter[] = [
+  { name: 'Zephyr', model: 'Zephyr', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Bright and energetic.', provider: 'google' },
+  { name: 'Puck', model: 'Puck', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Upbeat and lively.', provider: 'google' },
+  { name: 'Charon', model: 'Charon', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Informative and steady.', provider: 'google' },
+  { name: 'Kore', model: 'Kore', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Firm and authoritative.', provider: 'google' },
+  { name: 'Fenrir', model: 'Fenrir', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Excitable and high-energy.', provider: 'google' },
+  { name: 'Leda', model: 'Leda', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Youthful and fresh.', provider: 'google' },
+  { name: 'Orus', model: 'Orus', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Firm and confident.', provider: 'google' },
+  { name: 'Aoede', model: 'Aoede', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Breezy and light.', provider: 'google' },
+  { name: 'Callirrhoe', model: 'Callirrhoe', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Easy-going and relaxed.', provider: 'google' },
+  { name: 'Autonoe', model: 'Autonoe', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Bright and clear.', provider: 'google' },
+  { name: 'Enceladus', model: 'Enceladus', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Breathy and intimate.', provider: 'google' },
+  { name: 'Iapetus', model: 'Iapetus', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Clear and articulate.', provider: 'google' },
+  { name: 'Umbriel', model: 'Umbriel', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Easy-going and calm.', provider: 'google' },
+  { name: 'Algieba', model: 'Algieba', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Smooth and melodic.', provider: 'google' },
+  { name: 'Despina', model: 'Despina', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Smooth and consistent.', provider: 'google' },
+  { name: 'Erinome', model: 'Erinome', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Clear and precise.', provider: 'google' },
+  { name: 'Algenib', model: 'Algenib', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Gravelly and textured.', provider: 'google' },
+  { name: 'Rasalgethi', model: 'Rasalgethi', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Informative and professional.', provider: 'google' },
+  { name: 'Laomedeia', model: 'Laomedeia', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Upbeat and positive.', provider: 'google' },
+  { name: 'Achernar', model: 'Achernar', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Soft and gentle.', provider: 'google' },
+  { name: 'Alnilam', model: 'Alnilam', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Firm and steady.', provider: 'google' },
+  { name: 'Schedar', model: 'Schedar', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Even and balanced.', provider: 'google' },
+  { name: 'Gacrux', model: 'Gacrux', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Mature and resonant.', provider: 'google' },
+  { name: 'Pulcherrima', model: 'Pulcherrima', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Forward and engaging.', provider: 'google' },
+  { name: 'Achird', model: 'Achird', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Friendly and approachable.', provider: 'google' },
+  { name: 'Zubenelgenubi', model: 'Zubenelgenubi', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Casual and relaxed.', provider: 'google' },
+  { name: 'Vindemiatrix', model: 'Vindemiatrix', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Gentle and kind.', provider: 'google' },
+  { name: 'Sadachbia', model: 'Sadachbia', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Lively and spirited.', provider: 'google' },
+  { name: 'Sadaltager', model: 'Sadaltager', gender: 'male', language: 'English', languageCode: 'en', accent: 'American', description: 'Knowledgeable and wise.', provider: 'google' },
+  { name: 'Sulafat', model: 'Sulafat', gender: 'female', language: 'English', languageCode: 'en', accent: 'American', description: 'Warm and comforting.', provider: 'google' },
 ];
