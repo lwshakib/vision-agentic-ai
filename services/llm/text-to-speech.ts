@@ -20,7 +20,8 @@ export async function textToSpeech(
   try {
     // STEP 2: Make a request and configure the request with options
     const response = await deepgram.speak.v1.audio.generate(
-      { text
+      {
+        text: text,
         model: voice,
         encoding: 'linear16',
         container: 'wav',
@@ -28,13 +29,13 @@ export async function textToSpeech(
     );
 
     // STEP 3: Get the audio stream from the response
-    const stream = response.stream;
-    if (!stream) {
+    const audioStream = typeof response.stream === 'function' ? response.stream() : response.stream;
+    if (!audioStream) {
       throw new Error('Deepgram synthesis failed: No audio stream returned');
     }
 
     // STEP 4: Convert the stream to an audio buffer
-    const buffer = await getAudioBuffer(stream);
+    const buffer = await getAudioBuffer(audioStream);
 
     // STEP 5: Upload the audio buffer to S3
     const key = `tts/audio-${Date.now()}.wav`;
