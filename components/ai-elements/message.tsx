@@ -50,11 +50,14 @@ export const Message = ({ className, from, ...props }: MessageProps) => (
   />
 );
 
-export type MessageContentProps = HTMLAttributes<HTMLDivElement>;
+export type MessageContentProps = HTMLAttributes<HTMLDivElement> & {
+  isStreaming?: boolean;
+};
 
 export const MessageContent = ({
   children,
   className,
+  isStreaming,
   ...props
 }: MessageContentProps) => (
   <div
