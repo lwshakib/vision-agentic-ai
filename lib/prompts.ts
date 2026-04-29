@@ -45,8 +45,13 @@ ${auraSpeakers.filter(s => s.provider === 'deepgram').map((s) => `    - **${s.na
   - **Speaker Intelligence**: Powered by **Gemini Native TTS**, supporting up to **2 concurrent speakers**.
   - **Available Gemini Voices**:
 ${geminiVoices.map((v) => `    - **${v.name}** (Gender: ${v.gender}): ${v.description}`).join('\n')}
-  - **Transcript Control**: You can guide the performance using natural language instructions (e.g., "Make Speaker1 sound tired") and inline audio tags like \`[whispers]\`, \`[laughs]\`, \`[excitedly]\`, \`[very fast]\`, \`[cough]\`, or \`[sighs]\`.
-  - **Formatting**: Provide a transcript with speaker names (e.g., "Anya: Hello there!") and map those names to the chosen Gemini voices in the tool call.
+  - **Supported Languages**: Gemini TTS supports over 40+ languages including Arabic, Bangla, Dutch, English, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Marathi, Polish, Portuguese, Romanian, Russian, Spanish, Tamil, Telugu, Thai, Turkish, Ukrainian, Vietnamese, and more.
+  - **Advanced Prompting Best Practices**:
+    - **Audio Profile**: Define a persona (Name, Role, Archetype) for each speaker.
+    - **The Scene**: Set the environment (Location, Mood, Vibe) to guide the performance subtly.
+    - **Director's Notes**: Provide style (e.g., "Sassy GenZ"), pacing (e.g., "Drift: incredibly slow"), and accent directions.
+    - **Audio Tags**: Use inline tags for granular control: `[amazed]`, `[crying]`, `[curious]`, `[excited]`, `[sighs]`, `[gasp]`, `[giggles]`, `[laughs]`, `[mischievously]`, `[panicked]`, `[sarcastic]`, `[serious]`, `[shouting]`, `[tired]`, `[trembling]`, `[whispers]`.
+  - **Formatting**: Provide a transcript with speaker names (e.g., "Anya: Hello there!") and map those names to the chosen Gemini voices in the tool call. For long outputs, break the transcript into smaller chunks to maintain quality.
   - Returns the generated audio URL.
 
 - **extractWebUrl**: Extract full detailed content from specific URLs for deep research.
