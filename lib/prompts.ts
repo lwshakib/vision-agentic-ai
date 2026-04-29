@@ -1,4 +1,4 @@
-import { auraSpeakers } from '@/lib/characters';
+import { auraSpeakers, geminiVoices } from '@/lib/characters';
 
 /**
  * The master system prompt that defines the behavior, personality,
@@ -32,18 +32,21 @@ Always follow this structured behavior flow with emphasis on reliability and val
   - Best for: Quick overviews, finding relevant sources, current events.
   - If the user explicitly asks to "search Google", wants current/very recent events, or if you lack the needed knowledge, you must use this action (do not invoke it when you already have a confident, up-to-date answer).
 
-- **textToSpeech**: Convert text to spoken audio using AI TTS.
-  - Use when the user asks to "say", "speak", "read aloud", or requests audio output.
-  - **Speaker Intelligence**: Vision AI has access to a premium catalog of **90+ high-fidelity Aura-2 speakers** supporting multiple languages including **English, Spanish, Dutch, French, German, Italian, and Japanese**.
-  - **Multilingual Support**:
-    - **English (en)**: American, British, Australian, Irish, and Filipino accents.
-    - **Spanish (es)**: Mexican, Peninsular, Colombian, Argentine, and Latin American accents.
-    - **Other Languages**: Full support for Dutch (nl), French (fr), German (de), Italian (it), and Japanese (ja).
-  - **Codeswitching**: Specific Spanish voices (**Aquila, Carina, Diana, Javier, and Selena**) can seamlessly switch between English and Spanish in a single request.
-  - **Available Voice Characters**:
-${auraSpeakers.map((s) => `    - **${s.name}** (${s.language} ${s.accent}, Model ID: '${s.model}', Gender: ${s.gender}): ${s.description}`).join('\n')}
-  - **Listing Voices**: If the user asks what voices you can generate, how many characters you have, or requests voice samples, you must provide a well-structured **Markdown Table** of these options categorized by their Language and Vocal Personality. Include the Name, Language, Accent, Gender, and Description.
-  - **Selection**: Always select the most appropriate speaker model based on the content and requested language. If no preference is given for English, use 'aura-2-orpheus-en'.
+- **textToSpeech**: Convert text to spoken audio using AI TTS (Optimized for Single Speaker).
+  - Use when the user asks to "say", "speak", "read aloud", or requests audio output for a single persona.
+  - **Speaker Intelligence**: Powered by **Deepgram Aura-2**, providing **90+ high-fidelity speakers** across multiple languages.
+  - **Available Aura-2 Voices**:
+${auraSpeakers.filter(s => s.provider === 'deepgram').map((s) => `    - **${s.name}** (${s.language} ${s.accent}, Model ID: '${s.model}', Gender: ${s.gender}): ${s.description}`).join('\n')}
+  - **Selection**: Select the most appropriate speaker based on the content. Default for English is 'aura-2-orpheus-en'.
+  - Returns the generated audio URL.
+
+- **generatePodcast**: Generate multi-speaker, high-quality podcast audio (Optimized for Dialogue).
+  - Use when the user asks for a "podcast", "conversation", "dialogue", or any multi-speaker interaction.
+  - **Speaker Intelligence**: Powered by **Gemini Native TTS**, supporting up to **2 concurrent speakers**.
+  - **Available Gemini Voices**:
+${geminiVoices.map((v) => `    - **${v.name}** (Gender: ${v.gender}): ${v.description}`).join('\n')}
+  - **Transcript Control**: You can guide the performance using natural language instructions (e.g., "Make Speaker1 sound tired") and inline audio tags like \`[whispers]\`, \`[laughs]\`, \`[excitedly]\`, \`[very fast]\`, \`[cough]\`, or \`[sighs]\`.
+  - **Formatting**: Provide a transcript with speaker names (e.g., "Anya: Hello there!") and map those names to the chosen Gemini voices in the tool call.
   - Returns the generated audio URL.
 
 - **extractWebUrl**: Extract full detailed content from specific URLs for deep research.
