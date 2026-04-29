@@ -4,16 +4,21 @@ import { ToolDefinition } from './types';
 
 /**
  * tool: textToSpeech
+ * Uses Deepgram Aura-2 models for high-fidelity text-to-speech across multiple languages.
  */
 export const textToSpeechTool: ToolDefinition = {
-  description: 'Convert text to speech using Gemini Native Audio Generation (TTS). Supports controllable style, tone, and emotional delivery through natural language prompts or audio tags like [whispers] or [excitedly].',
+  description:
+    'Convert text to spoken audio (TTS). Supports 90+ high-fidelity voices across English, Spanish, Dutch, French, German, Italian, and Japanese.',
   schema: z.object({
-    text: z.string().describe('The text to convert to speech. You can include performance directions like "Say in a spooky voice: Hello there" or use tags like [laughs] or [gasp].'),
-    voice: z.string()
-      .default('Kore')
-      .describe('The voice name to use. Popular: Zephyr (Bright), Puck (Upbeat), Kore (Firm), Fenrir (Excitable), Leda (Youthful), Enceladus (Breathy).'),
+    text: z.string().describe('The text to convert to speech.'),
+    voice: z
+      .string()
+      .default('aura-2-orpheus-en')
+      .describe(
+        "The model ID of the voice to use (e.g., 'aura-2-thalia-en' for English, 'aura-2-celeste-es' for Spanish). If not specified, 'aura-2-orpheus-en' will be used."
+      ),
   }),
-  execute: async ({ text, voice = 'Kore' }) => {
+  execute: async ({ text, voice = 'aura-2-orpheus-en' }) => {
     return textToSpeech(text, voice);
   },
 };
