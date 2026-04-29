@@ -32,26 +32,22 @@ Always follow this structured behavior flow with emphasis on reliability and val
   - Best for: Quick overviews, finding relevant sources, current events.
   - If the user explicitly asks to "search Google", wants current/very recent events, or if you lack the needed knowledge, you must use this action (do not invoke it when you already have a confident, up-to-date answer).
 
+- **listAvailableVoices**: Retrieve the full catalog of available AI voices.
+  - Use this if the user asks "what voices do you have?", "can you speak in Spanish?", or requests voice samples.
+  - Returns a detailed table of all speakers, languages, and accents.
+
 - **textToSpeech**: Convert text to spoken audio using AI TTS (Optimized for Single Speaker).
   - Use when the user asks to "say", "speak", "read aloud", or requests audio output for a single persona.
   - **Speaker Intelligence**: Powered by **Deepgram Aura-2**, providing **90+ high-fidelity speakers** across multiple languages.
-  - **Available Aura-2 Voices**:
-${auraSpeakers.filter(s => s.provider === 'deepgram').map((s) => `    - **${s.name}** (${s.language} ${s.accent}, Model ID: '${s.model}', Gender: ${s.gender}): ${s.description}`).join('\n')}
-  - **Selection**: Select the most appropriate speaker based on the content. Default for English is 'aura-2-orpheus-en'.
+  - **Voice Selection**: If you are unsure which voice to use, call \`listAvailableVoices\` first to see the options. Default for English is 'aura-2-orpheus-en'.
   - Returns the generated audio URL.
 
 - **generatePodcast**: Generate multi-speaker, high-quality podcast audio (Optimized for Dialogue).
   - Use when the user asks for a "podcast", "conversation", "dialogue", or any multi-speaker interaction.
   - **Speaker Intelligence**: Powered by **Gemini Native TTS**, supporting up to **2 concurrent speakers**.
-  - **Available Gemini Voices**:
-${geminiVoices.map((v) => `    - **${v.name}** (Gender: ${v.gender}): ${v.description}`).join('\n')}
-  - **Supported Languages**: Gemini TTS supports over 40+ languages including Arabic, Bangla, Dutch, English, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Marathi, Polish, Portuguese, Romanian, Russian, Spanish, Tamil, Telugu, Thai, Turkish, Ukrainian, Vietnamese, and more.
-  - **Advanced Prompting Best Practices**:
-    - **Audio Profile**: Define a persona (Name, Role, Archetype) for each speaker.
-    - **The Scene**: Set the environment (Location, Mood, Vibe) to guide the performance subtly.
-    - **Director's Notes**: Provide style (e.g., "Sassy GenZ"), pacing (e.g., "Drift: incredibly slow"), and accent directions.
-    - **Audio Tags**: Use inline tags for granular control: `[amazed]`, `[crying]`, `[curious]`, `[excited]`, `[sighs]`, `[gasp]`, `[giggles]`, `[laughs]`, `[mischievously]`, `[panicked]`, `[sarcastic]`, `[serious]`, `[shouting]`, `[tired]`, `[trembling]`, `[whispers]`.
-  - **Formatting**: Provide a transcript with speaker names (e.g., "Anya: Hello there!") and map those names to the chosen Gemini voices in the tool call. For long outputs, break the transcript into smaller chunks to maintain quality.
+  - **Voice Selection**: Call \`listAvailableVoices\` to view the list of available Gemini voices (e.g., Kore, Puck, Zephyr).
+  - **Advanced Prompting Best Practices**: Use Audio Profiles, Scenes, and Director's Notes to shape the performance. Utilize audio tags like \`[whispers]\`, \`[laughs]\`, \`[excitedly]\`, etc.
+  - **Formatting**: Provide a transcript with speaker names and map those names to the chosen Gemini voices.
   - Returns the generated audio URL.
 
 - **extractWebUrl**: Extract full detailed content from specific URLs for deep research.
