@@ -11,7 +11,7 @@ export async function formatToGemini(messages: AiMessage[]): Promise<any[]> {
 
   for (const msg of messages) {
     if (msg.role === 'system') continue; // Handled in config
-
+    let geminiThoughtSignature: string | undefined = undefined;
     const parts: any[] = [];
 
     // 1. Handle Content (Text or Multimodal)
@@ -51,12 +51,23 @@ export async function formatToGemini(messages: AiMessage[]): Promise<any[]> {
               }
             }
           }
+          }
+        } else if ((part as any).type === 'thought_signature') {
+          geminiThoughtSignature = (part as any).text || (part as any).thought_signature;
         }
       }
     }
 
+    // Capture thought_signature if it was on the message object or found in parts
+    const finalThoughtSignature = msg.thought_signature || geminiThoughtSignature;
+
     // 2. Handle Tool Calls (Assistant's side)
     if (msg.tool_calls && msg.tool_calls.length > 0) {
+      // If we have a thought signature, include it in its own part at the beginning
+      if (finalThoughtSignature) {
+        parts.push({ thoughtSignature: finalThoughtSignature });
+      }
+
       msg.tool_calls.forEach((tc) => {
         parts.push({
           functionCall: {

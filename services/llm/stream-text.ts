@@ -40,6 +40,7 @@ export async function streamText(messages: AiMessage[], options?: StreamOptions)
 
       let finalContent = '';
       let finalReasoning = '';
+      let finalThoughtSignature: string | undefined = undefined;
       const finalToolInvocations: Record<string, unknown>[] = [];
 
       try {
@@ -82,13 +83,19 @@ export async function streamText(messages: AiMessage[], options?: StreamOptions)
               sendChunk({ type: 'content', delta: chunk.text });
             }
 
-            // 2. Handle Thoughts (Reasoning) explicitly
+            // 2. Handle Thoughts (Reasoning) and Signatures
             const candidate = chunk.candidates?.[0];
             if (candidate?.content?.parts) {
               for (const part of candidate.content.parts) {
+                // Reasoning text
                 if (part.thought && part.text) {
                   finalReasoning += part.text;
                   sendChunk({ type: 'reasoning', delta: part.text });
+                }
+                // Thought signature (Gemini 3)
+                if (part.thoughtSignature) {
+                  finalThoughtSignature = part.thoughtSignature;
+                  sendChunk({ type: 'thought_signature', delta: part.thoughtSignature });
                 }
               }
             }
@@ -191,6 +198,7 @@ export async function streamText(messages: AiMessage[], options?: StreamOptions)
           await onFinish({
             content: finalContent,
             reasoning: finalReasoning || undefined,
+            thought_signature: finalThoughtSignature,
             toolInvocations: finalToolInvocations,
           });
         }
