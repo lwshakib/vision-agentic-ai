@@ -92,6 +92,7 @@ export function ChatMessageItem({
         parts={parts}
         isVersioned={!!msgWithFiles.version}
         version={msgWithFiles.version}
+        isStreaming={message.isStreaming}
       />
 
       <MessageActionsList message={message} onCopy={onCopy} onRetry={onRetry} />
