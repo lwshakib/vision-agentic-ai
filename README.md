@@ -1,6 +1,6 @@
 # <img src="./public/icons/logo.svg" width="40" alt="Vision Agentic AI Logo" style="vertical-align: middle;"> Vision Agentic AI
 
-Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform built with **Next.js 16**, **React 19**, and **Bun**. It provides a sophisticated suite of AI tools, including real-time web exploration, automated deep content extraction, high-quality image generation using FLUX models, and natural voice synthesis.
+Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform built with **Next.js 16**, **React 19**, and **Bun**. It provides a sophisticated suite of AI tools, including real-time web exploration, automated deep content extraction, high-quality image generation using **Gemini 2.5 Flash Image** models, and natural voice synthesis.
 
 ![Vision Agentic AI Demo](./public/images/demo.png)
 ![Vision Agentic AI Demo 2](./public/images/demo-2.png)
@@ -8,10 +8,10 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
 
 ## ✨ Key Features
 
-- 🤖 **Multi-Modal Agentic Chat**: Context-aware AI interactions powered by **GLM-4.7-Flash**, supporting text-to-image, speech-to-text, and more.
+- 🤖 **Multi-Modal Agentic Chat**: Context-aware AI interactions powered by **Gemini 3.1 Flash Lite**, supporting text-to-image, speech-to-text, and more.
 - 🔍 **Real-time Web Intelligence**: Integrated **Tavily AI** for up-to-the-minute web searches and deep content extraction from any URL.
-- 🎨 **FLUX-Powered Image Generation**: Generate stunning visuals using **FLUX.2 [klein] 9B** models directly within your conversation flow.
-- 🎙️ **Voice & Audio Intelligence**: Natural-sounding Text-to-Speech (TTS) via **Aura-2** and real-time Speech-to-Text (ASR) via **Whisper** for voice interactions.
+- 🎨 **Gemini-Powered Image Generation**: Generate stunning visuals using **Gemini 2.5 Flash Image** models directly within your conversation flow.
+- 🎙️ **Voice & Audio Intelligence**: Natural-sounding Text-to-Speech (TTS) via **Deepgram Aura-2**, real-time Speech-to-Text (ASR) via **Gemini 3.1 Flash**, and multi-speaker podcast generation.
 - 📂 **Workspace & Project Management**: Organize specialized chats into dedicated projects with full context retention.
 - 📄 **Dynamic File Generation**: Generate downloadable PDF, CSV, JSON, or Markdown files based on AI analysis.
 - 🔒 **Secure Authentication**: Enterprise-grade user accounts and session management via **BetterAuth**.
@@ -56,7 +56,7 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
    - **Authentication**: `BETTER_AUTH_SECRET` (generate a secure random string), `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET`.
    - **Database**: `DATABASE_URL` for your PostgreSQL instance.
    - **External APIs**: `TAVILY_API_KEY` and `RESEND_API_KEY`.
-   - **Cloudflare AI Gateway**: `CLOUDFLARE_AI_GATEWAY_API_KEY` and `CLOUDFLARE_AI_GATEWAY_ENDPOINT`.
+   - **AI Providers**: `GOOGLE_API_KEY` for Gemini models and `DEEPGRAM_API_KEY` for Aura-2 TTS.
    - **Media Storage**: Setup your AWS S3 or Cloudflare R2 bucket variables like `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_S3_BUCKET_NAME`.
 
 4. **Initialize the database**:
@@ -90,8 +90,8 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 - **Database & ORM**: [PostgreSQL](https://www.postgresql.org/), [Prisma](https://www.prisma.io/)
 - **Authentication**: [Better-Auth](https://better-auth.com/)
-- **AI Models & Infrastructure**: [GLM-4.7-Flash](https://github.com/THUDM/GLM-4), [Tavily AI](https://tavily.com/), [Flux AI](https://fal.ai/models/fal-ai/flux/schnell)
-- **Audio Intelligence**: Aura-2 (TTS) & Whisper Large v3 Turbo (ASR)
+- **AI Models & Infrastructure**: [Google Gemini (3.1 Flash / 2.5 Image)](https://deepmind.google/technologies/gemini/), [Tavily AI](https://tavily.com/)
+- **Audio Intelligence**: [Deepgram Aura-2](https://deepgram.com/) (TTS) & Gemini (ASR, Podcast Synthesis)
 - **Image Hosting**: [AWS S3](https://aws.amazon.com/s3/) / [Cloudflare R2](https://www.cloudflare.com/products/r2/)
 - **UI Components**: [Radix UI](https://www.radix-ui.com/), [shadcn/ui](https://ui.shadcn.com/), [Framer Motion](https://www.framer.com/motion/)
 - **Email**: [Resend](https://resend.com/), [React Email](https://react.email/)
@@ -105,10 +105,12 @@ graph TD
     Server -->|Data Operations| DB[(PostgreSQL & Prisma)]
     Server -->|AI Processing| AICore[AI Core Services]
     
-    AICore <-->|Secure Routing| Gateway[Cloudflare AI Gateway]
-    Gateway -->|Conversations| GLM[GLM-4.7-Flash]
-    Gateway -->|Image Generation| FLUX[Flux AI]
-    Gateway -->|Speech Synthesis| Audio[Aura-2 & Whisper]
+    AICore <-->|Secure API Routing| GoogleGenAI[Google GenAI API]
+    AICore <-->|Secure API Routing| Deepgram[Deepgram API]
+    GoogleGenAI -->|Conversations & Audio| GeminiFlash[Gemini 3.1 Flash Lite]
+    GoogleGenAI -->|Image Generation| GeminiImage[Gemini 2.5 Flash Image]
+    GoogleGenAI -->|Podcasts| GeminiTTS[Gemini 3.1 Flash TTS]
+    Deepgram -->|Speech Synthesis| Aura2[Aura-2 TTS]
     
     AICore -.->|Web Search| Tavily[Tavily API]
     Server -.->|File Storage| Storage[S3 / R2]

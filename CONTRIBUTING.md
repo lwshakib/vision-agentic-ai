@@ -112,7 +112,7 @@ Follow these step-by-step instructions to contribute code to the repository:
 
 3. **Environment setup**:
    - Copy `.env.example` to `.env`.
-   - Fill in the required API keys (Tavily, Resend, etc.).
+   - Fill in the required API keys (Google AI, Deepgram, Tavily, Resend, etc.).
 
 4. **Database setup**:
 
