@@ -38,7 +38,6 @@ import { cn } from '@/lib/utils';
 // Import S3 upload utilities and progress types.
 import { uploadToS3, type UploadProgress } from '@/lib/s3-upload';
 import NextImage from 'next/image';
-import { useFlux } from '@/hooks/useFlux';
 import { toast } from 'sonner';
 
 /* ------------------ LIVE RAIL WAVEFORM ------------------ */
@@ -542,6 +541,8 @@ type ChatInputProps = {
   isVoiceMode?: boolean;
   onVoiceModeChange?: (value: boolean) => void;
   isSpeaking?: boolean;
+  isConnected?: boolean;
+  volume?: number;
 };
 
 /**
@@ -556,6 +557,8 @@ export default function ChatInput({
   isVoiceMode = false,
   onVoiceModeChange,
   isSpeaking = false,
+  isConnected = false,
+  volume = 0,
 }: ChatInputProps) {
   // DOM references for elements and recording states.
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -577,53 +580,8 @@ export default function ChatInput({
     filePreviews.length > 0 &&
     filePreviews.every((f) => f.cloudUrl && !f.isUploading);
 
-  /**
-   * FLUX ASR STABILITY FIX:
-   * We use refs for the callbacks to prevent useFlux from restarting
-   * every time the chat messages/state update (which changes the identity of onSend).
-   */
-  const onSendRef = useRef(onSend);
-  const onVoiceModeChangeRef = useRef(onVoiceModeChange);
-
-  useEffect(() => {
-    onSendRef.current = onSend;
-    onVoiceModeChangeRef.current = onVoiceModeChange;
-  }, [onSend, onVoiceModeChange]);
-
-  const stableOnFinalTranscript = useCallback((text: string) => {
-    if (text.trim()) {
-      void onSendRef.current?.(text);
-    }
-  }, []);
-
-  const stableOnError = useCallback((err: string) => {
-    console.error('Flux ASR Error:', err);
-    onVoiceModeChangeRef.current?.(false);
-  }, []);
-
-  const {
-    start: startFlux,
-    stop: stopFlux,
-    isActive: isFluxActive,
-    partialTranscript,
-    isMuted,
-    setIsMuted,
-    volume,
-  } = useFlux({
-    onFinalTranscript: stableOnFinalTranscript,
-    onError: stableOnError,
-  });
-
-  // Interruption Logic: Abort LLM/Speech if user starts talking
-  useEffect(() => {
-    if (
-      isVoiceMode &&
-      partialTranscript.trim().length > 2 &&
-      (isGenerating || isSpeaking)
-    ) {
-      onStop?.();
-    }
-  }, [partialTranscript, isGenerating, isSpeaking, isVoiceMode, onStop]);
+  const [isMuted, setIsMuted] = useState(false);
+  // volume is now a prop
 
   const [voiceStatus, setVoiceStatus] = useState<
     'idle' | 'connecting' | 'active' | 'ending'
@@ -631,19 +589,15 @@ export default function ChatInput({
 
   useEffect(() => {
     if (isVoiceMode) {
-      setVoiceStatus('connecting');
-      void startFlux();
+      if (isConnected) {
+        setVoiceStatus('active');
+      } else {
+        setVoiceStatus('connecting');
+      }
     } else {
       setVoiceStatus('idle');
-      stopFlux();
     }
-  }, [isVoiceMode, startFlux, stopFlux]);
-
-  useEffect(() => {
-    if (isFluxActive && voiceStatus === 'connecting') {
-      setVoiceStatus('active');
-    }
-  }, [isFluxActive, voiceStatus]);
+  }, [isVoiceMode, isConnected]);
 
   /**
    * Orchestrates the primary sending logic, combining text and uploaded files.
@@ -1067,130 +1021,124 @@ export default function ChatInput({
                     </TooltipContent>
                   </Tooltip>
 
-                  {/* Middle: Voice/Flux Interaction Status */}
-                  {isVoiceMode && (
-                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 ml-1">
-                      <div className="h-4 w-px bg-border dark:bg-gray-600 mr-1" />
-                      
-                      <button
-                        onClick={() => setIsMuted(!isMuted)}
-                        className={cn(
-                          'flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:scale-105 active:scale-95',
-                          isMuted
-                            ? 'bg-red-500/20 text-red-500'
-                            : 'text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#515151]',
-                        )}
-                      >
-                        {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
-                      </button>
+                  {/* Middle: Voice/Flux Interaction Status - MOVED TO RIGHT */}
 
-                      {voiceStatus === 'connecting' ? (
-                        <button
-                          onClick={() => {
-                            stopFlux();
-                            onVoiceModeChange?.(false);
-                          }}
-                          className="flex items-center gap-2 px-3 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
-                        >
-                          <X size={14} />
-                          <span className="text-xs font-bold">CANCEL</span>
-                        </button>
-                      ) : voiceStatus === 'active' ? (
-                        <button
-                          onClick={() => {
-                            stopFlux();
-                            setVoiceStatus('ending');
-                            setTimeout(() => onVoiceModeChange?.(false), 800);
-                          }}
-                          className="group flex items-center gap-2 px-4 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
-                        >
-                          <div className="flex items-center gap-[1px] h-3">
-                            {[1, 2, 3, 4].map((i) => (
-                              <div
-                                key={i}
-                                className="w-[1.5px] bg-white dark:bg-black rounded-full"
-                                style={{
-                                  height: isMuted
-                                    ? '2px'
-                                    : `${4 + volume * (8 + Math.random() * 8)}px`,
-                                  opacity: isMuted ? 0.3 : 1,
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider">
-                            End
-                          </span>
-                        </button>
-                      ) : (
-                        <div className="flex items-center gap-2 px-3 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 animate-pulse">
-                          <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                            ENDING...
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
 
                   {/* Right-aligned buttons container */}
                   <div className="ml-auto flex items-center gap-2">
-                    {!isVoiceMode && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={startRecording}
-                            disabled={isTranscribing}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none"
-                          >
-                            <MicIcon className="h-5 w-5" />
-                            <span className="sr-only">Record voice</span>
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" showArrow={true}>
-                          <p>Record voice</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
+                    {!isVoiceMode ? (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={startRecording}
+                              disabled={isTranscribing}
+                              className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none"
+                            >
+                              <MicIcon className="h-5 w-5" />
+                              <span className="sr-only">Record voice</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" showArrow={true}>
+                            <p>Record voice</p>
+                          </TooltipContent>
+                        </Tooltip>
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isGenerating) {
+                                  onStop?.();
+                                } else if (hasText || filePreviews.length > 0) {
+                                  handleSendOrStop();
+                                } else {
+                                  onVoiceModeChange?.(true);
+                                }
+                              }}
+                              disabled={isSubmitting}
+                              className={cn(
+                                'flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none disabled:pointer-events-none',
+                                isGenerating || hasText || hasFiles
+                                  ? 'bg-black text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80'
+                                  : 'text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#515151]',
+                                'disabled:bg-black/40 dark:disabled:bg-[#515151]',
+                              )}
+                            >
+                              {isGenerating ? (
+                                <Square fill="currentColor" size={12} />
+                              ) : hasText || filePreviews.length > 0 ? (
+                                <SendIcon className="h-6 w-6" />
+                              ) : (
+                                <AudioLines size={18} />
+                              )}
+                              <span className="sr-only">
+                                {isGenerating ? 'Stop' : (hasText || hasFiles) ? 'Send message' : 'Use voice'}
+                              </span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" showArrow={true}>
+                            <p>{isGenerating ? 'Stop' : (hasText || hasFiles) ? 'Send' : 'Use Voice'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
                         <button
-                          type="button"
-                          onClick={() => {
-                            if (isGenerating) {
-                              onStop?.();
-                            } else if (hasText || filePreviews.length > 0) {
-                              handleSendOrStop();
-                            } else {
-                              onVoiceModeChange?.(true);
-                            }
-                          }}
-                          disabled={isSubmitting}
+                          onClick={() => setIsMuted(!isMuted)}
                           className={cn(
-                            'flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none disabled:pointer-events-none',
-                            isGenerating || hasText || hasFiles
-                              ? 'bg-black text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80'
+                            'flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:scale-105 active:scale-95',
+                            isMuted
+                              ? 'bg-red-500/20 text-red-500'
                               : 'text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#515151]',
-                            'disabled:bg-black/40 dark:disabled:bg-[#515151]',
                           )}
                         >
-                          {isGenerating ? (
-                            <Square fill="currentColor" size={12} />
-                          ) : hasText || filePreviews.length > 0 ? (
-                            <SendIcon className="h-6 w-6" />
-                          ) : (
-                            <AudioLines size={18} />
-                          )}
-                          <span className="sr-only">
-                            {isGenerating ? 'Stop' : 'Send message'}
-                          </span>
+                          {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
                         </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" showArrow={true}>
-                        <p>{isGenerating ? 'Stop' : 'Send'}</p>
-                      </TooltipContent>
-                    </Tooltip>
+
+                        {voiceStatus === 'connecting' ? (
+                          <button
+                            onClick={() => onVoiceModeChange?.(false)}
+                            className="flex items-center gap-2 px-3 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-white transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
+                          >
+                            <X size={14} />
+                            <span className="text-xs font-medium">Cancel</span>
+                          </button>
+                        ) : voiceStatus === 'active' ? (
+                          <button
+                            onClick={() => {
+                              setVoiceStatus('ending');
+                              setTimeout(() => onVoiceModeChange?.(false), 800);
+                            }}
+                            className="group flex items-center gap-2 px-4 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in-95"
+                          >
+                            <div className="flex items-center gap-[1px] h-3">
+                              {[1, 2, 3, 4].map((i) => (
+                                <div
+                                  key={i}
+                                  className="w-[1.5px] bg-white dark:bg-black rounded-full"
+                                  style={{
+                                    height: isMuted
+                                      ? '2px'
+                                      : `${4 + volume * (8 + Math.random() * 8)}px`,
+                                    opacity: isMuted ? 0.3 : 1,
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs font-medium">End</span>
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-2 px-3 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 animate-pulse">
+                            <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                              Ending...
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
