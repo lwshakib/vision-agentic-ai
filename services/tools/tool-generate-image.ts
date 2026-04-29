@@ -7,33 +7,51 @@ import { ToolDefinition } from './types';
  */
 export const generateImageTool: ToolDefinition = {
   description:
-    'Generate or edit high-quality images using FLUX.2 [klein] 9B. Supports text-to-image and multi-reference image-to-image (img2img).',
+    "Generate or edit high-quality images using Gemini's Nano Banana (Gemini 3.1 Flash Image). Supports text-to-image, image-to-image (up to 14 references), and complex visual reasoning.",
   schema: z.object({
-    prompt: z.string().describe('Detailed description of the image to generate or the edits to apply.'),
-    image_urls: z.array(z.string())
-      .max(4)
+    prompt: z
+      .string()
+      .describe(
+        'Detailed description of the image to generate or the edits to apply.',
+      ),
+    image_urls: z
+      .array(z.string())
+      .max(14)
       .optional()
-      .describe('Optional array of up to 4 reference image URLs or S3 keys for image-to-image generation.'),
-    num_inference_steps: z.number()
-      .max(50)
-      .default(10)
-      .describe('Number of diffusion steps (max 50).'),
-    guidance: z.number()
-      .default(3.5)
-      .describe('Controls how strictly the model follows the prompt.'),
-    seed: z.number()
-      .optional()
-      .describe('Random seed for deterministic generation.'),
-    width: z.number()
-      .max(1024)
-      .default(512)
-      .describe('Width of the image in pixels (max 1024).'),
-    height: z.number()
-      .max(1024)
-      .default(512)
-      .describe('Height of the image in pixels (max 1024).'),
+      .describe(
+        'Optional array of up to 14 reference image URLs or S3 keys. Up to 4 characters for consistency and 10 objects for fidelity.',
+      ),
+    aspect_ratio: z
+      .enum([
+        '1:1',
+        '1:4',
+        '1:8',
+        '2:3',
+        '3:2',
+        '3:4',
+        '4:1',
+        '4:3',
+        '4:5',
+        '5:4',
+        '8:1',
+        '9:16',
+        '16:9',
+        '21:9',
+      ])
+      .default('1:1')
+      .describe('The desired aspect ratio for the generated image.'),
+    image_size: z
+      .enum(['512', '1K', '2K', '4K'])
+      .default('1K')
+      .describe('The target resolution (1K is default).'),
+    thinking_level: z
+      .enum(['minimal', 'high'])
+      .default('minimal')
+      .describe(
+        'Controls the amount of reasoning used (minimal is faster, high is better quality).',
+      ),
   }),
   execute: async (args) => {
-    return generateImage(args);
+    return generateImage(args as any);
   },
 };

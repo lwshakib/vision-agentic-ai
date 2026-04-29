@@ -1,49 +1,72 @@
 import { fetchWithRetry } from '@/lib/utils';
 import { s3Service } from '@/services/s3.services';
-import {
-  CLOUDFLARE_AI_GATEWAY_API_KEY,
-  CLOUDFLARE_AI_GATEWAY_ENDPOINT,
-} from '@/lib/env';
 import { IMAGE_MODEL_ID } from '@/lib/constants';
+import { googleGenAi } from './client';
 
 export interface GenerateImageOptions {
   prompt: string;
   image_urls?: string[];
-  num_inference_steps?: number;
-  guidance?: number;
-  seed?: number;
+  aspect_ratio?:
+    | '1:1'
+    | '1:4'
+    | '1:8'
+    | '2:3'
+    | '3:2'
+    | '3:4'
+    | '4:1'
+    | '4:3'
+    | '4:5'
+    | '5:4'
+    | '8:1'
+    | '9:16'
+    | '16:9'
+    | '21:9';
+  image_size?: '512' | '1K' | '2K' | '4K';
+  thinking_level?: 'minimal' | 'high';
+  include_thoughts?: boolean;
+  // Legacy fields for backward compatibility
   width?: number;
   height?: number;
 }
 
 /**
- * Standalone Image Generation logic using FLUX via Cloudflare AI Gateway.
+ * Nano Banana: Gemini's native image generation capabilities.
+ * Supports text-to-image, image-to-image, and complex multi-turn editing.
  */
 export async function generateImage(options: GenerateImageOptions) {
   const {
     prompt,
     image_urls = [],
-    num_inference_steps = 10,
-    guidance = 3.5,
-    seed,
-    width = 512,
-    height = 512,
+    aspect_ratio = '1:1',
+    image_size = '1K',
+    thinking_level = 'minimal',
+    include_thoughts = true,
+    width,
+    height,
   } = options;
 
-  // 🛡️ Enforcement Guards
-  const safeWidth = Math.min(width, 1024);
-  const safeHeight = Math.min(height, 1024);
-  const safeSteps = Math.min(num_inference_steps, 50);
+  // 🔄 Map legacy dimensions to aspect ratio if provided
+  let effectiveAspectRatio = aspect_ratio;
+  if (width && height && !options.aspect_ratio) {
+    const ratio = width / height;
+    if (ratio === 1) effectiveAspectRatio = '1:1';
+    else if (ratio > 1.7) effectiveAspectRatio = '16:9';
+    else if (ratio > 1.4) effectiveAspectRatio = '3:2';
+    else if (ratio > 1.3) effectiveAspectRatio = '4:3';
+    else if (ratio < 0.6) effectiveAspectRatio = '9:16';
+    else if (ratio < 0.7) effectiveAspectRatio = '2:3';
+    else if (ratio < 0.8) effectiveAspectRatio = '3:4';
+  }
 
-  const images: string[] = [];
+  const parts: any[] = [{ text: prompt }];
 
-  // 🔄 Process Reference Images
+  // 🔄 Process Reference Images (Up to 14 total)
   if (image_urls.length > 0) {
     console.log(
       `[llm:generateImage] Processing ${image_urls.length} reference images...`,
     );
-    await Promise.all(
-      image_urls.map(async (url: string) => {
+    const referenceImages = await Promise.all(
+      image_urls.slice(0, 14).map(async (url: string) => {
         try {
           let actualUrl = url;
           if (!url.startsWith('http')) {
@@ -54,70 +77,82 @@ export async function generateImage(options: GenerateImageOptions) {
           if (!imgRes.ok) throw new Error(`Fetch failed: ${imgRes.status}`);
 
           const buffer = Buffer.from(await imgRes.arrayBuffer());
-          images.push(buffer.toString('base64'));
+          return {
+            inlineData: {
+              mimeType: 'image/png',
+              data: buffer.toString('base64'),
+            },
+          };
         } catch (e) {
           console.warn(
             `[llm:generateImage] Failed to process image ${url}:`,
             e,
           );
+          return null;
         }
       }),
     );
+    parts.push(...referenceImages.filter((img) => img !== null));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const payload: any = {
-    model: IMAGE_MODEL_ID,
-    prompt,
-    width: safeWidth,
-    height: safeHeight,
-    num_inference_steps: safeSteps,
-    guidance,
-  };
-
-  if (images.length > 0) {
-    payload.images = images;
-  }
-  if (seed !== undefined) {
-    payload.seed = seed;
-  }
-
-  const response = await fetch(CLOUDFLARE_AI_GATEWAY_ENDPOINT!, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${CLOUDFLARE_AI_GATEWAY_API_KEY}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Model error: ${response.status} - ${errorText.slice(0, 100)}`,
-    );
-  }
-
-  const { image } = await response.json();
-  if (!image) throw new Error('No image in response');
-
-  const resultBuffer = Buffer.from(image, 'base64');
-  const key = `generated/flux2-${Date.now()}.jpg`;
-  const imageUrl = await s3Service.uploadFile(
-    resultBuffer,
-    key,
-    'image/jpeg',
-  );
-
-  return {
-    success: true,
-    image: imageUrl,
-    info: {
+  try {
+    const response = await (googleGenAi as any).models.generateContent({
       model: IMAGE_MODEL_ID,
-      mode: images.length > 0 ? 'img2img' : 'text2img',
-      references: images.length,
-      dimensions: `${safeWidth}x${safeHeight}`,
-      steps: safeSteps,
-    },
-  };
+      contents: parts,
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        imageConfig: {
+          aspectRatio: effectiveAspectRatio,
+          imageSize: image_size,
+        },
+        thinkingConfig: {
+          thinkingLevel:
+            thinking_level.charAt(0).toUpperCase() + thinking_level.slice(1),
+          includeThoughts: include_thoughts,
+        },
+      },
+    });
+
+    let finalImageUrl = '';
+    let reasoning = '';
+    const outputParts = response.candidates[0].content.parts;
+
+    for (const part of outputParts) {
+      if (part.thought && part.text) {
+        reasoning += part.text + '\n';
+      } else if (part.inlineData) {
+        const imageData = part.inlineData.data;
+        const resultBuffer = Buffer.from(imageData, 'base64');
+        const key = `generated/nano-${Date.now()}.png`;
+        finalImageUrl = await s3Service.uploadFile(
+          resultBuffer,
+          key,
+          'image/png',
+        );
+      } else if (part.text && !part.thought) {
+        // Some models might return descriptive text alongside the image
+        console.log(`[llm:generateImage] Model text: ${part.text}`);
+      }
+    }
+
+    if (!finalImageUrl) {
+      throw new Error('No image was generated by the model.');
+    }
+
+    return {
+      success: true,
+      image: finalImageUrl,
+      reasoning: reasoning.trim() || undefined,
+      info: {
+        model: IMAGE_MODEL_ID,
+        aspectRatio: effectiveAspectRatio,
+        size: image_size,
+        thinking: thinking_level,
+        references: image_urls.length,
+      },
+    };
+  } catch (error) {
+    console.error('[llm:generateImage] Gemini error:', error);
+    throw error;
+  }
 }

@@ -9,12 +9,6 @@ export const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
 // API Key for Resend email integration.
 export const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-// Cloudflare AI Gateway configuration.
-export const CLOUDFLARE_AI_GATEWAY_API_KEY =
-  process.env.CLOUDFLARE_AI_GATEWAY_API_KEY;
-export const CLOUDFLARE_AI_GATEWAY_ENDPOINT =
-  process.env.CLOUDFLARE_AI_GATEWAY_ENDPOINT;
-
 // S3/R2 Storage configuration.
 export const AWS_REGION = process.env.AWS_REGION;
 export const AWS_ENDPOINT = process.env.AWS_ENDPOINT;
