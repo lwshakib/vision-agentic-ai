@@ -11,142 +11,104 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 // Import Next.js hooks for accessing URL parameters and search queries.
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useChat } from '@/hooks/use-chat';
-// Import custom components.
+import { useLiveAPI } from '@/hooks/use-live-api';
+import { nanoid } from 'nanoid';
 import ChatInput from '@/components/chats/chat-input';
 import { ChatConversationList } from '@/components/chats/conversation-list';
-// Import utility for notifications.
 import { toast } from 'sonner';
-// Import global state for chat management.
 import { useChatStore } from '@/hooks/use-chat-store';
 
 /**
  * Interface representing a component part of a chat message (text, file, etc.).
  */
 interface MessagePart {
-  type: string; // The category of the part.
-  text?: string; // Content if it's text.
-  id?: string; // Unique part ID.
-  publicId?: string; // External storage ID.
-  name?: string; // Display name.
-  filename?: string; // Alternative name.
-  url?: string; // Media URL.
-  mediaType?: string; // MIME type.
+  type: string;
+  text?: string;
+  id?: string;
+  publicId?: string;
+  name?: string;
+  filename?: string;
+  url?: string;
+  mediaType?: string;
 }
 
-/**
- * Main ChatPage Component
- */
 export default function ChatPage() {
-  // Extract chatId from the URL dynamic segment.
   const { chatId } = useParams<{ chatId: string }>();
-  // Access state action to set the current chat title in the UI.
   const { setChatTitle, messageCredits, setMessageCredits } = useChatStore();
   const router = useRouter();
-
   const searchParams = useSearchParams();
-  // Voice Mode State
+  
+  // Refs to track the currently active optimistic message for in-place streaming
+  const activeMessageIdRef = useRef<string | null>(null);
+  const activeMessageRoleRef = useRef<'user' | 'assistant' | null>(null);
+  const isMessageSavedRef = useRef<boolean>(false);
+
+  /**
+   * Helper function to save a message to the database
+   */
+  const saveMessageToDB = useCallback(async (text: string, role: string) => {
+    if (!text.trim() || !chatId) return;
+    
+    console.log(`💾 Saving final ${role} message to DB: "${text.substring(0, 30)}..."`);
+    try {
+      const res = await fetch(`/api/chat/${chatId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role,
+          parts: [{ type: 'text', text }],
+        }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        console.log(`✅ ${role} message saved successfully`);
+        if (data.title) setChatTitle(chatId, data.title);
+      } else {
+        console.error(`❌ Failed to save ${role} message:`, res.status);
+      }
+    } catch (err) {
+      console.error(`❌ Error saving ${role} message:`, err);
+    }
+  }, [chatId, setChatTitle]);
+
   const [isVoiceMode, setIsVoiceMode] = useState(
     searchParams.get('voiceMode') === 'true',
   );
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const toastRef = useRef<string | number | null>(null);
-  const ttsAbortControllerRef = useRef<AbortController | null>(null);
 
-  /**
-   * TTS Playback Logic
-   */
-  const speak = useCallback(
-    async (text: string) => {
-      if (!text || !isVoiceMode) return;
+  // Reset active transcripts when voice mode toggles
+  useEffect(() => {
+    activeMessageIdRef.current = null;
+    activeMessageRoleRef.current = null;
+    isMessageSavedRef.current = false;
+  }, [isVoiceMode]);
 
-      if (ttsAbortControllerRef.current) {
-        ttsAbortControllerRef.current.abort(
-          new Error('User interrupted speech'),
-        );
-      }
-      const controller = new AbortController();
-      ttsAbortControllerRef.current = controller;
-
-      const ttsPromise = (async () => {
-        const res = await fetch('/api/voice-agent/tts', {
-          method: 'POST',
-          signal: controller.signal,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, voice: 'orpheus' }),
-        });
-
-        if (!res.ok) throw new Error('Speech generation failed');
-        const data = await res.json();
-        if (!data.audioUrl) throw new Error('No audio URL returned');
-        return data.audioUrl;
-      })();
-
-      const tId = toast.promise(ttsPromise, {
-        loading: 'Processing audio...',
-        success: 'Audio ready',
-        error: 'Speech generation failed',
-      }) as unknown as string | number;
-      toastRef.current = tId;
-
-      try {
-        setIsSpeaking(true);
-        const audioUrl = await ttsPromise;
-
-        if (audioUrl) {
-          if (audioRef.current) {
-            audioRef.current.pause();
-          }
-          const audio = new Audio(audioUrl);
-          audioRef.current = audio;
-
-          audio.onended = () => setIsSpeaking(false);
-          audio.onerror = () => setIsSpeaking(false);
-
-          await audio.play();
-        } else {
-          setIsSpeaking(false);
-        }
-      } catch (error) {
-        // Ignore intentional aborts
-        if (
-          error instanceof Error &&
-          error.message === 'User interrupted speech'
-        ) {
-          setIsSpeaking(false);
-          return;
-        }
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          setIsSpeaking(false);
-          return;
-        }
-        console.error('Speech playback failed:', error);
-        setIsSpeaking(false);
-      }
-    },
-    [isVoiceMode],
-  );
-
-  /**
-   * Initialize custom useChat hook for real-time interaction.
-   */
   const {
-    sendMessage, // Function to send a new user message.
-    messages, // Array of current chat messages.
-    setMessages, // Function to manually update message state.
-    status, // Current status of the chat (idle, loading, etc.).
-    stop, // Function to abort the current AI generation request
+    connect: connectLive,
+    disconnect: disconnectLive,
+    isConnected: isLiveConnected,
+    isSpeaking: isLiveSpeaking,
+    volume: liveVolume,
+    onTranscription,
+    onTurnComplete
+  } = useLiveAPI();
+
+  const {
+    sendMessage,
+    messages,
+    setMessages,
+    status,
+    stop,
   } = useChat({
     headers: {
-      'X-Chat-Id': chatId || '', // Include chatId in headers for server context.
+      'X-Chat-Id': chatId || '',
     },
-    // Global error handler for chat operations.
     onError: (err) => {
       console.error('Chat error:', err);
       try {
         const errorData = JSON.parse(err.message);
         if (errorData.error === 'Credit exhausted') {
-          setIsVoiceMode(false); // Close voice mode on credit exhaustion
+          setIsVoiceMode(false);
           toast.error('Limit Reached', {
             description:
               errorData.message ||
@@ -163,15 +125,12 @@ export default function ChatPage() {
       }
       toast.error('Internal server error');
     },
-    // Callback triggered when the AI finishes generating a response.
     onFinish: (message) => {
-      // Extract parts from the finished message for database persistence.
       const parts = message.parts ?? [];
       const content = message.content ?? '';
 
       if (!chatId || (parts.length === 0 && !content)) return;
 
-      // Persist the assistant message to the database.
       void fetch(`/api/chat/${chatId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -191,42 +150,114 @@ export default function ChatPage() {
         .catch((err) =>
           console.error('Failed to save assistant message:', err),
         );
-
-      // Trigger Voice Mode speech if active
-      if (isVoiceMode && content) {
-        speak(content);
-      }
     },
   });
 
-  // Wrap the stop function to also handle audio and toasts
   const handleStop = useCallback(() => {
-    stop(); // Abort LLM stream
-    if (ttsAbortControllerRef.current) {
-      ttsAbortControllerRef.current.abort(new Error('User interrupted speech'));
-      ttsAbortControllerRef.current = null;
+    stop();
+    if (isVoiceMode) {
+      disconnectLive();
+      setIsVoiceMode(false);
     }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if (toastRef.current) {
-      toast.dismiss(toastRef.current);
-      toastRef.current = null;
-    }
-    setIsSpeaking(false);
-  }, [stop]);
+  }, [stop, isVoiceMode, disconnectLive]);
 
-  // Stop everything if exiting Voice Mode
+  // Voice Mode lifecycle
   useEffect(() => {
-    if (!isVoiceMode) {
-      // Small timeout to avoid React "cascading renders" error when calling setState from effect.
-      const timer = setTimeout(() => {
-        handleStop();
-      }, 0);
-      return () => clearTimeout(timer);
+    if (isVoiceMode && !isLiveConnected) {
+      console.log('🔄 Voice Mode: ON (Connecting...)');
+      connectLive();
+    } else if (!isVoiceMode && isLiveConnected) {
+      console.log('🔄 Voice Mode: OFF');
+      disconnectLive();
     }
-  }, [isVoiceMode, handleStop]);
+  }, [isVoiceMode, isLiveConnected, connectLive, disconnectLive]);
+
+  // Live Transcription Handling - Direct Streaming into Message Bubbles
+  useEffect(() => {
+    onTranscription((text, isFinal, role, isCumulative) => {
+       if (!text && !isFinal) return;
+
+       // 1. Role Switch or New Turn Detection
+       if (activeMessageRoleRef.current !== role) {
+          // If we were streaming something else, finalize it
+          if (activeMessageIdRef.current && !isMessageSavedRef.current) {
+             const lastMsg = messages.find(m => m.id === activeMessageIdRef.current);
+             if (lastMsg && lastMsg.content.trim()) {
+                void saveMessageToDB(lastMsg.content, lastMsg.role);
+             }
+          }
+          
+          const newId = nanoid();
+          activeMessageIdRef.current = newId;
+          activeMessageRoleRef.current = role;
+          isMessageSavedRef.current = false;
+
+          setMessages(prev => [...prev, {
+             id: newId,
+             role,
+             content: text,
+             isStreaming: true,
+             parts: [{ type: 'text', text }]
+          }]);
+       } else {
+          // 2. Update existing active message bubble
+          setMessages(prev => {
+             const updated = [...prev];
+             const idx = updated.findIndex(m => m.id === activeMessageIdRef.current);
+             if (idx >= 0) {
+                const oldText = updated[idx].content;
+                let newText = text;
+                
+                if (!isCumulative) {
+                   const needsSpace = oldText && !oldText.endsWith(' ') && !text.startsWith(' ');
+                   newText = oldText + (needsSpace ? ' ' : '') + text;
+                } else {
+                   newText = (text.length >= oldText.length) ? text : oldText;
+                }
+
+                updated[idx] = {
+                   ...updated[idx],
+                   content: newText,
+                   isStreaming: !isFinal,
+                   parts: [{ type: 'text', text: newText }]
+                };
+             }
+             return updated;
+          });
+       }
+
+       // 3. Persistence for user message (on isFinal)
+       if (isFinal && role === 'user' && !isMessageSavedRef.current) {
+          setMessages(prev => {
+             const msg = prev.find(m => m.id === activeMessageIdRef.current);
+             if (msg) void saveMessageToDB(msg.content, 'user');
+             return prev;
+          });
+          isMessageSavedRef.current = true;
+       }
+    });
+  }, [onTranscription, setMessages, chatId, saveMessageToDB, messages]);
+
+  // Handle Turn Completion (Assistant Persistence & Finalization)
+  useEffect(() => {
+    onTurnComplete(() => {
+      if (activeMessageIdRef.current && activeMessageRoleRef.current === 'assistant' && !isMessageSavedRef.current) {
+        setMessages(prev => {
+           const idx = prev.findIndex(m => m.id === activeMessageIdRef.current);
+           if (idx >= 0) {
+              const msg = prev[idx];
+              void saveMessageToDB(msg.content, 'assistant');
+              prev[idx] = { ...msg, isStreaming: false };
+           }
+           return [...prev];
+        });
+        isMessageSavedRef.current = true;
+      }
+      activeMessageIdRef.current = null;
+      activeMessageRoleRef.current = null;
+      isMessageSavedRef.current = false;
+    });
+  }, [onTurnComplete, saveMessageToDB, setMessages]);
 
   // Local state to track if historical messages are still being fetched.
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -305,6 +336,7 @@ export default function ChatPage() {
 
         // If messages are found, set them in the chat state.
         if (data.messages && data.messages.length > 0) {
+          console.log(`📜 Loaded ${data.messages.length} historical messages`);
           setMessages(data.messages);
           if (data.title) {
             setChatTitle(chatId, data.title);
@@ -398,10 +430,8 @@ export default function ChatPage() {
   const handleCopy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success('Copied');
     } catch (err) {
       console.error('Copy failed:', err);
-      toast.error('Failed to copy');
     }
   };
 
@@ -449,7 +479,7 @@ export default function ChatPage() {
     // Main layout container for the chat interface.
     <div className="flex min-h-screen flex-col bg-background">
       {/* Scrollable conversation display area. */}
-      <div className="flex flex-1 min-h-0 max-w-3xl mx-auto w-full">
+      <div className="flex flex-1 min-h-0 max-w-3xl mx-auto w-full flex-col">
         <ChatConversationList
           messages={messages}
           status={status}
@@ -478,7 +508,9 @@ export default function ChatPage() {
               }
               setIsVoiceMode(value);
             }}
-            isSpeaking={isSpeaking}
+            isSpeaking={isLiveSpeaking}
+            isConnected={isLiveConnected}
+            volume={liveVolume}
           />
         </div>
       </div>
