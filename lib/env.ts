@@ -24,3 +24,6 @@ export const AWS_S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
 
 // Google AI configuration.
 export const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+
+// Deepgram configuration.
+export const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY;
