@@ -4,7 +4,7 @@ import { ToolDefinition } from './types';
 
 /**
  * tool: textToSpeech
- * Uses Deepgram Aura-2 models for high-fidelity text-to-speech across multiple languages.
+ * Uses high-fidelity Vision Text-to-Speech Voices across multiple languages.
  */
 export const textToSpeechTool: ToolDefinition = {
   description:

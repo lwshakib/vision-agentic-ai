@@ -5,6 +5,7 @@ import { textToSpeechTool } from './tool-text-to-speech';
 import { generateFileTool } from './tool-generate-file';
 import { generatePodcastTool } from './tool-generate-podcast';
 import { listAvailableVoicesTool } from './tool-list-voices';
+import { youtubeSummarizeTool } from './tool-youtube-summarize';
 import { ToolDefinition } from './types';
 
 export * from './types';
@@ -15,6 +16,7 @@ export * from './tool-text-to-speech';
 export * from './tool-generate-file';
 export * from './tool-generate-podcast';
 export * from './tool-list-voices';
+export * from './tool-youtube-summarize';
 
 /**
  * The consolidated tools collection for the LLM to access by name.
@@ -27,4 +29,5 @@ export const toolDefinitions: Record<string, ToolDefinition> = {
   generateFile: generateFileTool,
   generatePodcast: generatePodcastTool,
   listAvailableVoices: listAvailableVoicesTool,
+  youtubeSummarize: youtubeSummarizeTool,
 };
