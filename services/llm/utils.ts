@@ -111,5 +111,11 @@ export function getTools() {
     };
   });
 
-  return [{ functionDeclarations }];
+  return [
+    { functionDeclarations },
+    // { googleSearch: {} },
+    // { googleMaps: {} },
+    // { codeExecution: {} },
+    // { urlContext: {} }
+  ];
 }
