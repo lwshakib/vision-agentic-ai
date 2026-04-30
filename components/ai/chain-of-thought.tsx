@@ -109,7 +109,7 @@ export const ChainOfThoughtHeader = memo(
 );
 
 export type ChainOfThoughtStepProps = ComponentProps<'div'> & {
-  icon?: LucideIcon;
+  icon?: React.ElementType;
   label: ReactNode;
   description?: ReactNode;
   status?: 'complete' | 'active' | 'pending';

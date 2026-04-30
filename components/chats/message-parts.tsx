@@ -17,7 +17,9 @@ import {
   GlobeIcon,
   SearchIcon,
   BrainIcon,
+  MicIcon,
 } from 'lucide-react';
+import { Icon } from '@iconify/react';
 
 import {
   ChainOfThought,
@@ -322,6 +324,70 @@ export function ChatMessageParts({
               );
             }
           }
+          return;
+        }
+
+        if (toolName === 'generatePodcast') {
+          if (isLoading) {
+            process.push(
+              <ChainOfThoughtStep
+                key={key}
+                icon={MicIcon}
+                label="Generating podcast..."
+                status="active"
+              />,
+            );
+          } else if (hasOutput) {
+            process.push(
+              <ChainOfThoughtStep
+                key={`${key}-done`}
+                icon={MicIcon}
+                label="Podcast generated"
+                status="complete"
+              />,
+            );
+            if (output.success && output.audioUrl) {
+              final.push(
+                <ProAudioPlayer
+                  key={key}
+                  src={output.audioUrl}
+                  fileName="podcast.wav"
+                />,
+              );
+            } else if (!output.success) {
+              final.push(
+                <ToolError
+                  key={key}
+                  title="Podcast generation failed"
+                  error="The system encountered an error while generating your podcast."
+                />,
+              );
+            }
+          }
+          return;
+        }
+        
+        if (toolName === 'youtubeSummarize') {
+          process.push(
+            <ChainOfThoughtStep
+              key={key}
+              icon={() => <Icon icon="logos:youtube-icon" className="size-4" />}
+              label={isLoading ? 'Summarizing YouTube video...' : 'YouTube video summarized'}
+              status={isLoading ? 'active' : 'complete'}
+            />,
+          );
+          return;
+        }
+
+        if (toolName === 'listAvailableVoices') {
+          process.push(
+            <ChainOfThoughtStep
+              key={key}
+              icon={BrainIcon}
+              label={isLoading ? 'Retrieving voice catalog...' : 'Voice catalog retrieved'}
+              status={isLoading ? 'active' : 'complete'}
+            />,
+          );
           return;
         }
 
