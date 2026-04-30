@@ -53,7 +53,7 @@ export async function streamText(messages: AiMessage[], options?: StreamOptions)
             tools,
             thinkingConfig: {
               includeThoughts: true,
-              ...(!CHAT_MODEL_ID.includes('gemini-2.5') && { thinkingLevel: ThinkingLevel.LOW }),
+              thinkingLevel: ThinkingLevel.LOW
             }
           },
         });
