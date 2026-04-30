@@ -8,7 +8,7 @@ import { ToolDefinition } from './types';
  */
 export const generatePodcastTool: ToolDefinition = {
   description:
-    'Generate a multi-speaker podcast audio from a transcript. Supports up to 2 speakers with distinct Gemini voices. The transcript must include speaker names (e.g., "Joe: ...", "Jane: ...").',
+    'Generate a high-quality podcast audio from a transcript. Requires exactly 2 speakers with distinct Vision Podcast Voices. The transcript must include speaker names (e.g., "Joe: ...", "Jane: ...").',
   schema: z.object({
     transcript: z
       .string()
@@ -31,7 +31,7 @@ export const generatePodcastTool: ToolDefinition = {
         })
       )
       .max(2)
-      .describe('Mapping of speaker names to Gemini voices. Max 2 speakers.'),
+      .describe('Mapping of exactly 2 speaker names to Vision Podcast Voices.'),
   }),
   execute: async ({ transcript, speakers }) => {
     return generatePodcast(transcript, speakers);

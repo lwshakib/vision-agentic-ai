@@ -13,13 +13,13 @@ export const listAvailableVoicesTool: ToolDefinition = {
     provider: z
       .enum(['deepgram', 'google', 'all'])
       .default('all')
-      .describe('Filter voices by provider (Deepgram for single-speaker, Google for podcasts).'),
+      .describe('Filter voices by provider (Vision TTS for single-speaker, Vision Podcast for podcasts).'),
   }),
   execute: async ({ provider = 'all' }) => {
     let result = '';
 
     if (provider === 'all' || provider === 'deepgram') {
-      result += '### Deepgram Aura-2 Voices (Single Speaker)\n';
+      result += '### Vision Text-to-Speech Voices (Single Speaker)\n';
       result += '| Name | Language | Accent | Gender | Model ID | Description |\n';
       result += '|------|----------|--------|--------|----------|-------------|\n';
       result += auraSpeakers
@@ -33,7 +33,7 @@ export const listAvailableVoicesTool: ToolDefinition = {
     }
 
     if (provider === 'all' || provider === 'google') {
-      result += '### Gemini TTS Voices (Multi-Speaker Podcast)\n';
+      result += '### Vision Podcast Voices (Multi-Speaker Podcast)\n';
       result += '| Name | Gender | Description |\n';
       result += '|------|--------|-------------|\n';
       result += geminiVoices

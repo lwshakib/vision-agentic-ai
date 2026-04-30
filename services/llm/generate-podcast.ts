@@ -28,9 +28,24 @@ function createWavHeader(pcmLength: number, sampleRate: number = 24000): Buffer 
  */
 export async function generatePodcast(
   transcript: string,
-  speakers: { speaker: string; voice: string }[]
+  speakers: { speaker: string; voice: string }[] = []
 ): Promise<{ success: boolean; audioUrl: string }> {
   try {
+    // Gemini Multi-Speaker TTS requires EXACTLY 2 speaker configurations.
+    let effectiveSpeakers = [...speakers];
+    if (effectiveSpeakers.length === 0) {
+      effectiveSpeakers = [
+        { speaker: 'Host', voice: 'Puck' },
+        { speaker: 'Guest', voice: 'Charon' },
+      ];
+    } else if (effectiveSpeakers.length === 1) {
+      const first = effectiveSpeakers[0];
+      const fallbackVoice = first.voice === 'Puck' ? 'Charon' : 'Puck';
+      effectiveSpeakers.push({ speaker: 'Co-Host', voice: fallbackVoice });
+    } else if (effectiveSpeakers.length > 2) {
+      effectiveSpeakers = effectiveSpeakers.slice(0, 2);
+    }
+
     const response = await googleGenAi.models.generateContent({
       model: TTS_MODEL_ID,
       contents: [{ role: 'user', parts: [{ text: transcript }] }],
@@ -39,7 +54,7 @@ export async function generatePodcast(
         responseModalities: ['AUDIO'] as any,
         speechConfig: {
           multiSpeakerVoiceConfig: {
-            speakerVoiceConfigs: speakers.map((s) => ({
+            speakerVoiceConfigs: effectiveSpeakers.map((s) => ({
               speaker: s.speaker,
               voiceConfig: {
                 prebuiltVoiceConfig: { voiceName: s.voice },
