@@ -106,7 +106,7 @@ export function ChatMessageParts({
             <ChainOfThoughtStep
               key={key}
               icon={BrainIcon}
-              label={isStreaming ? 'Thinking...' : 'Thought process'}
+              label={isStreaming ? 'Thinking...' : 'Thought'}
               description={reasoningText}
               status={isStreaming ? 'active' : 'complete'}
             />,
