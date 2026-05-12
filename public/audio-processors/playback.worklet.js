@@ -11,7 +11,7 @@ class PCMProcessor extends AudioWorkletProcessor {
     this.currentOffset = 0; // Track position in current buffer (avoids slice())
 
     this.port.onmessage = (event) => {
-      if (event.data === "interrupt") {
+      if (event.data === 'interrupt') {
         // Clear the queue on interrupt
         this.audioQueue = [];
         this.currentOffset = 0;
@@ -64,4 +64,4 @@ class PCMProcessor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor("pcm-processor", PCMProcessor);
+registerProcessor('pcm-processor', PCMProcessor);

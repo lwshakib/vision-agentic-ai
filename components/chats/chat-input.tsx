@@ -294,9 +294,7 @@ const TooltipContent = React.forwardRef<
       {...props}
     >
       {props.children}
-      {showArrow && (
-        <TooltipPrimitive.Arrow className="-my-px fill-popover" />
-      )}
+      {showArrow && <TooltipPrimitive.Arrow className="-my-px fill-popover" />}
     </TooltipPrimitive.Content>
   </TooltipPrimitive.Portal>
 ));
@@ -1021,8 +1019,7 @@ export default function ChatInput({
                     </TooltipContent>
                   </Tooltip>
 
-                  {/* Middle: Voice/Flux Interaction Status - MOVED TO RIGHT */}
-
+                  {/* Middle: Voice Interaction Status - MOVED TO RIGHT */}
 
                   {/* Right-aligned buttons container */}
                   <div className="ml-auto flex items-center gap-2">
@@ -1075,12 +1072,22 @@ export default function ChatInput({
                                 <AudioLines size={18} />
                               )}
                               <span className="sr-only">
-                                {isGenerating ? 'Stop' : (hasText || hasFiles) ? 'Send message' : 'Use voice'}
+                                {isGenerating
+                                  ? 'Stop'
+                                  : hasText || hasFiles
+                                    ? 'Send message'
+                                    : 'Use voice'}
                               </span>
                             </button>
                           </TooltipTrigger>
                           <TooltipContent side="top" showArrow={true}>
-                            <p>{isGenerating ? 'Stop' : (hasText || hasFiles) ? 'Send' : 'Use Voice'}</p>
+                            <p>
+                              {isGenerating
+                                ? 'Stop'
+                                : hasText || hasFiles
+                                  ? 'Send'
+                                  : 'Use Voice'}
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </>

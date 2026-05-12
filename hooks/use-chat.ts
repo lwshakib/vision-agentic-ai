@@ -167,7 +167,7 @@ export function useChat({
 
               const commonContent =
                 imageParts.length > 0
-                  ? [{ type: 'text', text: textContent }, ...imageParts]
+                  ? [...imageParts, { type: 'text', text: textContent }]
                   : textContent;
 
               // Complex Message Handling: Assistant messages with tool calls
@@ -269,13 +269,12 @@ export function useChat({
 
           for (const line of lines) {
             const trimmedLine = line.trim();
-            // Each data chunk is prefixed with 'data: ' according to SSE spec
             if (!trimmedLine.startsWith('data: ')) continue;
 
             try {
               const data = JSON.parse(trimmedLine.slice(6));
 
-              // Transition: If we get content/tools but were reasoning, mark reasoning block as finished
+              // Transition reasoning state
               if (data.type !== 'reasoning') {
                 const parts = [...(assistantMessage.parts || [])];
                 const lastReasoningIndex = parts.findLastIndex(
@@ -295,13 +294,11 @@ export function useChat({
                 }
               }
 
-              // Route the incoming chunk based on its type
+              // Handle content types
               if (data.type === 'content') {
-                // Main assistant text response
                 assistantMessage.content += data.delta;
                 const parts = [...(assistantMessage.parts || [])];
                 const lastPart = parts[parts.length - 1];
-
                 if (lastPart?.type === 'text') {
                   parts[parts.length - 1] = {
                     ...lastPart,
@@ -312,14 +309,11 @@ export function useChat({
                 }
                 assistantMessage.parts = parts;
               } else if (data.type === 'reasoning') {
-                // "Thinking" process streamed by the model
                 if (!reasoningStartTime) reasoningStartTime = Date.now();
                 assistantMessage.reasoning =
                   (assistantMessage.reasoning || '') + data.delta;
-
                 const parts = [...(assistantMessage.parts || [])];
                 const lastPart = parts[parts.length - 1];
-
                 if (lastPart?.type === 'reasoning') {
                   parts[parts.length - 1] = {
                     ...lastPart,
@@ -335,17 +329,28 @@ export function useChat({
                 }
                 assistantMessage.parts = parts;
               } else if (data.type === 'tool_call') {
-                // Notification that the AI is calling a tool
                 const parts = [...(assistantMessage.parts || [])];
-                parts.push({
-                  id: data.id,
-                  type: `tool-${data.name}`,
-                  input: data.args ? JSON.parse(data.args) : {},
-                  state: 'input-available',
-                });
+                const existingIndex = parts.findIndex((p) => p.id === data.id);
+                const input = data.args ? JSON.parse(data.args) : {};
+
+                if (existingIndex !== -1) {
+                  parts[existingIndex] = {
+                    ...parts[existingIndex],
+                    input:
+                      Object.keys(input).length > 0
+                        ? input
+                        : parts[existingIndex].input,
+                  };
+                } else {
+                  parts.push({
+                    id: data.id,
+                    type: `tool-${data.name}`,
+                    input,
+                    state: 'input-available',
+                  });
+                }
                 assistantMessage.parts = parts;
               } else if (data.type === 'tool_result') {
-                // Notification that a tool execution has finished
                 const parts = [...(assistantMessage.parts || [])];
                 const toolIndex = parts.findLastIndex(
                   (p) =>
@@ -353,7 +358,6 @@ export function useChat({
                     (p.type === `tool-${data.name}` &&
                       p.state !== 'output-available'),
                 );
-
                 if (toolIndex !== -1) {
                   parts[toolIndex] = {
                     ...parts[toolIndex],
@@ -370,9 +374,23 @@ export function useChat({
                   });
                 }
                 assistantMessage.parts = parts;
+              } else if (data.type === 'status') {
+                // Update a temporary status part or just show it in the UI
+                const parts = [...(assistantMessage.parts || [])];
+                const statusIndex = parts.findIndex((p) => p.type === 'status');
+                if (statusIndex !== -1) {
+                  parts[statusIndex] = {
+                    ...parts[statusIndex],
+                    text: data.message,
+                  };
+                } else {
+                  parts.push({ type: 'status', text: data.message });
+                }
+                assistantMessage.parts = parts;
               }
 
-              // Reactively update the local state to trigger a re-render
+              // Update state for every chunk/line to ensure real-time feel
+              // Using functional update to ensure we always have the latest state
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMessageId
@@ -384,7 +402,7 @@ export function useChat({
                 ),
               );
             } catch {
-              // Ignore malformed JSON chunks from heartbeat signals
+              // Ignore malformed chunks
             }
           }
         }

@@ -3,7 +3,7 @@
  * Provides a secure endpoint for converting AI responses to speech.
  */
 // Import the localized TTS tool implementation.
-import { textToSpeechTool } from '@/services/tools';
+import { textToSpeechTool } from '@/llm/tools';
 import { NextResponse } from 'next/server';
 import { getUser } from '@/actions/user';
 

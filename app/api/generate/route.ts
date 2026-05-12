@@ -5,7 +5,7 @@
  */
 
 // Import the centralized AI service.
-import { aiService } from '@/services/ai.services';
+import { streamText } from '@/llm';
 import { NextResponse } from 'next/server';
 // Import utility for retrieving the current user's session.
 import { getUser } from '@/actions/user';
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     }
 
     // Trigger the core LLM streaming process with optional voice mode formatting.
-    const stream = await aiService.streamText(messages, {
+    const stream = await streamText(messages, {
       isVoiceMode: Boolean(isVoiceMode),
       sessionId: user.id,
     });
@@ -58,10 +58,11 @@ export async function POST(req: Request) {
     // Return the stream with appropriate headers for Server-Sent Events (SSE)
     return new Response(stream, {
       headers: {
-        'Content-Type': 'text/event-stream', // Required for standard streaming
-        'Cache-Control': 'no-cache', // Prevents proxy caching
-        Connection: 'keep-alive', // Keeps the HTTP connection open during long streaming
-        // Custom header to inform the frontend of remaining credits
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'X-Accel-Buffering': 'no',
+        'X-Content-Type-Options': 'nosniff',
+        Connection: 'keep-alive',
         'X-Message-Credits': updatedUser.messageCredits.toString(),
       },
     });

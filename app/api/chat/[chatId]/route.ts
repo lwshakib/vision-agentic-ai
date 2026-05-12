@@ -12,7 +12,7 @@ import { MessageRole } from '@/generated/prisma/client';
 // Import the current user's retrieval action.
 import { getUser } from '@/actions/user';
 // Import the centralized AI service.
-import { aiService } from '@/services/ai.services';
+import { generateText } from '@/llm';
 
 /**
  * Type definition for the route parameters, accommodating Nextjs 15+ promise-based params.
@@ -272,7 +272,7 @@ async function generateChatTitle(
   sessionId?: string,
 ): Promise<string> {
   try {
-    const text = await aiService.generateText(
+    const text = await generateText(
       [
         {
           role: 'user',

@@ -1,10 +1,14 @@
 # <img src="./public/icons/logo.svg" width="40" alt="Vision Agentic AI Logo" style="vertical-align: middle;"> Vision Agentic AI
 
-Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform built with **Next.js 16**, **React 19**, and **Bun**. It provides a sophisticated suite of AI tools, including real-time web exploration, automated deep content extraction, high-quality image generation using **Gemini 2.5 Flash Image** models, and natural voice synthesis.
+Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform built with **Next.js 16**, **React 19**, and **PNPM**. It provides a sophisticated suite of AI tools, including real-time web exploration, automated deep content extraction, high-quality image generation using **Gemini 2.5 Flash Image** models, and natural voice synthesis.
 
-![Vision Agentic AI Demo](./public/images/demo.png)
-![Vision Agentic AI Demo 2](./public/images/demo-2.png)
-![Vision Agentic AI Demo 3](./public/images/demo-3.png)
+<p align="center">
+  <img src="./public/images/demo.png" alt="Vision Agentic AI Demo" width="100%" />
+</p>
+<p align="center">
+  <img src="./public/images/demo-2.png" alt="Vision Agentic AI Demo 2" width="49%" />
+  <img src="./public/images/demo-3.png" alt="Vision Agentic AI Demo 3" width="49%" />
+</p>
 
 ## ✨ Key Features
 
@@ -23,7 +27,7 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) (recommended) or [Node.js](https://nodejs.org/) 18+
+- [PNPM](https://pnpm.io/) (recommended) or [Node.js](https://nodejs.org/) 18+
 - [PostgreSQL](https://www.postgresql.org/) database
 - [Git](https://git-scm.com/)
 
@@ -38,10 +42,10 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
 
 2. **Install dependencies**:
 
-   Ensure you have [Bun](https://bun.sh/) installed. If not, follow the official installation guide. Then, run:
+   Ensure you have [PNPM](https://pnpm.io/) installed. If not, follow the official installation guide. Then, run:
 
    ```bash
-   bun install
+   pnpm install
    ```
 
 3. **Set up environment variables**:
@@ -64,7 +68,7 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
    Set up your PostgreSQL database schema with Prisma:
 
    ```bash
-   bun run db:migrate
+   pnpm run db:migrate
    ```
 
 5. **(Optional) Storage Bucket Setup**:
@@ -72,20 +76,20 @@ Vision Agentic AI is a high-performance, state-of-the-art agentic AI platform bu
    If using S3 or Cloudflare R2, you can initialize your buckets:
 
    ```bash
-   bun run bucket:setup
+   pnpm run bucket:setup
    ```
 
 6. **Run the development server**:
 
    ```bash
-   bun run dev
+   pnpm run dev
    ```
 
 7. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🛠️ Tech Stack
 
-- **Runtime & Tooling**: [Bun](https://bun.sh/), [TypeScript](https://www.typescriptlang.org/)
+- **Runtime & Tooling**: [PNPM](https://pnpm.io/), [TypeScript](https://www.typescriptlang.org/)
 - **Frontend**: [Next.js 16](https://nextjs.org/), [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 - **Database & ORM**: [PostgreSQL](https://www.postgresql.org/), [Prisma](https://www.prisma.io/)
@@ -104,19 +108,20 @@ graph TD
     Server -->|Authentication| Auth[Better-Auth]
     Server -->|Data Operations| DB[(PostgreSQL & Prisma)]
     Server -->|AI Processing| AICore[AI Core Services]
-    
+
     AICore <-->|Secure API Routing| GoogleGenAI[Google GenAI API]
     AICore <-->|Secure API Routing| Deepgram[Deepgram API]
     GoogleGenAI -->|Conversations & Audio| GeminiFlash[Gemini 3.1 Flash Lite]
     GoogleGenAI -->|Image Generation| GeminiImage[Gemini 2.5 Flash Image]
     GoogleGenAI -->|Podcasts| GeminiTTS[Gemini 3.1 Flash TTS]
     Deepgram -->|Speech Synthesis| Aura2[Aura-2 TTS]
-    
+
     AICore -.->|Web Search| Tavily[Tavily API]
     Server -.->|File Storage| Storage[S3 / R2]
 ```
 
 ## 📂 Project Structure
+
 - **`actions/`**: Server-side logic for data mutations and external API integrations.
 - **`app/`**: Next.js App Router structure (Auth, Main workspace, API routes).
 - **`components/`**: Modular React components (AI elements, Chat system, UI primitives).

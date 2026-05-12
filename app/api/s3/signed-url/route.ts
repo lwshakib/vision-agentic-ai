@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { s3Service } from '@/services/s3.services';
+import { getSignedUrl } from '@/lib/s3';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing key' }, { status: 400 });
     }
 
-    const url = await s3Service.getSignedUrl(key);
+    const url = await getSignedUrl(key);
 
     return NextResponse.json({ url });
   } catch (error) {

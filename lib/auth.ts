@@ -14,7 +14,12 @@ import { Resend } from 'resend';
 import { AuthEmailTemplate } from '@/components/emails/auth-email-template';
 
 // Initialize the Resend instance with the API key from environment variables.
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Function to lazily initialize Resend to avoid errors during build when the key is missing.
+const getResend = () => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  return new Resend(apiKey);
+};
 
 /**
  * Main authentication configuration object.
@@ -39,6 +44,11 @@ export const auth = betterAuth({
      * Triggered when a user requests a password recovery.
      */
     sendResetPassword: async ({ user, url }) => {
+      const resend = getResend();
+      if (!resend) {
+        console.warn('RESEND_API_KEY is not configured. Skipping reset email.');
+        return;
+      }
       try {
         const { error } = await resend.emails.send({
           from: 'Vision Agentic AI <noreply@lwshakib.site>',
@@ -81,6 +91,13 @@ export const auth = betterAuth({
      * Custom handler for sending the initial account verification email.
      */
     sendVerificationEmail: async ({ user, url }) => {
+      const resend = getResend();
+      if (!resend) {
+        console.warn(
+          'RESEND_API_KEY is not configured. Skipping verification email.',
+        );
+        return;
+      }
       try {
         await resend.emails.send({
           from: 'Vision Agentic AI <noreply@lwshakib.site>',

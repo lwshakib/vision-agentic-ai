@@ -15,11 +15,14 @@ export async function GET() {
     }
 
     if (!GOOGLE_API_KEY) {
-      return NextResponse.json({ error: 'Missing GOOGLE_API_KEY' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Missing GOOGLE_API_KEY' },
+        { status: 500 },
+      );
     }
 
     const client = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
-    
+
     // Generate an ephemeral token valid for 30 minutes
     const now = new Date();
     const expireTime = new Date(now.getTime() + 30 * 60000);

@@ -59,15 +59,19 @@ export function MessageActionsList({
     >
       {fullText && (
         <MessageAction
-          label={isCopied ? "Copied" : "Copy"}
+          label={isCopied ? 'Copied' : 'Copy'}
           onClick={() => {
-             onCopy(fullText);
-             setIsCopied(true);
-             setTimeout(() => setIsCopied(false), 2000);
+            onCopy(fullText);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
           }}
-          tooltip={isCopied ? "Copied to clipboard" : "Copy this response"}
+          tooltip={isCopied ? 'Copied to clipboard' : 'Copy this response'}
         >
-          {isCopied ? <CheckIcon className="size-4 text-green-600" /> : <CopyIcon className="size-4" />}
+          {isCopied ? (
+            <CheckIcon className="size-4 text-green-600" />
+          ) : (
+            <CopyIcon className="size-4" />
+          )}
         </MessageAction>
       )}
 

@@ -37,7 +37,7 @@ export default function ChatPage() {
   const { setChatTitle, messageCredits, setMessageCredits } = useChatStore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Refs to track the currently active optimistic message for in-place streaming
   const activeMessageIdRef = useRef<string | null>(null);
   const activeMessageRoleRef = useRef<'user' | 'assistant' | null>(null);
@@ -46,31 +46,36 @@ export default function ChatPage() {
   /**
    * Helper function to save a message to the database
    */
-  const saveMessageToDB = useCallback(async (text: string, role: string) => {
-    if (!text.trim() || !chatId) return;
-    
-    console.log(`💾 Saving final ${role} message to DB: "${text.substring(0, 30)}..."`);
-    try {
-      const res = await fetch(`/api/chat/${chatId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          role,
-          parts: [{ type: 'text', text }],
-        }),
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        console.log(`✅ ${role} message saved successfully`);
-        if (data.title) setChatTitle(chatId, data.title);
-      } else {
-        console.error(`❌ Failed to save ${role} message:`, res.status);
+  const saveMessageToDB = useCallback(
+    async (text: string, role: string) => {
+      if (!text.trim() || !chatId) return;
+
+      console.log(
+        `💾 Saving final ${role} message to DB: "${text.substring(0, 30)}..."`,
+      );
+      try {
+        const res = await fetch(`/api/chat/${chatId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            role,
+            parts: [{ type: 'text', text }],
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          console.log(`✅ ${role} message saved successfully`);
+          if (data.title) setChatTitle(chatId, data.title);
+        } else {
+          console.error(`❌ Failed to save ${role} message:`, res.status);
+        }
+      } catch (err) {
+        console.error(`❌ Error saving ${role} message:`, err);
       }
-    } catch (err) {
-      console.error(`❌ Error saving ${role} message:`, err);
-    }
-  }, [chatId, setChatTitle]);
+    },
+    [chatId, setChatTitle],
+  );
 
   const [isVoiceMode, setIsVoiceMode] = useState(
     searchParams.get('voiceMode') === 'true',
@@ -90,16 +95,10 @@ export default function ChatPage() {
     isSpeaking: isLiveSpeaking,
     volume: liveVolume,
     onTranscription,
-    onTurnComplete
+    onTurnComplete,
   } = useLiveAPI();
 
-  const {
-    sendMessage,
-    messages,
-    setMessages,
-    status,
-    stop,
-  } = useChat({
+  const { sendMessage, messages, setMessages, status, stop } = useChat({
     headers: {
       'X-Chat-Id': chatId || '',
     },
@@ -175,81 +174,95 @@ export default function ChatPage() {
   // Live Transcription Handling - Direct Streaming into Message Bubbles
   useEffect(() => {
     onTranscription((text, isFinal, role, isCumulative) => {
-       if (!text && !isFinal) return;
+      if (!text && !isFinal) return;
 
-       // 1. Role Switch or New Turn Detection
-       if (activeMessageRoleRef.current !== role) {
-          // If we were streaming something else, finalize it
-          if (activeMessageIdRef.current && !isMessageSavedRef.current) {
-             const lastMsg = messages.find(m => m.id === activeMessageIdRef.current);
-             if (lastMsg && lastMsg.content.trim()) {
-                void saveMessageToDB(lastMsg.content, lastMsg.role);
-             }
+      // 1. Role Switch or New Turn Detection
+      if (activeMessageRoleRef.current !== role) {
+        // If we were streaming something else, finalize it
+        if (activeMessageIdRef.current && !isMessageSavedRef.current) {
+          const lastMsg = messages.find(
+            (m) => m.id === activeMessageIdRef.current,
+          );
+          if (lastMsg && lastMsg.content.trim()) {
+            void saveMessageToDB(lastMsg.content, lastMsg.role);
           }
-          
-          const newId = nanoid();
-          activeMessageIdRef.current = newId;
-          activeMessageRoleRef.current = role;
-          isMessageSavedRef.current = false;
+        }
 
-          setMessages(prev => [...prev, {
-             id: newId,
-             role,
-             content: text,
-             isStreaming: true,
-             parts: [{ type: 'text', text }]
-          }]);
-       } else {
-          // 2. Update existing active message bubble
-          setMessages(prev => {
-             const updated = [...prev];
-             const idx = updated.findIndex(m => m.id === activeMessageIdRef.current);
-             if (idx >= 0) {
-                const oldText = updated[idx].content;
-                let newText = text;
-                
-                if (!isCumulative) {
-                   const needsSpace = oldText && !oldText.endsWith(' ') && !text.startsWith(' ');
-                   newText = oldText + (needsSpace ? ' ' : '') + text;
-                } else {
-                   newText = (text.length >= oldText.length) ? text : oldText;
-                }
+        const newId = nanoid();
+        activeMessageIdRef.current = newId;
+        activeMessageRoleRef.current = role;
+        isMessageSavedRef.current = false;
 
-                updated[idx] = {
-                   ...updated[idx],
-                   content: newText,
-                   isStreaming: !isFinal,
-                   parts: [{ type: 'text', text: newText }]
-                };
-             }
-             return updated;
-          });
-       }
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: newId,
+            role,
+            content: text,
+            isStreaming: true,
+            parts: [{ type: 'text', text }],
+          },
+        ]);
+      } else {
+        // 2. Update existing active message bubble
+        setMessages((prev) => {
+          const updated = [...prev];
+          const idx = updated.findIndex(
+            (m) => m.id === activeMessageIdRef.current,
+          );
+          if (idx >= 0) {
+            const oldText = updated[idx].content;
+            let newText = text;
 
-       // 3. Persistence for user message (on isFinal)
-       if (isFinal && role === 'user' && !isMessageSavedRef.current) {
-          setMessages(prev => {
-             const msg = prev.find(m => m.id === activeMessageIdRef.current);
-             if (msg) void saveMessageToDB(msg.content, 'user');
-             return prev;
-          });
-          isMessageSavedRef.current = true;
-       }
+            if (!isCumulative) {
+              const needsSpace =
+                oldText && !oldText.endsWith(' ') && !text.startsWith(' ');
+              newText = oldText + (needsSpace ? ' ' : '') + text;
+            } else {
+              newText = text.length >= oldText.length ? text : oldText;
+            }
+
+            updated[idx] = {
+              ...updated[idx],
+              content: newText,
+              isStreaming: !isFinal,
+              parts: [{ type: 'text', text: newText }],
+            };
+          }
+          return updated;
+        });
+      }
+
+      // 3. Persistence for user message (on isFinal)
+      if (isFinal && role === 'user' && !isMessageSavedRef.current) {
+        setMessages((prev) => {
+          const msg = prev.find((m) => m.id === activeMessageIdRef.current);
+          if (msg) void saveMessageToDB(msg.content, 'user');
+          return prev;
+        });
+        isMessageSavedRef.current = true;
+      }
     });
   }, [onTranscription, setMessages, chatId, saveMessageToDB, messages]);
 
   // Handle Turn Completion (Assistant Persistence & Finalization)
   useEffect(() => {
     onTurnComplete(() => {
-      if (activeMessageIdRef.current && activeMessageRoleRef.current === 'assistant' && !isMessageSavedRef.current) {
-        setMessages(prev => {
-           const idx = prev.findIndex(m => m.id === activeMessageIdRef.current);
-           if (idx >= 0) {
-              const msg = prev[idx];
-              void saveMessageToDB(msg.content, 'assistant');
-              prev[idx] = { ...msg, isStreaming: false };
-           }
-           return [...prev];
+      if (
+        activeMessageIdRef.current &&
+        activeMessageRoleRef.current === 'assistant' &&
+        !isMessageSavedRef.current
+      ) {
+        setMessages((prev) => {
+          const idx = prev.findIndex(
+            (m) => m.id === activeMessageIdRef.current,
+          );
+          if (idx >= 0) {
+            const msg = prev[idx];
+            void saveMessageToDB(msg.content, 'assistant');
+            prev[idx] = { ...msg, isStreaming: false };
+          }
+          return [...prev];
         });
         isMessageSavedRef.current = true;
       }

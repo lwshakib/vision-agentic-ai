@@ -199,10 +199,10 @@ export class GeminiLiveAPI {
 
     try {
       const messageData = JSON.parse(jsonData);
-      console.log('📥 WebSocket Message:', messageData); 
-      
+      console.log('📥 WebSocket Message:', messageData);
+
       if (messageData.error) {
-         console.error('❌ Server reported error:', messageData.error);
+        console.error('❌ Server reported error:', messageData.error);
       }
 
       const responses = parseResponseMessages(messageData);
@@ -218,7 +218,9 @@ export class GeminiLiveAPI {
     this.webSocket = new WebSocket(this.serviceUrl);
 
     this.webSocket.onclose = (ev) => {
-      console.warn(`⚠️ Gemini Live WebSocket Closed. Code: ${ev.code}, Reason: ${ev.reason}`);
+      console.warn(
+        `⚠️ Gemini Live WebSocket Closed. Code: ${ev.code}, Reason: ${ev.reason}`,
+      );
       this.connected = false;
       this.stopHeartbeat();
       this.onClose();
@@ -261,10 +263,13 @@ export class GeminiLiveAPI {
         realtimeInputConfig: {
           automaticActivityDetection: {
             disabled: this.automaticActivityDetection.disabled,
-            silenceDurationMs: this.automaticActivityDetection.silence_duration_ms,
+            silenceDurationMs:
+              this.automaticActivityDetection.silence_duration_ms,
             prefixPaddingMs: this.automaticActivityDetection.prefix_padding_ms,
-            endOfSpeechSensitivity: this.automaticActivityDetection.end_of_speech_sensitivity,
-            startOfSpeechSensitivity: this.automaticActivityDetection.start_of_speech_sensitivity,
+            endOfSpeechSensitivity:
+              this.automaticActivityDetection.end_of_speech_sensitivity,
+            startOfSpeechSensitivity:
+              this.automaticActivityDetection.start_of_speech_sensitivity,
           },
           activityHandling: this.activityHandling,
         },
@@ -322,8 +327,8 @@ export class GeminiLiveAPI {
 
   private stopHeartbeat() {
     if (this.heartbeatTimer) {
-       clearInterval(this.heartbeatTimer);
-       this.heartbeatTimer = null;
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
     }
   }
 }
@@ -359,7 +364,8 @@ export class AudioStreamer {
         audio: audioConstraints,
       });
 
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtx =
+        window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioCtx({ sampleRate: this.sampleRate });
       this.audioContext = ctx;
 
@@ -375,7 +381,9 @@ export class AudioStreamer {
       }
 
       try {
-        await ctx.audioWorklet.addModule('/audio-processors/capture.worklet.js');
+        await ctx.audioWorklet.addModule(
+          '/audio-processors/capture.worklet.js',
+        );
       } catch (err) {
         console.error('Failed to load capture worklet:', err);
         throw err;
@@ -388,17 +396,14 @@ export class AudioStreamer {
         return false;
       }
 
-      this.audioWorklet = new AudioWorkletNode(
-        ctx,
-        'audio-capture-processor',
-      );
+      this.audioWorklet = new AudioWorkletNode(ctx, 'audio-capture-processor');
 
       this.audioWorklet.port.onmessage = (event) => {
         if (!this.isStreaming) return;
 
         if (event.data.type === 'audio') {
           const inputData = event.data.data;
-          
+
           if (this.onLevel) {
             let sum = 0;
             for (let i = 0; i < inputData.length; i++) {
@@ -417,7 +422,9 @@ export class AudioStreamer {
         }
       };
 
-      const source = this.audioContext.createMediaStreamSource(this.mediaStream);
+      const source = this.audioContext.createMediaStreamSource(
+        this.mediaStream,
+      );
       source.connect(this.audioWorklet);
 
       this.isStreaming = true;
@@ -482,7 +489,8 @@ export class AudioPlayer {
     if (this.isInitialized) return;
 
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtx =
+        window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioCtx({ sampleRate: this.sampleRate });
       this.audioContext = ctx;
 
@@ -495,7 +503,9 @@ export class AudioPlayer {
       }
 
       try {
-        await ctx.audioWorklet.addModule('/audio-processors/playback.worklet.js');
+        await ctx.audioWorklet.addModule(
+          '/audio-processors/playback.worklet.js',
+        );
       } catch (err) {
         console.error('Failed to load playback worklet:', err);
         throw err;
@@ -505,10 +515,7 @@ export class AudioPlayer {
         return;
       }
 
-      this.workletNode = new AudioWorkletNode(
-        ctx,
-        'pcm-processor',
-      );
+      this.workletNode = new AudioWorkletNode(ctx, 'pcm-processor');
 
       this.gainNode = this.audioContext.createGain();
       this.gainNode.gain.value = this.volume;

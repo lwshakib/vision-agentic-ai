@@ -82,8 +82,7 @@ export function ChatMessageParts({
         if (part.text) {
           final.push(
             <div key={key} className="flex flex-col gap-1">
-              <MessageResponse 
-                className="[&_p]:leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-1.5 [&_code:not(pre_code)]:bg-muted [&_code:not(pre_code)]:px-1 [&_code:not(pre_code)]:py-0.5 [&_code:not(pre_code)]:rounded [&_code:not(pre_code)]:text-xs">
+              <MessageResponse className="[&_p]:leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-1.5 [&_code:not(pre_code)]:bg-muted [&_code:not(pre_code)]:px-1 [&_code:not(pre_code)]:py-0.5 [&_code:not(pre_code)]:rounded [&_code:not(pre_code)]:text-xs">
                 {part.text}
               </MessageResponse>
               {isVersioned && version && (
@@ -92,6 +91,22 @@ export function ChatMessageParts({
                 </span>
               )}
             </div>,
+          );
+        }
+        return;
+      }
+
+      if (part.type === 'status') {
+        const text = (part.text || '') as string;
+        if (text) {
+          hasActive = true;
+          process.push(
+            <ChainOfThoughtStep
+              key={key}
+              icon={BrainIcon}
+              label={text}
+              status="active"
+            />,
           );
         }
         return;
@@ -267,7 +282,7 @@ export function ChatMessageParts({
                     model:
                       input?.model ||
                       (toolName === 'generateImage'
-                        ? 'FLUX.2'
+                        ? 'Gemini 2.5 Flash Image'
                         : 'ImageToImage'),
                     width: input?.width,
                     height: input?.height,
@@ -366,13 +381,17 @@ export function ChatMessageParts({
           }
           return;
         }
-        
+
         if (toolName === 'youtubeSummarize') {
           process.push(
             <ChainOfThoughtStep
               key={key}
               icon={() => <Icon icon="logos:youtube-icon" className="size-4" />}
-              label={isLoading ? 'Summarizing YouTube video...' : 'YouTube video summarized'}
+              label={
+                isLoading
+                  ? 'Summarizing YouTube video...'
+                  : 'YouTube video summarized'
+              }
               status={isLoading ? 'active' : 'complete'}
             />,
           );
@@ -384,7 +403,11 @@ export function ChatMessageParts({
             <ChainOfThoughtStep
               key={key}
               icon={BrainIcon}
-              label={isLoading ? 'Retrieving voice catalog...' : 'Voice catalog retrieved'}
+              label={
+                isLoading
+                  ? 'Retrieving voice catalog...'
+                  : 'Voice catalog retrieved'
+              }
               status={isLoading ? 'active' : 'complete'}
             />,
           );
@@ -431,6 +454,44 @@ export function ChatMessageParts({
             }
           }
           return;
+        }
+        if (toolName === 'readImageUrl') {
+          const imageUrl = input?.url || output?.url;
+          process.push(
+            <ChainOfThoughtStep
+              key={key}
+              icon={ImageIcon}
+              label={
+                isLoading
+                  ? 'Analyzing image from URL...'
+                  : 'Image analysis complete'
+              }
+              status={isLoading ? 'active' : 'complete'}
+            >
+              {!isLoading && hasOutput && output?.success && output?.data && (
+                <div className="mt-2 flex flex-col gap-2">
+                  <div className="relative h-40 w-full overflow-hidden rounded-md border bg-muted">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`data:${output.mimeType || 'image/jpeg'};base64,${output.data}`}
+                      alt="Fetched from URL"
+                      className="size-full object-contain"
+                    />
+                  </div>
+                  {imageUrl && (
+                    <a
+                      href={imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-muted-foreground hover:underline truncate max-w-full"
+                    >
+                      Source: {imageUrl}
+                    </a>
+                  )}
+                </div>
+              )}
+            </ChainOfThoughtStep>,
+          );
         }
       }
     });

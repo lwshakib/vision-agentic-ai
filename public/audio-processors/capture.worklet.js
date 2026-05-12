@@ -24,7 +24,7 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
         if (this.bufferIndex >= this.bufferSize) {
           // Send the buffered audio to the main thread
           this.port.postMessage({
-            type: "audio",
+            type: 'audio',
             data: this.buffer.slice(),
           });
 
@@ -40,4 +40,4 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
 }
 
 // Register the processor
-registerProcessor("audio-capture-processor", AudioCaptureProcessor);
+registerProcessor('audio-capture-processor', AudioCaptureProcessor);

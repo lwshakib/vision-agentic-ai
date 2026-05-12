@@ -19,7 +19,15 @@ export function useLiveAPI() {
   const isManualDisconnectRef = useRef(false);
 
   // Callbacks for the UI to subscribe to
-  const onReceiveTextRef = useRef<((text: string, isFinal: boolean, role: 'user' | 'assistant', isCumulative: boolean) => void) | null>(null);
+  const onReceiveTextRef = useRef<
+    | ((
+        text: string,
+        isFinal: boolean,
+        role: 'user' | 'assistant',
+        isCumulative: boolean,
+      ) => void)
+    | null
+  >(null);
   const onTurnCompleteRef = useRef<(() => void) | null>(null);
 
   const disconnect = useCallback((manual: boolean = false) => {
@@ -45,15 +53,21 @@ export function useLiveAPI() {
   }, []);
 
   const connect = useCallback(async () => {
-    if (isConnectingRef.current || (clientRef.current && clientRef.current.connected)) return;
+    if (
+      isConnectingRef.current ||
+      (clientRef.current && clientRef.current.connected)
+    )
+      return;
     isConnectingRef.current = true;
     isManualDisconnectRef.current = false;
     setShouldConnect(true);
-    
+
     try {
       setIsError(false);
       // Fetch token
-      console.log('📡 Fetching Gemini Live token from /api/voice-agent/token...');
+      console.log(
+        '📡 Fetching Gemini Live token from /api/voice-agent/token...',
+      );
       const res = await fetch('/api/voice-agent/token');
       if (!res.ok) {
         console.error('❌ Failed to fetch token:', res.status, res.statusText);
@@ -61,12 +75,14 @@ export function useLiveAPI() {
       }
       const data = await res.json();
       console.log('✅ Token fetched successfully');
-      
+
       const client = new GeminiLiveAPI(data.token);
       clientRef.current = client;
 
-      client.setSystemInstructions('You are Vision, a helpful AI voice assistant. Keep your responses conversational and concise.');
-      
+      client.setSystemInstructions(
+        'You are Vision, a helpful AI voice assistant. Keep your responses conversational and concise.',
+      );
+
       const streamer = new AudioStreamer(client, (level) => {
         setVolume(level);
       });
@@ -102,17 +118,36 @@ export function useLiveAPI() {
         } else if (response.type === MultimodalLiveResponseType.TURN_COMPLETE) {
           setIsSpeaking(false);
           if (onTurnCompleteRef.current) onTurnCompleteRef.current();
-        } else if (response.type === MultimodalLiveResponseType.INPUT_TRANSCRIPTION) {
+        } else if (
+          response.type === MultimodalLiveResponseType.INPUT_TRANSCRIPTION
+        ) {
           if (onReceiveTextRef.current) {
-            onReceiveTextRef.current(response.data.text || '', response.data.finished, 'user', false);
+            onReceiveTextRef.current(
+              response.data.text || '',
+              response.data.finished,
+              'user',
+              false,
+            );
           }
         } else if (response.type === MultimodalLiveResponseType.TEXT) {
-           if (onReceiveTextRef.current) {
-            onReceiveTextRef.current(response.data || '', true, 'assistant', true);
+          if (onReceiveTextRef.current) {
+            onReceiveTextRef.current(
+              response.data || '',
+              true,
+              'assistant',
+              true,
+            );
           }
-        } else if (response.type === MultimodalLiveResponseType.OUTPUT_TRANSCRIPTION) {
-           if (onReceiveTextRef.current) {
-            onReceiveTextRef.current(response.data.text || '', response.data.finished, 'assistant', false);
+        } else if (
+          response.type === MultimodalLiveResponseType.OUTPUT_TRANSCRIPTION
+        ) {
+          if (onReceiveTextRef.current) {
+            onReceiveTextRef.current(
+              response.data.text || '',
+              response.data.finished,
+              'assistant',
+              false,
+            );
           }
         }
       };
@@ -134,9 +169,19 @@ export function useLiveAPI() {
     };
   }, [disconnect]);
 
-  const onTranscription = useCallback((fn: (text: string, isFinal: boolean, role: 'user' | 'assistant', isCumulative: boolean) => void) => {
-    onReceiveTextRef.current = fn;
-  }, []);
+  const onTranscription = useCallback(
+    (
+      fn: (
+        text: string,
+        isFinal: boolean,
+        role: 'user' | 'assistant',
+        isCumulative: boolean,
+      ) => void,
+    ) => {
+      onReceiveTextRef.current = fn;
+    },
+    [],
+  );
 
   const onTurnComplete = useCallback((fn: () => void) => {
     onTurnCompleteRef.current = fn;
