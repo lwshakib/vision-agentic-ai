@@ -104,7 +104,10 @@ export async function uploadToS3(
     });
 
     xhr.open('PUT', presignedUrl);
-    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.setRequestHeader(
+      'Content-Type',
+      file.type || 'application/octet-stream',
+    );
     xhr.send(file);
   });
 
