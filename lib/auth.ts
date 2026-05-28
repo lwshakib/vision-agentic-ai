@@ -108,6 +108,7 @@ export const auth = betterAuth({
         });
       } catch (err) {
         console.error('Verification email error:', err);
+        throw new Error('Failed to send verification email');
       }
     },
   },
