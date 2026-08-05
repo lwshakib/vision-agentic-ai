@@ -21,12 +21,22 @@ export async function PATCH(req: Request) {
   try {
     const { name, email, image } = await req.json();
 
-    // Perform a partial update on the User record.
+    // Prevent direct unverified email modifications via generic profile update
+    if (email !== undefined && email !== session.user.email) {
+      return NextResponse.json(
+        {
+          error:
+            'Direct email updates are not allowed via profile update. Please use the email verification workflow to change your email.',
+        },
+        { status: 400 },
+      );
+    }
+
+    // Perform a partial update on the User record for allowed profile fields.
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: {
         ...(name !== undefined && { name }),
-        ...(email !== undefined && { email }),
         ...(image !== undefined && { image }),
       },
     });
