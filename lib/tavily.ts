@@ -1,5 +1,6 @@
 import { tavily } from '@tavily/core';
 import { TAVILY_API_KEY } from '@/lib/env';
+import { validatePublicUrl } from '@/lib/url-validator';
 
 const client = TAVILY_API_KEY ? tavily({ apiKey: TAVILY_API_KEY }) : null;
 
@@ -43,7 +44,32 @@ export async function extractWebUrl(urls: string[]) {
   }
 
   try {
-    const response = (await client.extract(urls, {
+    // Validate input URLs against SSRF (block private IP ranges, loopback, link-local, internal domains)
+    const validationResults = await Promise.all(
+      urls.map(async (url) => ({
+        url,
+        validation: await validatePublicUrl(url),
+      })),
+    );
+
+    const validUrls = validationResults
+      .filter((v) => v.validation.valid)
+      .map((v) => v.url);
+    const invalidUrls = validationResults.filter((v) => !v.validation.valid);
+
+    if (validUrls.length === 0) {
+      const reasons = invalidUrls
+        .map((v) => `${v.url}: ${v.validation.reason}`)
+        .join('; ');
+      return {
+        success: false,
+        message:
+          'URL validation failed: All provided URLs were invalid or pointed to restricted internal/private networks (SSRF protection).',
+        error: `SSRF validation failed. ${reasons}`,
+      };
+    }
+
+    const response = (await client.extract(validUrls, {
       includeFavicon: true,
       includeImages: false,
       topic: 'general',
@@ -61,7 +87,7 @@ export async function extractWebUrl(urls: string[]) {
 
     return {
       success: true,
-      urls,
+      urls: validUrls,
       results,
       totalSources: results.length,
       totalContentLength: results.reduce(
@@ -69,6 +95,14 @@ export async function extractWebUrl(urls: string[]) {
         0,
       ),
       response_time: response?.responseTime || 0,
+      ...(invalidUrls.length > 0
+        ? {
+            blockedUrls: invalidUrls.map((v) => ({
+              url: v.url,
+              reason: v.validation.reason,
+            })),
+          }
+        : {}),
     };
   } catch (error) {
     return {
@@ -78,3 +112,4 @@ export async function extractWebUrl(urls: string[]) {
     };
   }
 }
+

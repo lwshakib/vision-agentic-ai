@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ToolDefinition } from './types';
 import { fetchWithRetry } from '@/lib/utils';
+import { validatePublicUrl } from '@/lib/url-validator';
 
 /**
  * tool: readImageUrl
@@ -14,6 +15,13 @@ export const readImageUrlTool: ToolDefinition = {
   }),
   execute: async ({ url }) => {
     try {
+      const validation = await validatePublicUrl(url);
+      if (!validation.valid) {
+        throw new Error(
+          `SSRF Protection: Invalid or blocked URL target (${validation.reason})`,
+        );
+      }
+
       const res = await fetchWithRetry(url);
       if (!res.ok) {
         throw new Error(
