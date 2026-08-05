@@ -26,14 +26,43 @@ const client =
     : null;
 
 /**
+ * Validates and sanitizes an S3 object key to prevent path traversal attacks.
+ */
+export function sanitizeS3Key(key: string): string {
+  if (!key || typeof key !== 'string') {
+    throw new Error('Invalid S3 object key: Key must be a non-empty string.');
+  }
+
+  // Reject path traversal sequences (e.g. ../, ..\, or standalone ..) and null bytes
+  if (/\.\.(\/|\\|$)/.test(key) || key.includes('\0')) {
+    throw new Error(
+      `Invalid S3 object key "${key}": Path traversal characters ("..") or null bytes are not allowed.`,
+    );
+  }
+
+  // Strip leading slashes and backslashes
+  const sanitized = key.replace(/^[/\\]+/, '');
+
+  if (!sanitized) {
+    throw new Error(
+      'Invalid S3 object key: Key cannot be empty after stripping leading slashes.',
+    );
+  }
+
+  return sanitized;
+}
+
+/**
  * Generates a presigned URL for uploading a file directly to S3/R2 from the client.
  */
 export async function getPresignedUrl(key: string, contentType: string) {
   if (!client) throw new Error('AWS S3 credentials are not configured');
 
+  const safeKey = sanitizeS3Key(key);
+
   const command = new PutObjectCommand({
     Bucket: AWS_S3_BUCKET_NAME,
-    Key: key,
+    Key: safeKey,
     ContentType: contentType,
   });
 
@@ -46,9 +75,11 @@ export async function getPresignedUrl(key: string, contentType: string) {
 export async function getSignedUrl(key: string) {
   if (!client) throw new Error('AWS S3 credentials are not configured');
 
+  const safeKey = sanitizeS3Key(key);
+
   const command = new GetObjectCommand({
     Bucket: AWS_S3_BUCKET_NAME,
-    Key: key,
+    Key: safeKey,
   });
 
   return await getS3SignedUrl(client, command, { expiresIn: 3600 });
@@ -64,14 +95,16 @@ export async function uploadFile(
 ) {
   if (!client) throw new Error('AWS S3 credentials are not configured');
 
+  const safeKey = sanitizeS3Key(key);
+
   const command = new PutObjectCommand({
     Bucket: AWS_S3_BUCKET_NAME,
-    Key: key,
+    Key: safeKey,
     Body: buffer,
     ContentType: contentType,
   });
 
   await client.send(command);
 
-  return getSignedUrl(key);
+  return getSignedUrl(safeKey);
 }
