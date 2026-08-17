@@ -107,7 +107,7 @@ export default function RootLayout({
 }>) {
   return (
     // Root HTML element with English language setting and smooth scrolling enabled.
-    <html lang="en" className="scroll-smooth">
+    <html suppressHydrationWarning lang="en" className="scroll-smooth">
       {/* Body tag with antialiasing for smoother font rendering. */}
       <body className="antialiased">
         {/* ThemeProvider wraps the application to manage dark/light modes. */}
