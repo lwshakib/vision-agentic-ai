@@ -20,11 +20,22 @@ export async function streamText(
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
 
+  const safeCloseWriter = async () => {
+    try {
+      if (writable.locked) {
+        await writer.close();
+      }
+    } catch {
+      // Ignore error if stream was already closed or aborted by client
+    }
+  };
+
   const sendChunk = (data: Record<string, unknown>) => {
+    if (abortSignal?.aborted) return;
     try {
       writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
     } catch (e) {
-      console.error('[llm] Failed to write chunk:', e);
+      // Ignore write errors on aborted/closed streams
     }
   };
 
@@ -33,7 +44,7 @@ export async function streamText(
     try {
       // 🚀 Force-flush prelude: Some proxies/browsers buffer until ~1KB is received.
       // We send a tiny invisible comment and 1KB of whitespace to wake up the stream.
-      writer.write(encoder.encode(`: flush\n${' '.repeat(1024)}\n\n`));
+      sendChunk({});
 
       const contents = await formatToGemini(messages);
       const tools = getTools();
@@ -255,14 +266,16 @@ export async function streamText(
           toolInvocations: finalToolInvocations,
         });
       }
-      writer.close();
+      await safeCloseWriter();
     } catch (error) {
-      console.error('[llm] streamText error:', error);
-      sendChunk({
-        type: 'error',
-        message: error instanceof Error ? error.message : String(error),
-      });
-      writer.close();
+      if (!abortSignal?.aborted) {
+        console.error('[llm] streamText error:', error);
+        sendChunk({
+          type: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+      await safeCloseWriter();
     }
   })();
 
